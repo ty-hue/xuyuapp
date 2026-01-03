@@ -456,7 +456,7 @@ class _MinePageState extends State<MinePage>
             height: 80,
             child: Opacity(
               opacity: opacity,
-              child: Container(color: Color.fromARGB(255, 65, 60, 60)),
+              child: Container(color: const Color.fromRGBO(22, 22, 22, 1)),
             ),
           ),
         ),
@@ -714,7 +714,9 @@ class _MinePageState extends State<MinePage>
       padding: EdgeInsets.symmetric(horizontal: 20),
       color: const Color.fromRGBO(22, 22, 22, 1),
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          context.push('/edit-profile');
+        },
         child: Row(
           children: [
             Text(
@@ -734,7 +736,9 @@ class _MinePageState extends State<MinePage>
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       color: const Color.fromRGBO(22, 22, 22, 1),
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          context.push('/edit-profile');
+        },
         child: Row(
           spacing: 6,
           children: [
