@@ -1,19 +1,14 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
+import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 // ignore: must_be_immutable
 class OtherPhoneLoginPage extends StatefulWidget {
-  OtherPhoneLoginPage({Key? key, this.country}) : super(key: key);
-   Map<String, String>? country = {
-    'short': 'CN',
-    'name': '中国',
-    'en': 'China',
-    'code': '+86',
-    'groupEn': 'C',
-    'groupCn': 'Z',
-  };
+  final OtherPhoneLoginParams extra;
+  OtherPhoneLoginPage({Key? key, required this.extra}) : super(key: key);
+ 
 
   @override
   State<OtherPhoneLoginPage> createState() => _OtherPhoneLoginPageState();
@@ -53,7 +48,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            context.push('/login');
+            context.go('/');
           },
         ),
       ),
@@ -115,7 +110,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                         child: GestureDetector(
                           onTap: () {
                             // 处理点击事件
-                            context.push('/choose-phone-prefix');
+                            context.pushNamed('choose_phone_prefix');
                           },
                           child: Container(
                             alignment: Alignment.center,
@@ -124,7 +119,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
-                                  widget.country!['code']!,
+                                  widget.extra.code,
                                   style: TextStyle(
                                     fontSize: 24,
                                     color: Colors.black,
@@ -156,7 +151,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                       // minimumSize: Size(200, 50),
                     ),
                     onPressed: () {
-                      context.push('/fill-code');
+                      context.pushNamed('fill_code');
                     },
                     child: Text(
                       '获取短信验证码',

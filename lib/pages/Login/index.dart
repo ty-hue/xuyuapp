@@ -1,6 +1,5 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatefulWidget {
@@ -49,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
         leading: IconButton(
           icon: Icon(Icons.close),
           onPressed: () {
-            context.go('/');
+            context.pop();
           },
         ),
       ),

@@ -200,10 +200,10 @@ class _EditProfilePageState extends State<EditProfilePage>
   }
 
   // 构建信息条目
-  Widget _buildInfoItem({required String label, required String content}) {
+  Widget _buildInfoItem({required String label, required String content,required VoidCallback fn}) {
     return GestureDetector(
       onTap: () {
-        print('点击了$label');
+        fn();
       },
       child: Container(
         child: Row(
@@ -357,17 +357,26 @@ class _EditProfilePageState extends State<EditProfilePage>
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      _buildInfoItem(label: '名字', content: 'llg'),
+                      _buildInfoItem(label: '名字', content: 'llg', fn: () {
+                         context.push('/update-user-info-field', extra: {'title': '名字', 'tip': '请输入新的名字', 'maxLength': 20, 'initialValue': 'llg'});
+                      }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '简介', content: '介绍喜好、个性或@你的亲友'),
+                      _buildInfoItem(label: '简介', content: '介绍喜好、个性或@你的亲友', fn: () {
+                         context.push('/update-user-info-field', extra: {'title': '简介', 'tip': '请输入新的简介', 'maxLength': 100,});
+                      }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '性别', content: '不展示'),
+                      _buildInfoItem(label: '性别', content: '不展示', fn: () {
+                      }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '生日', content: '不展示'),
+                      _buildInfoItem(label: '生日', content: '不展示', fn: () {
+                      }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '所在地', content: '不展示'),
+                      _buildInfoItem(label: '所在地', content: '不展示', fn: () {
+                      }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '抖音号', content: 'sdk199912'),
+                      _buildInfoItem(label: '抖音号', content: 'sdk199912', fn: () {
+                         context.push('/update-user-info-field', extra: {'title': '抖音号', 'tip': '请输入新的抖音号', 'maxLength': 16});
+                      }),
                     ],
                   ),
                 ),

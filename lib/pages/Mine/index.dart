@@ -86,7 +86,7 @@ class _MinePageState extends State<MinePage>
               top: 0,
               child: GestureDetector(
                 onTap: () {
-                  Navigator.pop(context);
+                  context.pop();
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
