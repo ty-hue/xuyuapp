@@ -1,5 +1,6 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
 import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
+import 'package:bilbili_project/routes/shell_route.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -48,7 +49,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            context.go('/');
+            LoginRoute().go(context);
           },
         ),
       ),
@@ -110,7 +111,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                         child: GestureDetector(
                           onTap: () {
                             // 处理点击事件
-                            context.pushNamed('choose_phone_prefix');
+                            ChoosePhonePrefixRoute().go(context);
                           },
                           child: Container(
                             alignment: Alignment.center,
@@ -151,7 +152,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                       // minimumSize: Size(200, 50),
                     ),
                     onPressed: () {
-                      context.pushNamed('fill_code');
+                      FillCodeRoute().go(context);
                     },
                     child: Text(
                       '获取短信验证码',

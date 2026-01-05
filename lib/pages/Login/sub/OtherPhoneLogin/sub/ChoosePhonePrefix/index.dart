@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:bilbili_project/data/country_phone_prefix.dart';
+import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,9 +13,10 @@ class ChoosePhonePrefixPage extends StatefulWidget {
 }
 
 class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
-  final List<Map<String, String>> countryPhonePrefixList = rawData;
+  
+  final List<OtherPhoneLoginParams> countryPhonePrefixList = rawData.map((e) => OtherPhoneLoginParams.fromJson(e)).toList();
   // 2. 用于存储处理后的数据
-  late Map<String, List<Map<String, String>>> groupedData;
+  late Map<String, List<OtherPhoneLoginParams>> groupedData;
   late List<String> sortedGroupKeys;
   @override
   initState() {
@@ -24,11 +26,11 @@ class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
 
   void _processData() {
     // 使用 SplayTreeMap，它会自动根据 key (字母) 进行排序
-    final map = SplayTreeMap<String, List<Map<String, String>>>();
+    final map = SplayTreeMap<String, List<OtherPhoneLoginParams>>();
 
     // 遍历原始数据
     for (final country in countryPhonePrefixList) {
-      final group = country['groupCn']!;
+      final group = country.groupCn;
       // 如果 map 中还没有这个字母的 key，就创建一个空列表
       if (!map.containsKey(group)) {
         map[group] = [];
@@ -97,11 +99,20 @@ class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
                 itemBuilder: (context, countryIndex) {
                   final country = countriesInGroup[countryIndex];
                   return ListTile(
-                    title: Text(country['name']!,),
-                    trailing: Text(country['code']!, style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),),
+                    title: Text(country.name),
+                    trailing: Text(
+                      country.code,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     onTap: () {
                       // 点击国家后，返回上一页并携带数据
-                      context.push('/other-phone-login', extra: country);
+                      context.push(
+                        '/login/other_phone_login',
+                        extra: country,
+                      );
                     },
                   );
                 },
