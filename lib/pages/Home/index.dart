@@ -1,4 +1,4 @@
-import 'package:bilbili_project/routes/login_route.dart';
+import 'package:bilbili_project/routes/shell_route.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,7 +18,7 @@ class _HomePageState extends State<HomePage> {
           Text('Home Page'),
           ElevatedButton(
             onPressed: () {
-               LoginRoute().go(context);
+               LoginRoute().push(context);
             },
             child: Text('去登录1'),
           ),

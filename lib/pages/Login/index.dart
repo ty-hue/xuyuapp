@@ -1,4 +1,5 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
+import 'package:bilbili_project/routes/shell_route.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -106,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     onPressed: () {
-                      context.push('/other-phone-login');
+                      OtherPhoneLoginRoute().go(context);
                     },
                     child: Text(
                       '其他手机号登录',
