@@ -1,4 +1,4 @@
-import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/index.dart';
 import 'package:flutter/material.dart';
 
 void main() {

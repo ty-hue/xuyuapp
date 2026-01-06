@@ -1,6 +1,7 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
-import 'package:bilbili_project/routes/home_route.dart';
-import 'package:bilbili_project/routes/shell_route.dart';
+import 'package:bilbili_project/routes/home_routes/home_route.dart';
+import 'package:bilbili_project/routes/login_routes/other_phone_login_route.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {

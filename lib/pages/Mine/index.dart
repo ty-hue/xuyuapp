@@ -1,5 +1,4 @@
-import 'package:bilbili_project/routes/mine_routes/edit_profile_route.dart';
-import 'package:bilbili_project/routes/shell_route.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';

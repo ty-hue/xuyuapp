@@ -1,9 +1,10 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
 import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
-import 'package:bilbili_project/routes/shell_route.dart';
+import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
+import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
 
 // ignore: must_be_immutable
 class OtherPhoneLoginPage extends StatefulWidget {

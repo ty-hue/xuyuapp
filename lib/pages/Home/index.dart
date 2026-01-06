@@ -1,4 +1,4 @@
-import 'package:bilbili_project/routes/shell_route.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
