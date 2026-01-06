@@ -7,6 +7,8 @@ import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/sub/FillCode/ind
 import 'package:bilbili_project/routes/create_route.dart';
 import 'package:bilbili_project/routes/friend_route.dart';
 import 'package:bilbili_project/routes/message_route.dart';
+import 'package:bilbili_project/routes/mine_routes/edit_profile_route.dart';
+import 'package:bilbili_project/routes/mine_routes/update_user_info_field.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,7 +16,6 @@ import 'home_route.dart';
 import 'mine_route.dart';
 
 part 'shell_route.g.dart';
-
 
 @TypedGoRoute<LoginRoute>(
   path: '/login',
@@ -29,7 +30,7 @@ part 'shell_route.g.dart';
     ),
   ],
 )
-class LoginRoute extends GoRouteData  {
+class LoginRoute extends GoRouteData {
   const LoginRoute();
 
   @override
@@ -72,7 +73,6 @@ class ChoosePhonePrefixRoute extends GoRouteData {
   }
 }
 
-
 @TypedStatefulShellRoute<ShellRouteData>(
   branches: [
     TypedStatefulShellBranch<HomeBranchData>(
@@ -88,7 +88,16 @@ class ChoosePhonePrefixRoute extends GoRouteData {
       routes: [TypedGoRoute<MessageRoute>(path: '/message')],
     ),
     TypedStatefulShellBranch<MineBranchData>(
-      routes: [TypedGoRoute<MineRoute>(path: '/mine')],
+      routes: [
+        TypedGoRoute<MineRoute>(
+          path: '/mine',
+          routes: [
+            TypedGoRoute<EditProfileRoute>(path: 'edit_profile',routes: [
+              TypedGoRoute<UpdateUserInfoFieldRoute>(path: 'update_user_info_field'),
+            ]),
+          ],
+        ),
+      ],
     ),
   ],
 )

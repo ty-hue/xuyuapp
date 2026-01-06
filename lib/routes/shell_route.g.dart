@@ -138,6 +138,20 @@ RouteBase get $shellRouteData => StatefulShellRouteData.$route(
           path: '/mine',
 
           factory: $MineRouteExtension._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'edit_profile',
+
+              factory: $EditProfileRouteExtension._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: 'update_user_info_field',
+
+                  factory: $UpdateUserInfoFieldRouteExtension._fromState,
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ),
@@ -213,6 +227,39 @@ extension $MineRouteExtension on MineRoute {
   static MineRoute _fromState(GoRouterState state) => const MineRoute();
 
   String get location => GoRouteData.$location('/mine');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $EditProfileRouteExtension on EditProfileRoute {
+  static EditProfileRoute _fromState(GoRouterState state) =>
+      const EditProfileRoute();
+
+  String get location => GoRouteData.$location('/mine/edit_profile');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $UpdateUserInfoFieldRouteExtension on UpdateUserInfoFieldRoute {
+  static UpdateUserInfoFieldRoute _fromState(GoRouterState state) =>
+      const UpdateUserInfoFieldRoute();
+
+  String get location =>
+      GoRouteData.$location('/mine/edit_profile/update_user_info_field');
 
   void go(BuildContext context) => context.go(location);
 

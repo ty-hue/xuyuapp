@@ -1,3 +1,5 @@
+import 'package:bilbili_project/routes/mine_routes/edit_profile_route.dart';
+import 'package:bilbili_project/routes/shell_route.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -598,7 +600,7 @@ class _MinePageState extends State<MinePage>
           ),
           GestureDetector(
             onTap: () {
-              context.push('/edit-profile');
+              EditProfileRoute().push(context);
             },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -715,7 +717,7 @@ class _MinePageState extends State<MinePage>
       color: const Color.fromRGBO(22, 22, 22, 1),
       child: GestureDetector(
         onTap: () {
-          context.push('/edit-profile');
+          EditProfileRoute().push(context);
         },
         child: Row(
           children: [
@@ -737,7 +739,7 @@ class _MinePageState extends State<MinePage>
       color: const Color.fromRGBO(22, 22, 22, 1),
       child: GestureDetector(
         onTap: () {
-          context.push('/edit-profile');
+          EditProfileRoute().push(context);
         },
         child: Row(
           spacing: 6,

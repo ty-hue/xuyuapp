@@ -1,7 +1,7 @@
 import 'package:bilbili_project/components/Login/login_other_method.dart';
+import 'package:bilbili_project/routes/home_route.dart';
 import 'package:bilbili_project/routes/shell_route.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key? key}) : super(key: key);
@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
         leading: IconButton(
           icon: Icon(Icons.close),
           onPressed: () {
-            context.pop();
+            HomeRoute().go(context);
           },
         ),
       ),

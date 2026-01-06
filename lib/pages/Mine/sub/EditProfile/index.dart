@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Mine/sub/EditProfile/sub/UpdateUserInfoField/params/params.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -358,11 +359,21 @@ class _EditProfilePageState extends State<EditProfilePage>
                   child: Column(
                     children: [
                       _buildInfoItem(label: '名字', content: 'llg', fn: () {
-                         context.push('/update-user-info-field', extra: {'title': '名字', 'tip': '请输入新的名字', 'maxLength': 20, 'initialValue': 'llg'});
+                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
+                           title: '名字',
+                           tip: '请输入新的名字',
+                           maxLength: 20,
+                           initialValue: 'llg',
+                         ));
                       }),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '简介', content: '介绍喜好、个性或@你的亲友', fn: () {
-                         context.push('/update-user-info-field', extra: {'title': '简介', 'tip': '请输入新的简介', 'maxLength': 100,});
+                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
+                           title: '简介',
+                           tip: '请输入新的简介',
+                           maxLength: 100,
+                           initialValue: '',
+                         ));
                       }),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '性别', content: '不展示', fn: () {
@@ -375,7 +386,12 @@ class _EditProfilePageState extends State<EditProfilePage>
                       }),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '抖音号', content: 'sdk199912', fn: () {
-                         context.push('/update-user-info-field', extra: {'title': '抖音号', 'tip': '请输入新的抖音号', 'maxLength': 16});
+                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
+                           title: '抖音号',
+                           tip: '请输入新的抖音号',
+                           maxLength: 16,
+                           initialValue: 'sdk199912',
+                         ));
                       }),
                     ],
                   ),
