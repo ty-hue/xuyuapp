@@ -8,7 +8,11 @@ import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
 import 'package:bilbili_project/routes/login_routes/other_phone_login_route.dart';
 import 'package:bilbili_project/routes/message_routes/message_route.dart';
 import 'package:bilbili_project/routes/mine_routes/mine_route.dart';
+import 'package:bilbili_project/routes/mine_routes/select_city_route.dart';
+import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
+import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
 import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.dart';
+import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,7 +47,14 @@ class LoginRoute extends GoRouteData {
 @TypedGoRoute<EditProfileRoute>(
   path: '/mine/edit_profile',
   routes: [
+    // 修改普通文本类型字段
     TypedGoRoute<UpdateUserInfoFieldRoute>(path: 'update_user_info_field'),
+    // 选择地址
+    TypedGoRoute<SelectCountryRoute>(path: 'select_country', routes: [
+      TypedGoRoute<SelectProvinceRoute>(path: 'select_province', routes: [
+        TypedGoRoute<SelectCityRoute>(path: 'select_city'),
+      ]),
+    ]),
   ],
 )
 
@@ -52,10 +63,10 @@ class EditProfileRoute extends GoRouteData {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return  EditProfilePage();
+    final address = state.extra as AddressResult?;
+    return  EditProfilePage(address: address,);
   }
 }
-
 
 
 // 五个分支

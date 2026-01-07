@@ -658,7 +658,7 @@ class _MinePageState extends State<MinePage>
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/upload_avatar');
+                      context.go('/create');
                     },
                     child: Container(
                       alignment: Alignment.center,

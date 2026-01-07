@@ -111,6 +111,25 @@ RouteBase get $editProfileRoute => GoRouteData.$route(
 
       factory: $UpdateUserInfoFieldRouteExtension._fromState,
     ),
+    GoRouteData.$route(
+      path: 'select_country',
+
+      factory: $SelectCountryRouteExtension._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'select_province',
+
+          factory: $SelectProvinceRouteExtension._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'select_city',
+
+              factory: $SelectCityRouteExtension._fromState,
+            ),
+          ],
+        ),
+      ],
+    ),
   ],
 );
 
@@ -136,6 +155,65 @@ extension $UpdateUserInfoFieldRouteExtension on UpdateUserInfoFieldRoute {
 
   String get location =>
       GoRouteData.$location('/mine/edit_profile/update_user_info_field');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $SelectCountryRouteExtension on SelectCountryRoute {
+  static SelectCountryRoute _fromState(GoRouterState state) =>
+      const SelectCountryRoute();
+
+  String get location =>
+      GoRouteData.$location('/mine/edit_profile/select_country');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $SelectProvinceRouteExtension on SelectProvinceRoute {
+  static SelectProvinceRoute _fromState(GoRouterState state) =>
+      SelectProvinceRoute(
+        countryCode: state.uri.queryParameters['country-code']!,
+      );
+
+  String get location => GoRouteData.$location(
+    '/mine/edit_profile/select_country/select_province',
+    queryParams: {'country-code': countryCode},
+  );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $SelectCityRouteExtension on SelectCityRoute {
+  static SelectCityRoute _fromState(GoRouterState state) => SelectCityRoute(
+    countryCode: state.uri.queryParameters['country-code']!,
+    provinceCode: state.uri.queryParameters['province-code']!,
+  );
+
+  String get location => GoRouteData.$location(
+    '/mine/edit_profile/select_country/select_province/select_city',
+    queryParams: {'country-code': countryCode, 'province-code': provinceCode},
+  );
 
   void go(BuildContext context) => context.go(location);
 

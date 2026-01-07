@@ -1,10 +1,14 @@
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/sub/UpdateUserInfoField/params/params.dart';
+import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
+import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class EditProfilePage extends StatefulWidget {
-  EditProfilePage({Key? key}) : super(key: key);
+  final AddressResult? address;
+  EditProfilePage({Key? key, this.address}) : super(key: key);
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -19,6 +23,9 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   void initState() {
     super.initState();
+     if(widget.address != null) {
+       print('选择的地址编号集合是：${widget.address?.toString()},请发请求更新地址信息');
+     }
     prevDy = 0.0;
     _animationController = AnimationController(
       vsync: this,
@@ -26,7 +33,7 @@ class _EditProfilePageState extends State<EditProfilePage>
     );
     _anim = Tween<double>(begin: 0.0, end: 0).animate(_animationController!);
   }
-
+ 
   void _updatePicHeight(double changed) {
     if(_extraPicHeight > 200) {
       return;
@@ -245,6 +252,7 @@ class _EditProfilePageState extends State<EditProfilePage>
       ),
     );
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +274,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                   margin: EdgeInsets.only(left: 20),
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      context.go('/mine');
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -383,6 +391,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                       }),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '所在地', content: '不展示', fn: () {
+                        SelectCountryRoute().push(context); 
                       }),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '抖音号', content: 'sdk199912', fn: () {
