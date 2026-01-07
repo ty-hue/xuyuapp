@@ -1,4 +1,4 @@
-import 'package:bilbili_project/components/Login/login_other_method.dart';
+import 'package:bilbili_project/pages/Login/comps/login_other_method.dart';
 import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
 import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
 import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';

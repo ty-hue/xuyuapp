@@ -1,5 +1,5 @@
 import 'package:bilbili_project/api/EditProfile/index.dart';
-import 'package:bilbili_project/components/EditProfile/custom_azlistview.dart';
+import 'package:bilbili_project/pages/Mine/comps/custom_azlistview.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/mine_routes/select_city_route.dart';
 import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
@@ -25,9 +25,12 @@ class _SelectCountryState extends State<SelectCountry> {
   Future<void> _getAreaList() async {
     final areaList = await getCountryList(); 
     setState(() {
-      _areaList = areaList;
+      final AreaGroup headerGroup = AreaGroup(group: '#', items: []);
+      _areaList = areaList..insert(0, headerGroup);
     });
   }
+
+  
   
   void _onSelect(AreaItem item){
     if(item.hasSub) {
@@ -40,6 +43,6 @@ class _SelectCountryState extends State<SelectCountry> {
   }
   @override
   Widget build(BuildContext context) {
-    return CustomAzlistview(areaList: _areaList, onSelect: _onSelect);
+    return CustomAzlistview(areaList: _areaList, onSelect: _onSelect,isCountry: true);
   }
 }

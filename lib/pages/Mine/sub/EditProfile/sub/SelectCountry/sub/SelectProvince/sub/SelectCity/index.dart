@@ -1,5 +1,5 @@
 import 'package:bilbili_project/api/EditProfile/index.dart';
-import 'package:bilbili_project/components/EditProfile/custom_azlistview.dart';
+import 'package:bilbili_project/pages/Mine/comps/custom_azlistview.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
