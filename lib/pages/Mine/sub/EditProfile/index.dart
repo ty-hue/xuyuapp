@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Mine/comps/age_picker_sheet.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/sub/UpdateUserInfoField/params/params.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
@@ -9,7 +10,8 @@ import 'package:go_router/go_router.dart';
 class EditProfilePage extends StatefulWidget {
   final AddressResult? address;
   final bool? dontSettingAddress;
-  EditProfilePage({Key? key, this.address, this.dontSettingAddress}) : super(key: key);
+  EditProfilePage({Key? key, this.address, this.dontSettingAddress})
+    : super(key: key);
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -24,13 +26,13 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   void initState() {
     super.initState();
-     if(widget.address != null) {
-       print('选择的地址编号集合是：${widget.address?.toString()},请发请求更新地址信息');
-     }else{
-      if(widget.dontSettingAddress == true) {
+    if (widget.address != null) {
+      print('选择的地址编号集合是：${widget.address?.toString()},请发请求更新地址信息');
+    } else {
+      if (widget.dontSettingAddress == true) {
         print('选择了‘暂不设置’，请发请求通知后端服务器将该用户的地址信息设置为空');
       }
-     }
+    }
     prevDy = 0.0;
     _animationController = AnimationController(
       vsync: this,
@@ -38,9 +40,139 @@ class _EditProfilePageState extends State<EditProfilePage>
     );
     _anim = Tween<double>(begin: 0.0, end: 0).animate(_animationController!);
   }
- 
+void _showAgePicker(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) {
+      return AgePickerSheet(
+        onConfirm: (date) {
+          print(date); // 1998-06-12
+        },
+      );
+    },
+  );
+}
+
+  void _showGenderSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return ClipRRect(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          child: Container(
+            padding: EdgeInsets.only(bottom: 40),
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    color: Color.fromRGBO(198, 199, 199, 1),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ListTile(
+                          title: Center(
+                            child: Text(
+                              '男',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            // setState(() => _selectedGender = '男');
+                            Navigator.pop(context);
+                          },
+                        ),
+                        Divider(
+                          height: 1,
+                          color: Color.fromRGBO(177, 177, 177, 1),
+                        ),
+                        ListTile(
+                          title: Center(
+                            child: Text(
+                              '女',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            // setState(() => _selectedGender = '女');
+                            Navigator.pop(context);
+                          },
+                        ),
+                        Divider(
+                          height: 1,
+                          color: Color.fromRGBO(177, 177, 177, 1),
+                        ),
+                        ListTile(
+                          title: Center(
+                            child: Text(
+                              '不展示',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            // setState(() => _selectedGender = '暂不选择');
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Container(
+                  height: 60,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () {
+                      // setState(() => _selectedGender = '暂不选择');
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      '取消',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _updatePicHeight(double changed) {
-    if(_extraPicHeight > 200) {
+    if (_extraPicHeight > 200) {
       return;
     }
     if (prevDy == 0.0) {
@@ -213,7 +345,11 @@ class _EditProfilePageState extends State<EditProfilePage>
   }
 
   // 构建信息条目
-  Widget _buildInfoItem({required String label, required String content,required VoidCallback fn}) {
+  Widget _buildInfoItem({
+    required String label,
+    required String content,
+    required VoidCallback fn,
+  }) {
     return GestureDetector(
       onTap: () {
         fn();
@@ -257,7 +393,6 @@ class _EditProfilePageState extends State<EditProfilePage>
       ),
     );
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -371,42 +506,73 @@ class _EditProfilePageState extends State<EditProfilePage>
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      _buildInfoItem(label: '名字', content: 'llg', fn: () {
-                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
-                           title: '名字',
-                           tip: '请输入新的名字',
-                           maxLength: 20,
-                           initialValue: 'llg',
-                         ));
-                      }),
+                      _buildInfoItem(
+                        label: '名字',
+                        content: 'llg',
+                        fn: () {
+                          context.push(
+                            '/mine/edit_profile/update_user_info_field',
+                            extra: UpdateUserInfoFieldParams(
+                              title: '名字',
+                              tip: '请输入新的名字',
+                              maxLength: 20,
+                              initialValue: 'llg',
+                            ),
+                          );
+                        },
+                      ),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '简介', content: '介绍喜好、个性或@你的亲友', fn: () {
-                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
-                           title: '简介',
-                           tip: '请输入新的简介',
-                           maxLength: 100,
-                           initialValue: '',
-                         ));
-                      }),
+                      _buildInfoItem(
+                        label: '简介',
+                        content: '介绍喜好、个性或@你的亲友',
+                        fn: () {
+                          context.push(
+                            '/mine/edit_profile/update_user_info_field',
+                            extra: UpdateUserInfoFieldParams(
+                              title: '简介',
+                              tip: '请输入新的简介',
+                              maxLength: 100,
+                              initialValue: '',
+                            ),
+                          );
+                        },
+                      ),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '性别', content: '不展示', fn: () {
-                      }),
+                      _buildInfoItem(
+                        label: '性别',
+                        content: '不展示',
+                        fn: () {
+                          _showGenderSheet();
+                        },
+                      ),
                       SizedBox(height: 28),
                       _buildInfoItem(label: '生日', content: '不展示', fn: () {
+                        _showAgePicker(context);
                       }),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '所在地', content: '不展示', fn: () {
-                        SelectCountryRoute().push(context); 
-                      }),
+                      _buildInfoItem(
+                        label: '所在地',
+                        content: '不展示',
+                        fn: () {
+                          SelectCountryRoute().push(context);
+                        },
+                      ),
                       SizedBox(height: 28),
-                      _buildInfoItem(label: '抖音号', content: 'sdk199912', fn: () {
-                         context.push('/mine/edit_profile/update_user_info_field', extra: UpdateUserInfoFieldParams(
-                           title: '抖音号',
-                           tip: '请输入新的抖音号',
-                           maxLength: 16,
-                           initialValue: 'sdk199912',
-                         ));
-                      }),
+                      _buildInfoItem(
+                        label: '抖音号',
+                        content: 'sdk199912',
+                        fn: () {
+                          context.push(
+                            '/mine/edit_profile/update_user_info_field',
+                            extra: UpdateUserInfoFieldParams(
+                              title: '抖音号',
+                              tip: '请输入新的抖音号',
+                              maxLength: 16,
+                              initialValue: 'sdk199912',
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
