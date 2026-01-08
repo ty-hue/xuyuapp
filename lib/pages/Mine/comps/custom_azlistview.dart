@@ -47,49 +47,49 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
                       ),
                     ),
                   ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 8,
-                      ),
-                      // 添加底部边框
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.white.withOpacity(0.1),
-                            width: 0.5,
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        spacing: 24,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            spacing: 4,
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                color: Colors.grey,
-                                size: 12,
-                              ),
-                              Text(
-                                '当前位置',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '湖南·长沙',
-                            style: TextStyle(fontSize: 14, color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Container(
+                    //   padding: EdgeInsets.symmetric(
+                    //     vertical: 20,
+                    //     horizontal: 8,
+                    //   ),
+                    //   // 添加底部边框
+                    //   decoration: BoxDecoration(
+                    //     border: Border(
+                    //       bottom: BorderSide(
+                    //         color: Colors.white.withOpacity(0.1),
+                    //         width: 0.5,
+                    //       ),
+                    //     ),
+                    //   ),
+                    //   child: Column(
+                    //     spacing: 24,
+                    //     mainAxisAlignment: MainAxisAlignment.center,
+                    //     crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //     children: [
+                    //       Row(
+                    //         spacing: 4,
+                    //         children: [
+                    //           Icon(
+                    //             Icons.location_on,
+                    //             color: Colors.grey,
+                    //             size: 12,
+                    //           ),
+                    //           Text(
+                    //             '当前位置',
+                    //             style: TextStyle(
+                    //               fontSize: 12,
+                    //               color: Colors.grey,
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //       Text(
+                    //         '湖南·长沙',
+                    //         style: TextStyle(fontSize: 14, color: Colors.white),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     Container(
                       padding: EdgeInsets.symmetric(
                         vertical: 20,
