@@ -270,7 +270,7 @@ void _showAgePicker(BuildContext context) {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
-                print('更换头像');
+                AllPhotoRoute().push(context);
               },
               child: Container(
                 width: 110,

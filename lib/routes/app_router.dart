@@ -1,4 +1,5 @@
 import 'package:bilbili_project/layout/shell_page.dart';
+import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
@@ -42,6 +43,38 @@ class LoginRoute extends GoRouteData {
     return LoginPage();
   }
 }
+
+// 所有照片路由
+@TypedGoRoute<AllPhotoRoute>(
+  path: '/all_photo',
+)
+class AllPhotoRoute extends GoRouteData {
+  const AllPhotoRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return CustomTransitionPage(
+      key: state.pageKey,
+      child:  AllPhotoPage(),
+
+      transitionDuration: const Duration(milliseconds: 300),
+
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final tween = Tween(
+          begin: const Offset(0, 1), // 👈 从底部
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOut));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+
 
 // 这两个路由本身是在mine路由下的子路由，但是由于它们不能显示底部导航栏，所以把它们提示为顶级路由
 @TypedGoRoute<EditProfileRoute>(
