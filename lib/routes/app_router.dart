@@ -59,12 +59,13 @@ class LoginRoute extends GoRouteData {
 )
 
 class EditProfileRoute extends GoRouteData {
-  const EditProfileRoute();
+  final bool? dontSettingAddress;
+  const EditProfileRoute({this.dontSettingAddress});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     final address = state.extra as AddressResult?;
-    return  EditProfilePage(address: address,);
+    return  EditProfilePage(address: address, dontSettingAddress: dontSettingAddress,);
   }
 }
 

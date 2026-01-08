@@ -1,4 +1,5 @@
 import 'package:azlistview/azlistview.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -24,7 +25,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
                   children: [
                   GestureDetector(
                     onTap: (){
-                      print('暂不设置');
+                      EditProfileRoute(dontSettingAddress: true).push(context);
                     },
                     child:  Container(
                       padding: EdgeInsets.symmetric(

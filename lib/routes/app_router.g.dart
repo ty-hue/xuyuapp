@@ -134,10 +134,21 @@ RouteBase get $editProfileRoute => GoRouteData.$route(
 );
 
 extension $EditProfileRouteExtension on EditProfileRoute {
-  static EditProfileRoute _fromState(GoRouterState state) =>
-      const EditProfileRoute();
+  static EditProfileRoute _fromState(GoRouterState state) => EditProfileRoute(
+    dontSettingAddress: _$convertMapValue(
+      'dont-setting-address',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
+  );
 
-  String get location => GoRouteData.$location('/mine/edit_profile');
+  String get location => GoRouteData.$location(
+    '/mine/edit_profile',
+    queryParams: {
+      if (dontSettingAddress != null)
+        'dont-setting-address': dontSettingAddress!.toString(),
+    },
+  );
 
   void go(BuildContext context) => context.go(location);
 
@@ -223,6 +234,26 @@ extension $SelectCityRouteExtension on SelectCityRoute {
       context.pushReplacement(location);
 
   void replace(BuildContext context) => context.replace(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T? Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
+}
+
+bool _$boolConverter(String value) {
+  switch (value) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    default:
+      throw UnsupportedError('Cannot convert "$value" into a bool.');
+  }
 }
 
 RouteBase get $shellRouteData => StatefulShellRouteData.$route(

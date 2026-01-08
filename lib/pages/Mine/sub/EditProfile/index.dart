@@ -8,7 +8,8 @@ import 'package:go_router/go_router.dart';
 
 class EditProfilePage extends StatefulWidget {
   final AddressResult? address;
-  EditProfilePage({Key? key, this.address}) : super(key: key);
+  final bool? dontSettingAddress;
+  EditProfilePage({Key? key, this.address, this.dontSettingAddress}) : super(key: key);
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -25,6 +26,10 @@ class _EditProfilePageState extends State<EditProfilePage>
     super.initState();
      if(widget.address != null) {
        print('选择的地址编号集合是：${widget.address?.toString()},请发请求更新地址信息');
+     }else{
+      if(widget.dontSettingAddress == true) {
+        print('选择了‘暂不设置’，请发请求通知后端服务器将该用户的地址信息设置为空');
+      }
      }
     prevDy = 0.0;
     _animationController = AnimationController(
