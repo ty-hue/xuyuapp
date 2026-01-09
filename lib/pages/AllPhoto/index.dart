@@ -42,6 +42,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     if (albums.isEmpty) return;
     if (!mounted) return;
     setState(() {
+      albums.length > 0 ? title = albums[0].name : title = '所有照片';
       albums = albums;
     });
   }
@@ -66,9 +67,11 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   Future<void> _init() async {
     // 1. 获取相册列表
     await loadAlbums();
+    
     //2. 遍历相册列表，对单个相册的数据进行封装,得到新的相册列表
     List.generate(albums.length, (index) => _getAlbumThumbnail(albums[index]));
-
+    
+   
     // 3.获取第一个相册内的所有照片
     await loadPhotos();
   }
@@ -148,9 +151,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                               child: Row(
                                 children: [
                                   Text(
-                                    title == ''
-                                        ? albumsWithThumbnail[0].name
-                                        : title,
+                                    title,
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -237,10 +238,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                         final album = albumsWithThumbnail[index];
                         return ListTile(
                           leading: album.thumbnail == null
-                              ? Container(
+                              ? SizedBox(
                                   width: 40,
                                   height: 40,
-                                  color: Colors.grey.shade300,
+                                  child: Image.asset('assets/album_placeholder.svg', fit: BoxFit.cover,),
                                 )
                               : Image.memory(
                                   album.thumbnail!,
