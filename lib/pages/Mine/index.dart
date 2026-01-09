@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -216,35 +217,39 @@ class _MinePageState extends State<MinePage>
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/login');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(8 * contraryOpacity),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        color: Color.fromRGBO(
-                          88,
-                          77,
-                          78,
-                          0.5,
-                        ).withOpacity(contraryOpacity),
-                      ),
-                      child: Row(
-                        spacing: 8,
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            FontAwesomeIcons.navicon,
-                            color: Colors.white,
-                            size: 14,
-                            fontWeight: FontWeight.bold,
+                  Builder(
+                    builder: (context) {
+                      return GestureDetector(
+                        onTap: () {
+                          Scaffold.of(context).openEndDrawer();
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(8 * contraryOpacity),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            color: Color.fromRGBO(
+                              88,
+                              77,
+                              78,
+                              0.5,
+                            ).withOpacity(contraryOpacity),
                           ),
-                        ],
-                      ),
-                    ),
+                          child: Row(
+                            spacing: 8,
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.navicon,
+                                color: Colors.white,
+                                size: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -799,7 +804,10 @@ class _MinePageState extends State<MinePage>
   Widget build(BuildContext context) {
     double statusBarHeight = MediaQuery.of(context).padding.top;
     return Scaffold(
+     
+      endDrawer: DrawerMenu(context: context),
       appBar: _buildNavBar(statusBarHeight),
+      extendBody: true,
       extendBodyBehindAppBar: true, // 让body出现在appBar区域的正下方
       body: CustomScrollView(
         controller: _scrollController,

@@ -8,6 +8,7 @@ part of 'app_router.dart';
 
 List<RouteBase> get $appRoutes => [
   $loginRoute,
+  $settingsPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
   $shellRouteData,
@@ -91,6 +92,28 @@ extension $ChoosePhonePrefixRouteExtension on ChoosePhonePrefixRoute {
 
   String get location =>
       GoRouteData.$location('/login/other_phone_login/choose_phone_prefix');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $settingsPageRoute => GoRouteData.$route(
+  path: '/settings',
+
+  factory: $SettingsPageRouteExtension._fromState,
+);
+
+extension $SettingsPageRouteExtension on SettingsPageRoute {
+  static SettingsPageRoute _fromState(GoRouterState state) =>
+      const SettingsPageRoute();
+
+  String get location => GoRouteData.$location('/settings');
 
   void go(BuildContext context) => context.go(location);
 

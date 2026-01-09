@@ -2,6 +2,7 @@ import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
+import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
 import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
@@ -42,6 +43,19 @@ class LoginRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return LoginPage();
+  }
+}
+
+// 设置页 路由
+@TypedGoRoute<SettingsPageRoute>(
+  path: '/settings',
+)
+class SettingsPageRoute extends GoRouteData {
+  const SettingsPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return SettingsPage();
   }
 }
 
@@ -115,6 +129,7 @@ class EditProfileRoute extends GoRouteData {
     );
   }
 }
+
 
 // 五个分支
 @TypedStatefulShellRoute<ShellRouteData>(
