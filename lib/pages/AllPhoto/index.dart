@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_editor/image_editor.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AllPhotoPage extends StatefulWidget {
@@ -24,6 +27,11 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   bool isExpanded = false; // 是否显示相册列表
   List<Album> albumsWithThumbnail = []; // 相册列表（单个相册数据进行了封装）
   String title = '';
+  bool isShowClipSpace = false; // 是否显示裁剪空间
+  final TransformationController _controller = TransformationController();
+  Uint8List? selectedImage; // 当前需要裁剪的图片
+  final GlobalKey<ExtendedImageEditorState> _editorKey =
+      GlobalKey<ExtendedImageEditorState>();
   // 请求相册权限
   Future<bool> requestPermission() async {
     final result = await PhotoManager.requestPermissionExtend();
@@ -166,8 +174,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               return GestureDetector(
-                onTap: () {
-                  Navigator.pop(context, photo); // 返回选中的照片
+                onTap: () async {
+                  isShowClipSpace = true;
+                  selectedImage = await photo.originBytes;
+                  setState(() {});
                 },
                 child: Image.memory(snapshot.data!, fit: BoxFit.cover),
               );
@@ -226,15 +236,50 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     );
   }
 
+  Future<void> _cropAndSaveImage() async {
+    final editorState = _editorKey.currentState;
+    if (editorState == null || selectedImage == null) return;
+
+    // 获取裁剪矩形
+    final cropRect = editorState.getCropRect();
+    if (cropRect == null) return;
+
+    final option = ImageEditorOption();
+
+    // 添加裁剪
+    option.addOption(
+      ClipOption(
+        x: cropRect.left.toInt(),
+        y: cropRect.top.toInt(),
+        width: cropRect.width.toInt(),
+        height: cropRect.height.toInt(),
+      ),
+    );
+
+    // 注意：旋转/翻转等操作在 ExtendedImage 内部已经处理，ImageEditor 不需要再手动处理
+
+    // 执行裁剪
+    final result = await ImageEditor.editImage(
+      image: selectedImage!,
+      imageEditorOption: option,
+    );
+
+    if (result != null) {
+      print('裁剪成功请发送请求更新用户头像: $result');
+      context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 屏幕高度
     final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.black54, // 背景半透明遮罩
       body: SafeArea(
-        top: true, // 顶部留空
+        top: !isShowClipSpace, // 顶部留空
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ClipRRect(
@@ -257,6 +302,152 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                   ),
                 ),
                 _buildAlbumList(height: height),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: isShowClipSpace
+                      ? Container(
+                          color: Color.fromRGBO(30, 30, 30, 1),
+                          child: SafeArea(
+                            top: false,
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: ExtendedImage.memory(
+                                    selectedImage!,
+                                    fit: BoxFit.contain,
+
+                                    mode: ExtendedImageMode.editor, // ⭐ 核心
+
+                                    extendedImageEditorKey: _editorKey,
+
+                                    initEditorConfigHandler: (state) {
+                                      return EditorConfig(
+                                        maxScale: 8.0,
+                                        cropRectPadding: const EdgeInsets.all(
+                                          0,
+                                        ),
+                                        hitTestSize: 20,
+
+                                        // 🔽 裁剪形状（你可以切换）
+                                        cropAspectRatio: 1.0, // 正方形
+                                        initCropRectType:
+                                            InitCropRectType.imageRect,
+                                        // CropRectType.rect,
+                                        cornerColor: Colors.white,
+                                        lineColor: Colors.white,
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                // top值为状态栏高度 + 56
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.only(
+                                      top: MediaQuery.of(context).padding.top,
+                                    ),
+                                    height:
+                                        MediaQuery.of(context).padding.top + 56,
+                                    color: Colors.black,
+                                    child: Center(
+                                      child: IconButton(
+                                        icon: Transform.rotate(
+                                          angle: 90 * 3.1415926 / 50,
+                                          child: Icon(
+                                            FontAwesomeIcons.rotateLeft,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          _editorKey.currentState?.reset();
+                                          setState(() {});
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    height: 100,
+                                    color: Colors.black,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: SizedBox(
+                                            height: 42,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Color.fromRGBO(
+                                                  64,
+                                                  64,
+                                                  64,
+                                                  1,
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                isShowClipSpace = false;
+                                                setState(() {});
+                                              },
+                                              child: Text(
+                                                '取消',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 16),
+                                        Expanded(
+                                          child: SizedBox(
+                                            height: 42,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Color.fromRGBO(
+                                                  254,
+                                                  44,
+                                                  85,
+                                                  1,
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                // 裁剪图片
+                                                _cropAndSaveImage();
+                                              },
+                                              child: Text(
+                                                '保存',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : Container(),
+                ),
               ],
             ),
           ),
