@@ -21,7 +21,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
 
   List<AssetEntity> images = [];
   List<AssetPathEntity> albums = [];
-  bool isExpanded = false; // 是否展开相册
+  bool isExpanded = false; // 是否显示相册列表
   List<Album> albumsWithThumbnail = []; // 相册列表（单个相册数据进行了封装）
   String title = '';
   // 请求相册权限
@@ -47,7 +47,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     });
   }
 
-  // 分页获取指定相册里面的图片
+  // 获取指定相册里面的所有图片
   Future<void> loadPhotos({int index = 0}) async {
     bool hasPermission = await requestPermission();
     if (!hasPermission) return;
@@ -67,11 +67,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   Future<void> _init() async {
     // 1. 获取相册列表
     await loadAlbums();
-    
+
     //2. 遍历相册列表，对单个相册的数据进行封装,得到新的相册列表
     List.generate(albums.length, (index) => _getAlbumThumbnail(albums[index]));
-    
-   
+
     // 3.获取第一个相册内的所有照片
     await loadPhotos();
   }
@@ -98,6 +97,135 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     });
   }
 
+  // 顶部操作栏
+  Widget _buildTopBar({required double height}) {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: IgnorePointer(
+              ignoring: isExpanded, // 展开时不可点
+              child: AnimatedOpacity(
+                opacity: isExpanded ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                child: const Icon(Icons.close, color: Colors.black54),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              // 展开所有相册
+              setState(() {
+                isExpanded = !isExpanded;
+              });
+            },
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(width: 4),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0.0, // 0.5 = 180°
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: const Icon(FontAwesomeIcons.angleDown, size: 16),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24), // 占位
+        ],
+      ),
+    );
+  }
+
+  // 相片 Grid
+  Widget _buildPhotoGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemCount: images.length,
+      itemBuilder: (_, index) {
+        final photo = images[index];
+
+        return FutureBuilder<Uint8List?>(
+          future: photo.thumbnailDataWithSize(ThumbnailSize(200, 200)),
+          builder: (_, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pop(context, photo); // 返回选中的照片
+                },
+                child: Image.memory(snapshot.data!, fit: BoxFit.cover),
+              );
+            }
+            return Container(color: Colors.grey.shade300);
+          },
+        );
+      },
+    );
+  }
+
+  // 相册列表
+  Widget _buildAlbumList({required double height}) {
+    return Positioned(
+      top: 57,
+      left: 0,
+      right: 0,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        height: isExpanded ? height - 57 : 0,
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: ListView.builder(
+          itemCount: albumsWithThumbnail.length,
+          itemBuilder: (_, index) {
+            final album = albumsWithThumbnail[index];
+            return ListTile(
+              leading: album.thumbnail == null
+                  ? SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Image.asset(
+                        'assets/album_placeholder.svg',
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.memory(album.thumbnail!, fit: BoxFit.cover),
+              title: Text(album.name),
+              subtitle: Text('${album.count} 张照片'),
+              onTap: () async {
+                // 获取对应相册的所有照片
+                await loadPhotos(index: index);
+                // 重置标题和isExpanded
+                setState(() {
+                  isExpanded = false;
+                  title = album.name;
+                });
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 屏幕高度
@@ -119,150 +247,16 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                   child: Column(
                     children: [
                       // 顶部操作栏
-                      Container(
-                        height: 56,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: IgnorePointer(
-                                ignoring: isExpanded, // 展开时不可点
-                                child: AnimatedOpacity(
-                                  opacity: isExpanded ? 0.0 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeOut,
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                // 展开所有相册
-                                setState(() {
-                                  isExpanded = !isExpanded;
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    title,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  AnimatedRotation(
-                                    turns: isExpanded ? 0.5 : 0.0, // 0.5 = 180°
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeOut,
-                                    child: const Icon(
-                                      FontAwesomeIcons.angleDown,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 24), // 占位
-                          ],
-                        ),
-                      ),
+                      _buildTopBar(height: height),
 
                       const Divider(height: 1),
 
-                      // 相册 Grid
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(2),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                mainAxisSpacing: 2,
-                                crossAxisSpacing: 2,
-                              ),
-                          itemCount: images.length,
-                          itemBuilder: (_, index) {
-                            final photo = images[index];
-
-                            return FutureBuilder<Uint8List?>(
-                              future: photo.thumbnailDataWithSize(
-                                ThumbnailSize(200, 200),
-                              ),
-                              builder: (_, snapshot) {
-                                if (snapshot.connectionState ==
-                                        ConnectionState.done &&
-                                    snapshot.hasData) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.pop(context, photo); // 返回选中的照片
-                                    },
-                                    child: Image.memory(
-                                      snapshot.data!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  );
-                                }
-                                return Container(color: Colors.grey.shade300);
-                              },
-                            );
-                          },
-                        ),
-                      ),
+                      // 相片 Grid
+                      Expanded(child: _buildPhotoGrid()),
                     ],
                   ),
                 ),
-                Positioned(
-                  top: 57,
-                  left: 0,
-                  right: 0,
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    height: isExpanded ? height - 57 : 0,
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(16),
-                      ),
-                    ),
-                    child: ListView.builder(
-                      itemCount: albumsWithThumbnail.length,
-                      itemBuilder: (_, index) {
-                        final album = albumsWithThumbnail[index];
-                        return ListTile(
-                          leading: album.thumbnail == null
-                              ? SizedBox(
-                                  width: 40,
-                                  height: 40,
-                                  child: Image.asset('assets/album_placeholder.svg', fit: BoxFit.cover,),
-                                )
-                              : Image.memory(
-                                  album.thumbnail!,
-                                  fit: BoxFit.cover,
-                                ),
-                          title: Text(album.name),
-                          subtitle: Text('${album.count} 张照片'),
-                          onTap: () async {
-                            // 获取对应相册的所有照片
-                            await loadPhotos(index: index);
-                            // 重置标题和isExpanded
-                            setState(() {
-                              isExpanded = false;
-                              title = album.name;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                _buildAlbumList(height: height),
               ],
             ),
           ),
