@@ -9,8 +9,8 @@ import 'package:image_editor/image_editor.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AllPhotoPage extends StatefulWidget {
-  const AllPhotoPage({Key? key}) : super(key: key);
-
+  final EditorConfig editorConfig;
+  const AllPhotoPage({Key? key, required this.editorConfig}) : super(key: key);
   @override
   State<AllPhotoPage> createState() => _AllPhotoPageState();
 }
@@ -28,7 +28,6 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   List<Album> albumsWithThumbnail = []; // 相册列表（单个相册数据进行了封装）
   String title = '';
   bool isShowClipSpace = false; // 是否显示裁剪空间
-  final TransformationController _controller = TransformationController();
   Uint8List? selectedImage; // 当前需要裁剪的图片
   final GlobalKey<ExtendedImageEditorState> _editorKey =
       GlobalKey<ExtendedImageEditorState>();
@@ -324,21 +323,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                     extendedImageEditorKey: _editorKey,
 
                                     initEditorConfigHandler: (state) {
-                                      return EditorConfig(
-                                        maxScale: 8.0,
-                                        cropRectPadding: const EdgeInsets.all(
-                                          0,
-                                        ),
-                                        hitTestSize: 20,
-
-                                        // 🔽 裁剪形状（你可以切换）
-                                        cropAspectRatio: 1.0, // 正方形
-                                        initCropRectType:
-                                            InitCropRectType.imageRect,
-                                        // CropRectType.rect,
-                                        cornerColor: Colors.white,
-                                        lineColor: Colors.white,
-                                      );
+                                      return widget.editorConfig;
                                     },
                                   ),
                                 ),

@@ -11,8 +11,3 @@ class Album{
   });
 }
 
-/// 定义裁剪形状枚举
-enum CropShape {
-  rect,
-  circle,
-}

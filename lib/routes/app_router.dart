@@ -14,13 +14,14 @@ import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
 import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
 import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'home_routes/home_route.dart';
 
-
 part 'app_router.g.dart';
+
 // 登录路由
 @TypedGoRoute<LoginRoute>(
   path: '/login',
@@ -45,17 +46,29 @@ class LoginRoute extends GoRouteData {
 }
 
 // 所有照片路由
-@TypedGoRoute<AllPhotoRoute>(
-  path: '/all_photo',
-)
+@TypedGoRoute<AllPhotoRoute>(path: '/all_photo')
 class AllPhotoRoute extends GoRouteData {
   const AllPhotoRoute();
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
+    final editorConfig =
+        state.extra as EditorConfig? ??
+        EditorConfig(
+          maxScale: 8.0,
+          cropRectPadding: const EdgeInsets.all(0),
+          hitTestSize: 20,
+
+          // 🔽 裁剪形状（你可以切换）
+          cropAspectRatio: 1.0, // 正方形
+          initCropRectType: InitCropRectType.imageRect,
+          // CropRectType.rect,
+          cornerColor: Colors.white,
+          lineColor: Colors.white,
+        );
     return CustomTransitionPage(
       key: state.pageKey,
-      child:  AllPhotoPage(),
+      child: AllPhotoPage(editorConfig: editorConfig),
 
       transitionDuration: const Duration(milliseconds: 300),
 
@@ -65,16 +78,11 @@ class AllPhotoRoute extends GoRouteData {
           end: Offset.zero,
         ).chain(CurveTween(curve: Curves.easeOut));
 
-        return SlideTransition(
-          position: animation.drive(tween),
-          child: child,
-        );
+        return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
   }
 }
-
-
 
 // 这两个路由本身是在mine路由下的子路由，但是由于它们不能显示底部导航栏，所以把它们提示为顶级路由
 @TypedGoRoute<EditProfileRoute>(
@@ -83,14 +91,17 @@ class AllPhotoRoute extends GoRouteData {
     // 修改普通文本类型字段
     TypedGoRoute<UpdateUserInfoFieldRoute>(path: 'update_user_info_field'),
     // 选择地址
-    TypedGoRoute<SelectCountryRoute>(path: 'select_country', routes: [
-      TypedGoRoute<SelectProvinceRoute>(path: 'select_province', routes: [
-        TypedGoRoute<SelectCityRoute>(path: 'select_city'),
-      ]),
-    ]),
+    TypedGoRoute<SelectCountryRoute>(
+      path: 'select_country',
+      routes: [
+        TypedGoRoute<SelectProvinceRoute>(
+          path: 'select_province',
+          routes: [TypedGoRoute<SelectCityRoute>(path: 'select_city')],
+        ),
+      ],
+    ),
   ],
 )
-
 class EditProfileRoute extends GoRouteData {
   final bool? dontSettingAddress;
   const EditProfileRoute({this.dontSettingAddress});
@@ -98,10 +109,12 @@ class EditProfileRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     final address = state.extra as AddressResult?;
-    return  EditProfilePage(address: address, dontSettingAddress: dontSettingAddress,);
+    return EditProfilePage(
+      address: address,
+      dontSettingAddress: dontSettingAddress,
+    );
   }
 }
-
 
 // 五个分支
 @TypedStatefulShellRoute<ShellRouteData>(

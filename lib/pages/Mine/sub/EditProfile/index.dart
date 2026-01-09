@@ -3,6 +3,7 @@ import 'package:bilbili_project/pages/Mine/sub/EditProfile/sub/UpdateUserInfoFie
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -270,7 +271,7 @@ void _showAgePicker(BuildContext context) {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
-                AllPhotoRoute().push(context);
+                context.push(AllPhotoRoute().location);
               },
               child: Container(
                 width: 110,
@@ -459,7 +460,18 @@ void _showAgePicker(BuildContext context) {
                     margin: EdgeInsets.only(right: 20),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pop(context);
+                        context.push(AllPhotoRoute().location, extra: EditorConfig(
+                          maxScale: 8.0,
+                          cropRectPadding: const EdgeInsets.all(0),
+                          hitTestSize: 20,
+
+                          // 🔽 裁剪形状（你可以切换）
+                          cropAspectRatio: 2.0, // 长方形
+                          initCropRectType: InitCropRectType.imageRect,
+                          // CropRectType.rect,
+                          cornerColor: Colors.white,
+                          lineColor: Colors.white,
+                        ));
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
