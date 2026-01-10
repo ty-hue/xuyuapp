@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AgePickerSheet extends StatefulWidget {
   final Function(DateTime) onConfirm;
@@ -50,16 +51,16 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
     final yearCount = currentYear - startYear + 1;
 
     return Container(
-      height: 260,
-      decoration: const BoxDecoration(
+      height: 260.0.h,
+      decoration:  BoxDecoration(
         color: Color.fromRGBO(198, 199, 199, 1),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),
       ),
       child: Column(
         children: [
           // 顶部操作栏
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16.0.w, vertical: 12.0.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -67,8 +68,8 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
                   onTap: () => Navigator.pop(context),
                   child: Row(
                     children: [
-                      Text('不展示', style: TextStyle(color: Colors.black),),
-                      SizedBox(width: 4),
+                      Text('不展示', style: TextStyle(color: Colors.black, fontSize: 14.0.sp),),
+                      SizedBox(width: 4.0.w),
                       Switch(
                         value: _isShowAge,
                         onChanged: (v) {
@@ -92,7 +93,9 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
             ),
           ),
 
-          const Divider(height: 1),
+          Divider(height: 1.0.h,),
+
+
 
           Expanded(
             child: IgnorePointer(
@@ -137,12 +140,12 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
     return Expanded(
       child: CupertinoPicker(
         scrollController: controller,
-        itemExtent: 36,
+        itemExtent: 36.0.h,
         onSelectedItemChanged: onSelected,
         children: items
             .map(
               (e) =>
-                  Center(child: Text(e, style: const TextStyle(fontSize: 16))),
+                  Center(child: Text(e, style:  TextStyle(fontSize: 16.0.sp))),
             )
             .toList(),
       ),

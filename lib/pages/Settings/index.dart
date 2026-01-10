@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,12 +12,12 @@ class SettingsPage extends StatefulWidget {
 class _SettingsState extends State<SettingsPage> {
   Widget _buildGroupName(String groupName) {
     return Container(
-      padding: EdgeInsets.only(left: 16),
+      padding: EdgeInsets.only(left: 16.w),
       child: Text(
         groupName,
         style: TextStyle(
           color: Colors.grey,
-          fontSize: 14,
+          fontSize: 14.sp,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -37,22 +38,22 @@ class _SettingsState extends State<SettingsPage> {
       splashColor: Colors.white.withOpacity(0.08), // 水波纹
       highlightColor: Colors.white.withOpacity(0.05), // 按下态 ⭐
       child: SizedBox(
-        height: 54,
+        height: 54.h,
         child: Padding(
-          padding: const EdgeInsets.only(left: 16),
+          padding:  EdgeInsets.only(left: 16.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(icon, color: Colors.grey, size: 20),
-              const SizedBox(width: 10),
+              Icon(icon, color: Colors.grey, size: 20.r),
+               SizedBox(width: 10.w),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.only(right: 16),
+                  padding:  EdgeInsets.only(right: 16.w),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: needUnderline
-                          ? const BorderSide(color: Colors.grey, width: 0.5)
+                          ?  BorderSide(color: Colors.grey, width: 0.5.w)
                           : BorderSide.none,
                     ),
                   ),
@@ -61,17 +62,17 @@ class _SettingsState extends State<SettingsPage> {
                     children: [
                       Text(
                         itemName,
-                        style: const TextStyle(
+                        style:  TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       needTrailingIcon
-                          ? const Icon(
+                          ?  Icon(
                               Icons.arrow_forward_ios,
                               color: Colors.grey,
-                              size: 14,
+                              size: 14.r,
                             )
                           : const SizedBox.shrink(),
                     ],
@@ -92,29 +93,29 @@ class _SettingsState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,color: Colors.white,size: 20,),
+          icon: Icon(Icons.arrow_back_ios_new,color: Colors.white,size: 20.r,),
           onPressed: () {
             context.pop();
           },
         ),
         backgroundColor: Color.fromRGBO(11, 11, 11, 1),
-        title: Text('设置',style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.bold),),
+        title: Text('设置',style: TextStyle(color: Colors.white,fontSize: 16.sp,fontWeight: FontWeight.bold),),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.only(left: 16, right: 16,top: 16,bottom: 60),
+          padding: EdgeInsets.only(left: 16.w, right: 16.w,top: 16.h,bottom: 60.h),
           color: Color.fromRGBO(11, 11, 11, 1),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildGroupName('账号'),
-              SizedBox(height: 10),
+              SizedBox(height: 10.h),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Column(
                     children: [
@@ -133,14 +134,14 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20.h),
               _buildGroupName('通用'),
-              SizedBox(height: 10),
+              SizedBox(height: 10.h),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Column(
                     children: [
@@ -189,14 +190,14 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20.h),
               _buildGroupName('关于'),
-              SizedBox(height: 10),
+              SizedBox(height: 10.h),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Column(
                     children: [
@@ -254,12 +255,12 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20.h),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Column(
                     children: [
@@ -281,8 +282,8 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 60),
-              Text('絮语 version 1.0.0',style: TextStyle(color: Colors.grey,fontSize: 14,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
+              SizedBox(height: 60.h),
+              Text('絮语 version 1.0.0',style: TextStyle(color: Colors.grey,fontSize: 14.sp,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
             ],
           ),
         ),

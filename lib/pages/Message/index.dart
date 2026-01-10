@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MessagePage extends StatefulWidget {
   MessagePage({Key? key}) : super(key: key);
@@ -17,22 +18,22 @@ class _MessagePageState extends State<MessagePage> {
       body: Column(
         children: [
           Container(
-            height: 200,
+            height: 200.0.h,
             color: Colors.red,
           ),
           Container(
-            height: 200,
+            height: 200.0.h,
             color: Colors.blue,
             child: OverflowBox(
               child: Stack(
                 clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  top: -20,
-                  left: 10,
+                  top: -20.0.h,
+                  left: 10.0.w,
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 40.0.w,
+                    height: 40.0.h,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       image: DecorationImage(

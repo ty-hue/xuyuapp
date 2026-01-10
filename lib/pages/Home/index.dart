@@ -10,7 +10,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
+    print('宽高${MediaQuery.of(context).size}');
     return Container(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

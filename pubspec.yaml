@@ -46,6 +46,7 @@ dependencies:
   extended_image: ^10.0.1
   image_editor: ^1.6.0
   flutter_zoom_drawer: ^3.2.0
+  flutter_screenutil: ^5.9.3
 
 dev_dependencies:
   flutter_test:

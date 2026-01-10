@@ -5,6 +5,7 @@ import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
@@ -41,40 +42,41 @@ class _EditProfilePageState extends State<EditProfilePage>
     );
     _anim = Tween<double>(begin: 0.0, end: 0).animate(_animationController!);
   }
-void _showAgePicker(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (_) {
-      return AgePickerSheet(
-        onConfirm: (date) {
-          print(date); // 1998-06-12
-        },
-      );
-    },
-  );
-}
+
+  void _showAgePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return AgePickerSheet(
+          onConfirm: (date) {
+            print(date); // 1998-06-12
+          },
+        );
+      },
+    );
+  }
 
   void _showGenderSheet() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (BuildContext context) {
         return ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.all(Radius.circular(16.r)),
           child: Container(
-            padding: EdgeInsets.only(bottom: 40),
+            padding: EdgeInsets.only(bottom: 40.h),
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                   child: Container(
                     color: Color.fromRGBO(198, 199, 199, 1),
                     child: Column(
@@ -85,7 +87,7 @@ void _showAgePicker(BuildContext context) {
                             child: Text(
                               '男',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 color: Colors.blueAccent,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -97,7 +99,7 @@ void _showAgePicker(BuildContext context) {
                           },
                         ),
                         Divider(
-                          height: 1,
+                          height: 1.h,
                           color: Color.fromRGBO(177, 177, 177, 1),
                         ),
                         ListTile(
@@ -105,7 +107,7 @@ void _showAgePicker(BuildContext context) {
                             child: Text(
                               '女',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 color: Colors.blueAccent,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -117,7 +119,7 @@ void _showAgePicker(BuildContext context) {
                           },
                         ),
                         Divider(
-                          height: 1,
+                          height: 1.h,
                           color: Color.fromRGBO(177, 177, 177, 1),
                         ),
                         ListTile(
@@ -125,7 +127,7 @@ void _showAgePicker(BuildContext context) {
                             child: Text(
                               '不展示',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 color: Colors.blueAccent,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -140,14 +142,14 @@ void _showAgePicker(BuildContext context) {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 Container(
-                  height: 60,
+                  height: 60.h,
                   child: TextButton(
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(16.r),
                       ),
                     ),
                     onPressed: () {
@@ -157,7 +159,7 @@ void _showAgePicker(BuildContext context) {
                     child: Text(
                       '取消',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 20.sp,
                         color: Colors.blueAccent,
                         fontWeight: FontWeight.bold,
                       ),
@@ -173,7 +175,7 @@ void _showAgePicker(BuildContext context) {
   }
 
   void _updatePicHeight(double changed) {
-    if (_extraPicHeight > 200) {
+    if (_extraPicHeight > 200.h) {
       return;
     }
     if (prevDy == 0.0) {
@@ -207,19 +209,19 @@ void _showAgePicker(BuildContext context) {
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 4,
+            spacing: 4.h,
             children: [
               // 进度条
               SizedBox(
-                width: 100,
+                width: 100.w,
                 child: LinearProgressIndicator(
                   value: 0.89,
                   backgroundColor: Colors.grey,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     const Color.fromARGB(255, 89, 127, 192),
                   ),
-                  minHeight: 5,
-                  borderRadius: BorderRadius.circular(4),
+                  minHeight: 5.h,
+                  borderRadius: BorderRadius.circular(4.r),
                 ),
               ),
               Text.rich(
@@ -227,7 +229,7 @@ void _showAgePicker(BuildContext context) {
                   text: '资料完成度 ',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.bold,
                   ),
                   children: [
@@ -235,7 +237,7 @@ void _showAgePicker(BuildContext context) {
                       text: '89%',
                       style: TextStyle(
                         color: Colors.blueAccent,
-                        fontSize: 10,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -256,10 +258,10 @@ void _showAgePicker(BuildContext context) {
       child: Stack(
         children: [
           Container(
-            width: 110,
-            height: 110,
+            width: 110.w,
+            height: 110.h,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.white, width: 2.w),
               shape: BoxShape.circle,
               image: DecorationImage(
                 image: AssetImage('lib/assets/avatar.webp'),
@@ -274,21 +276,21 @@ void _showAgePicker(BuildContext context) {
                 context.push(AllPhotoRoute().location);
               },
               child: Container(
-                width: 110,
-                height: 110,
+                width: 110.w,
+                height: 110.h,
                 decoration: BoxDecoration(shape: BoxShape.circle),
                 child: Column(
-                  spacing: 4,
+                  spacing: 4.h,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       FontAwesomeIcons.cameraRetro,
                       color: Colors.white,
-                      size: 26,
+                      size: 26.r,
                     ),
                     Text(
                       '更换头像',
-                      style: TextStyle(color: Colors.white, fontSize: 20),
+                      style: TextStyle(color: Colors.white, fontSize: 18.r),
                     ),
                   ],
                 ),
@@ -313,26 +315,34 @@ void _showAgePicker(BuildContext context) {
           left: 0,
           right: 0,
           child: Container(
-            height: 90,
+            height: 90.h,
             decoration: BoxDecoration(
               color: Color.fromRGBO(22, 22, 22, 1),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+                topLeft: Radius.circular(20.r),
+                topRight: Radius.circular(20.r),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.fromRGBO(22, 22, 22, 1),
+                  spreadRadius: 0,
+                  blurRadius: 0,
+                  offset: Offset(0, 2.h),
+                ),
+              ],
             ),
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  top: -70,
+                  top: -70.h,
                   left: 0,
                   right: 0,
                   child: _buildAvatarInsideStack(),
                 ),
                 Positioned(
-                  top: 2,
+                  top: 2.h,
                   right: 0,
                   left: 0,
                   child: _buildCompleteProgress(),
@@ -361,20 +371,20 @@ void _showAgePicker(BuildContext context) {
           children: [
             Container(
               alignment: Alignment.centerLeft,
-              width: 60,
+              width: 60.w,
               child: Text(
                 label,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: Colors.grey, fontSize: 16.sp),
               ),
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(left: 80, right: 80),
+                padding: EdgeInsets.only(left: 80.w, right: 80.w),
                 child: Text(
                   content,
                   style: TextStyle(
                     color: label == '简介' ? Colors.grey : Colors.white,
-                    fontSize: 16,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -386,7 +396,7 @@ void _showAgePicker(BuildContext context) {
             Icon(
               Icons.arrow_forward_ios,
               color: Colors.grey,
-              size: 16,
+              size: 16.r,
               fontWeight: FontWeight.bold,
             ),
           ],
@@ -412,7 +422,7 @@ void _showAgePicker(BuildContext context) {
             slivers: [
               SliverAppBar(
                 leading: Container(
-                  margin: EdgeInsets.only(left: 20),
+                  margin: EdgeInsets.only(left: 20.w),
                   child: GestureDetector(
                     onTap: () {
                       context.go('/mine');
@@ -422,20 +432,20 @@ void _showAgePicker(BuildContext context) {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(8),
+                          padding: EdgeInsets.all(8.r),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(18.r),
                             color: Color.fromRGBO(88, 77, 78, 0.5),
                           ),
                           child: Row(
-                            spacing: 8,
+                            spacing: 8.w,
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.arrow_back_ios_new,
                                 color: Colors.white,
-                                size: 14,
+                                size: 14.r,
                                 fontWeight: FontWeight.bold,
                               ),
                             ],
@@ -449,7 +459,7 @@ void _showAgePicker(BuildContext context) {
                 pinned: true,
                 floating: true,
                 snap: true,
-                expandedHeight: 260 + _extraPicHeight,
+                expandedHeight: 260.h + _extraPicHeight,
                 backgroundColor: Colors.black,
                 flexibleSpace: FlexibleSpaceBar(
                   background: _buildFlexibleHeader(),
@@ -457,48 +467,51 @@ void _showAgePicker(BuildContext context) {
                 elevation: 0,
                 actions: [
                   Container(
-                    margin: EdgeInsets.only(right: 20),
+                    margin: EdgeInsets.only(right: 20.w),
                     child: GestureDetector(
                       onTap: () {
-                        context.push(AllPhotoRoute().location, extra: EditorConfig(
-                          maxScale: 8.0,
-                          cropRectPadding: const EdgeInsets.all(0),
-                          hitTestSize: 20,
+                        context.push(
+                          AllPhotoRoute().location,
+                          extra: EditorConfig(
+                            maxScale: 8.0,
+                            cropRectPadding: const EdgeInsets.all(0),
+                            hitTestSize: 20,
 
-                          // 🔽 裁剪形状（你可以切换）
-                          cropAspectRatio: 2.0, // 长方形
-                          initCropRectType: InitCropRectType.imageRect,
-                          // CropRectType.rect,
-                          cornerColor: Colors.white,
-                          lineColor: Colors.white,
-                        ));
+                            // 🔽 裁剪形状（你可以切换）
+                            cropAspectRatio: 2.0, // 长方形
+                            initCropRectType: InitCropRectType.imageRect,
+                            // CropRectType.rect,
+                            cornerColor: Colors.white,
+                            lineColor: Colors.white,
+                          ),
+                        );
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Container(
-                            padding: EdgeInsets.all(8),
+                            padding: EdgeInsets.all(8.r),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(18.r),
                               color: Color.fromRGBO(88, 77, 78, 0.5),
                             ),
                             child: Row(
-                              spacing: 8,
+                              spacing: 8.w,
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Icon(
                                   FontAwesomeIcons.camera,
                                   color: Colors.white,
-                                  size: 14,
+                                  size: 14.r,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 Text(
                                   '更换封面',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
+                                    fontSize: 12.r,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -514,8 +527,14 @@ void _showAgePicker(BuildContext context) {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Container(
-                  color: Color.fromRGBO(22, 22, 22, 1),
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(22, 22, 22, 1),
+                    border: Border.all(
+                      width: 0,
+                      color: Color.fromRGBO(22, 22, 22, 1),
+                    ),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Column(
                     children: [
                       _buildInfoItem(
@@ -533,7 +552,7 @@ void _showAgePicker(BuildContext context) {
                           );
                         },
                       ),
-                      SizedBox(height: 28),
+                      SizedBox(height: 28.h),
                       _buildInfoItem(
                         label: '简介',
                         content: '介绍喜好、个性或@你的亲友',
@@ -549,7 +568,7 @@ void _showAgePicker(BuildContext context) {
                           );
                         },
                       ),
-                      SizedBox(height: 28),
+                      SizedBox(height: 28.h),
                       _buildInfoItem(
                         label: '性别',
                         content: '不展示',
@@ -557,11 +576,15 @@ void _showAgePicker(BuildContext context) {
                           _showGenderSheet();
                         },
                       ),
-                      SizedBox(height: 28),
-                      _buildInfoItem(label: '生日', content: '不展示', fn: () {
-                        _showAgePicker(context);
-                      }),
-                      SizedBox(height: 28),
+                      SizedBox(height: 28.h),
+                      _buildInfoItem(
+                        label: '生日',
+                        content: '不展示',
+                        fn: () {
+                          _showAgePicker(context);
+                        },
+                      ),
+                      SizedBox(height: 28.h),
                       _buildInfoItem(
                         label: '所在地',
                         content: '不展示',
@@ -569,7 +592,7 @@ void _showAgePicker(BuildContext context) {
                           SelectCountryRoute().push(context);
                         },
                       ),
-                      SizedBox(height: 28),
+                      SizedBox(height: 28.h),
                       _buildInfoItem(
                         label: '抖音号',
                         content: 'sdk199912',

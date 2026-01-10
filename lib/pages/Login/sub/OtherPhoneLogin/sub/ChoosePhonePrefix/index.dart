@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:bilbili_project/data/country_phone_prefix.dart';
 import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class ChoosePhonePrefixPage extends StatefulWidget {
@@ -74,14 +75,14 @@ class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
             children: [
               // 1. 渲染字母标题
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+                padding:  EdgeInsets.symmetric(
+                  horizontal: 16.0.w,
+                  vertical: 8.0.h,
                 ),
                 child: Text(
                   groupKey,
-                  style: const TextStyle(
-                    fontSize: 18.0,
+                  style: TextStyle(
+                    fontSize: 18.0.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey,
                   ),
@@ -103,7 +104,7 @@ class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
                     trailing: Text(
                       country.code,
                       style: TextStyle(
-                        fontSize: 16.0,
+                        fontSize: 16.0.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

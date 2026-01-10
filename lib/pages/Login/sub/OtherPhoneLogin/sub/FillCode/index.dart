@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
@@ -23,21 +24,21 @@ class _FillCodePageState extends State<FillCodePage> {
       ),
       body: Container(
         width: double.infinity,
-        padding: EdgeInsets.only(top: 20, left: 30, right: 30),
+        padding: EdgeInsets.only(top: 20.0.h, left: 30.0.w, right: 30.0.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '输入验证码',
-              style: TextStyle(fontSize: 28, color: Colors.black),
+              style: TextStyle(fontSize: 28.0.sp, color: Colors.black),
               textAlign: TextAlign.left,
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 10.0.h),
             Text(
               '验证码已发送至 +8615573010566',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
             ),
-            SizedBox(height: 36),
+            SizedBox(height: 36.0.h),
             PinCodeTextField(
               autoFocus: true,
               appContext: context, // 必须提供 context
@@ -45,10 +46,10 @@ class _FillCodePageState extends State<FillCodePage> {
               obscureText: false, // 是否隐藏文本
               animationType: AnimationType.fade, // 输入时的动画类型
               pinTheme: PinTheme(
-                borderWidth: 1,
-                selectedBorderWidth: 1,
+                borderWidth: 1.0.w,
+                selectedBorderWidth: 1.0.w,
                 shape: PinCodeFieldShape.underline, // 输入框的形状，也可以是 underline
-                fieldWidth: 70,
+                fieldWidth: 70.0.w,
                 activeColor: const Color.fromARGB(255, 158, 90, 104), // 激活时的边框颜色
                 inactiveColor: Colors.black, // 未激活时的边框颜色
                 selectedColor: const Color.fromARGB(255, 132, 121, 228), // 选中时的边框颜色
@@ -59,7 +60,7 @@ class _FillCodePageState extends State<FillCodePage> {
               animationDuration: const Duration(milliseconds:  300),
               backgroundColor: Colors.transparent,
               enableActiveFill: true,
-              textStyle: TextStyle(fontSize: 26, color: Colors.black),
+              textStyle: TextStyle(fontSize: 26.0.sp, color: Colors.black),
               onCompleted: (v) {
                 // 输入完成后的回调
                 print("Completed: $v");
@@ -74,10 +75,10 @@ class _FillCodePageState extends State<FillCodePage> {
                 return true; // 返回 true 允许粘贴
               },
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 10.0.h),
            Text(
             '54s后重新获取',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
            ),
           ],
         ),

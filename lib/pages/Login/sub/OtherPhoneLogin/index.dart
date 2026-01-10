@@ -4,6 +4,7 @@ import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.da
 import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 // ignore: must_be_immutable
@@ -36,9 +37,9 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
             borderRadius: BorderRadius.circular(5), // 圆角大小
           ),
           // 可选：设置边框
-          side: BorderSide(color: Colors.grey, width: 1),
+          side: BorderSide(color: Colors.grey, width: 1.0.w),
         ),
-        Text('已阅读并同意"用户协议"和"隐私协议"', style: TextStyle(color: Colors.grey)),
+        Text('已阅读并同意"用户协议"和"隐私协议"', style: TextStyle(fontSize: 14.0.sp, color: Colors.grey)),
       ],
     );
   }
@@ -57,24 +58,24 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
       body: Stack(
         children: [
           Container(
-            padding: EdgeInsets.only(top: 20, left: 30, right: 30),
+            padding: EdgeInsets.only(top: 20.0.h, left: 30.0.w, right: 30.0.w),
             alignment: Alignment.topCenter,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  spacing: 10,
+                  spacing: 10.0.w,
                   children: [
                     Image.asset(
                       'lib/assets/app_logo.png',
-                      width: 60,
-                      height: 60,
+                      width: 60.0.w,
+                      height: 60.0.h,
                       fit: BoxFit.cover,
                     ),
-                    Text('登录体验更多精彩', style: TextStyle(fontSize: 28)),
+                    Text('登录体验更多精彩', style: TextStyle(fontSize: 28.0.sp)),
                   ],
                 ),
-                SizedBox(height: 60),
+                SizedBox(height: 60.0.h),
                 Form(
                   child: Stack(
                     children: [
@@ -83,17 +84,17 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                           return null;
                         },
                         style: TextStyle(
-                          fontSize: 20.0, // 设置输入文字的大小
+                          fontSize: 20.0.sp, // 设置输入文字的大小
                           color: Colors.black87, // 设置输入文字的颜色
                           // fontWeight: FontWeight.bold, // 还可以设置粗细等
                         ),
                         decoration: InputDecoration(
                           // 2. 设置提示文字的样式
                           hintStyle: TextStyle(
-                            fontSize: 18.0, // 设置提示文字的大小
+                            fontSize: 18.0.sp, // 设置提示文字的大小
                             color: Colors.grey[500], // 设置提示文字的颜色
                           ),
-                          contentPadding: EdgeInsets.only(left: 100), // 内容内边距
+                          contentPadding: EdgeInsets.only(left: 100.0.w), // 内容内边距
                           hintText: "请输入手机号",
                           fillColor: Colors.transparent,
                           filled: true,
@@ -123,13 +124,13 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                                 Text(
                                   widget.extra.code,
                                   style: TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 24.0.sp,
                                     color: Colors.black,
                                   ),
                                 ),
                                 Icon(
                                   FontAwesomeIcons.angleDown,
-                                  size: 20,
+                                  size: 20.r,
                                   color: Colors.black,
                                 ),
                               ],
@@ -140,15 +141,15 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 28),
+                SizedBox(height: 28.0.h),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 48.0.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8.0.r),
                       ),
                       // minimumSize: Size(200, 50),
                     ),
@@ -157,7 +158,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                     },
                     child: Text(
                       '获取短信验证码',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
                     ),
                   ),
                 ),

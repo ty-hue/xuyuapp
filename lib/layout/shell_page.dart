@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class ShellPage extends StatelessWidget {
@@ -18,8 +19,8 @@ class ShellPage extends StatelessWidget {
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey,
         currentIndex: navigationShell.currentIndex,
-        selectedFontSize: 15,
-        unselectedFontSize: 15,
+        selectedFontSize: 15.0.sp,
+        unselectedFontSize: 15.0.sp,
         onTap: (index) {
           navigationShell.goBranch(
             index,
@@ -33,16 +34,16 @@ class ShellPage extends StatelessWidget {
           BottomNavigationBarItem(
             // 使用一个 Container 来创建一个圆形背景的“+”号图标
             icon: Container(
-              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+              padding: EdgeInsets.symmetric(vertical: 4.0.h, horizontal: 12.0.w),
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white, width: 2),
+                borderRadius: BorderRadius.circular(8.0.r),
+                border: Border.all(color: Colors.white, width: 2.0.w),
               ),
               child: Icon(
                 Icons.add,
                 color: Colors.white, // “+”号颜色
-                size: 20,
+                size: 20.r,
                 fontWeight: FontWeight.bold,
               ),
             ),

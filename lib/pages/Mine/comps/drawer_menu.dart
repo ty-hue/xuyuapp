@@ -1,6 +1,7 @@
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/viewmodels/Mine/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DrawerMenu extends StatefulWidget {
   final BuildContext context;
@@ -41,14 +42,14 @@ class _DrawerMenuState extends State<DrawerMenu> {
         item.cb();
       },
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 18),
+        padding: EdgeInsets.symmetric(vertical: 18.0.h),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(item.icon, color: Colors.white),
-            SizedBox(width: 12),
-            Text(item.title, style: TextStyle(color: Colors.white)),
+            SizedBox(width: 12.0.w),
+            Text(item.title, style: TextStyle(color: Colors.white, fontSize: 14.0.sp)),
           ],
         ),
       ),
@@ -66,22 +67,22 @@ class _DrawerMenuState extends State<DrawerMenu> {
   Widget build(BuildContext context) {
     return Drawer(
       backgroundColor: Color.fromRGBO(22, 22, 22, 1),
-      width: 200,
+      width: 200.0.w,
       child: SafeArea(
         top: true,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16.0.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildMenuGroup(_topMenuItems),
-              SizedBox(height: 12),
-              Divider(height: 0.5, color: Colors.grey),
-              SizedBox(height: 12),
+              SizedBox(height: 12.0.h),
+              Divider(height: 0.5.h, color: Colors.grey),
+              SizedBox(height: 12.0.h),
               _buildMenuGroup(_centerMenuItems),
-              SizedBox(height: 12),
-              Divider(height: 0.5, color: Colors.grey),
-              SizedBox(height: 12),
+              SizedBox(height: 12.0.h),
+              Divider(height: 0.5.h, color: Colors.grey),
+              SizedBox(height: 12.0.h),
               _buildMenuGroup(_bottomMenuItems),
             ],
           ),

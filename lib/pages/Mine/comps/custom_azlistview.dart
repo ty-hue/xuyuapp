@@ -2,6 +2,7 @@ import 'package:azlistview/azlistview.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class CustomAzlistview extends StatefulWidget {
@@ -147,7 +148,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18.0.sp),
           onPressed: () {
             context.pop();
           },
@@ -155,7 +156,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
         title: Text(
           '选择地区',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 16.0.sp,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -168,12 +169,12 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
         decoration: BoxDecoration(
           color: Color.fromRGBO(22, 22, 22, 1),
           border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5),
+            top: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5.w),
           ),
         ),
         child: AzListView(
           hapticFeedback: true,
-          susItemHeight: 40,
+          susItemHeight: 40.0.h,
           padding: EdgeInsets.zero,
           data: widget.areaList, // 每个 item 需要实现 ISuspensionBean
           susItemBuilder: (context, index) {
@@ -185,11 +186,11 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
               color: Color.fromRGBO(22, 22, 22, 1),
               width: MediaQuery.of(context).size.width,
               alignment: Alignment.centerLeft,
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: EdgeInsets.symmetric(vertical: 8.0.h, horizontal: 16.0.w),
               child: Text(
                 item.group,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16.0.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -203,14 +204,16 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
             }
             final item = widget.areaList[index].items;
             return Container(
-              padding: EdgeInsets.only(bottom: 30),
+              padding: EdgeInsets.only(bottom: 30.0.h),
+
+
 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: List.generate(item.length, (index) {
                   return Container(
                     padding: index == item.length - 1
-                        ? EdgeInsets.only(bottom: 20)
+                        ? EdgeInsets.only(bottom: 20.0.h)
                         : EdgeInsets.only(bottom: 0),
                     decoration: BoxDecoration(
                       border: Border(
@@ -218,14 +221,14 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
                             ? BorderSide.none
                             : BorderSide(
                                 color: Colors.white.withOpacity(0.1),
-                                width: 0.5,
+                                width: 0.5.w,
                               ),
                       ),
                     ),
                     child: ListTile(
                       title: Text(
                         item[index].name,
-                        style: TextStyle(fontSize: 14, color: Colors.white),
+                        style: TextStyle(fontSize: 14.0.sp, color: Colors.white),
                       ),
                       onTap: () {
                         widget.onSelect(item[index]);

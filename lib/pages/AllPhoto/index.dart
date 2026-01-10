@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_editor/image_editor.dart';
@@ -95,7 +96,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
       Album(
         name: album.name,
         count: count,
-        thumbnail: await last.thumbnailDataWithSize(ThumbnailSize(200, 200)),
+        thumbnail: await last.thumbnailDataWithSize(ThumbnailSize(200.0.w.toInt(), 200.0.h.toInt())),
       ),
     );
     if (!mounted) return;
@@ -107,8 +108,8 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   // 顶部操作栏
   Widget _buildTopBar({required double height}) {
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 56.0.h,
+      padding: EdgeInsets.symmetric(horizontal: 16.0.w),
       alignment: Alignment.centerLeft,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -138,17 +139,17 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                   title,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(width: 4),
+                SizedBox(width: 4.0.w),
                 AnimatedRotation(
                   turns: isExpanded ? 0.5 : 0.0, // 0.5 = 180°
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
-                  child: const Icon(FontAwesomeIcons.angleDown, size: 16),
+                  child: Icon(FontAwesomeIcons.angleDown, size: 16.0.r),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 24), // 占位
+           SizedBox(width: 24.0.w), // 占位
         ],
       ),
     );
@@ -157,18 +158,18 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   // 相片 Grid
   Widget _buildPhotoGrid() {
     return GridView.builder(
-      padding: const EdgeInsets.all(2),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      padding:  EdgeInsets.all(2.r),
+      gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
+        mainAxisSpacing: 2.r,
+        crossAxisSpacing: 2.r,
       ),
       itemCount: images.length,
       itemBuilder: (_, index) {
         final photo = images[index];
 
         return FutureBuilder<Uint8List?>(
-          future: photo.thumbnailDataWithSize(ThumbnailSize(200, 200)),
+          future: photo.thumbnailDataWithSize(ThumbnailSize(200.0.w.toInt(), 200.0.h.toInt())),
           builder: (_, snapshot) {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
@@ -191,16 +192,16 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   // 相册列表
   Widget _buildAlbumList({required double height}) {
     return Positioned(
-      top: 57,
+      top: 57.0.h,
       left: 0,
       right: 0,
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
-        height: isExpanded ? height - 57 : 0,
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        height: isExpanded ? height - 57.0.h : 0,
+        padding: EdgeInsets.symmetric(horizontal: 16.0.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),  
         ),
         child: ListView.builder(
           itemCount: albumsWithThumbnail.length,
@@ -209,8 +210,8 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
             return ListTile(
               leading: album.thumbnail == null
                   ? SizedBox(
-                      width: 40,
-                      height: 40,
+                      width: 40.0.w,
+                      height: 40.0.h,
                       child: Image.asset(
                         'assets/album_placeholder.svg',
                         fit: BoxFit.cover,
@@ -282,7 +283,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),
             child: Stack(
               children: [
                 Container(
@@ -293,7 +294,8 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                       // 顶部操作栏
                       _buildTopBar(height: height),
 
-                      const Divider(height: 1),
+                      // 分隔线
+                      Divider(height: 1.0.h),
 
                       // 相片 Grid
                       Expanded(child: _buildPhotoGrid()),
@@ -338,7 +340,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                       top: MediaQuery.of(context).padding.top,
                                     ),
                                     height:
-                                        MediaQuery.of(context).padding.top + 56,
+                                        MediaQuery.of(context).padding.top + 56.0.h,
                                     color: Colors.black,
                                     child: Center(
                                       child: IconButton(
@@ -347,7 +349,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                           child: Icon(
                                             FontAwesomeIcons.rotateLeft,
                                             color: Colors.white,
-                                            size: 20,
+                                            size: 20.0.r,
                                           ),
                                         ),
                                         onPressed: () {
@@ -364,15 +366,15 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                   bottom: 0,
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
-                                      horizontal: 16,
+                                      horizontal: 16.0.w,
                                     ),
-                                    height: 100,
+                                    height: 100.0.h,
                                     color: Colors.black,
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: SizedBox(
-                                            height: 42,
+                                            height: 42.0.h,
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Color.fromRGBO(
@@ -396,10 +398,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 16),
+                                        SizedBox(width: 16.0.w),
                                         Expanded(
                                           child: SizedBox(
-                                            height: 42,
+                                            height: 42.0.h,
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Color.fromRGBO(
