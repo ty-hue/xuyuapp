@@ -11,7 +11,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class OtherPhoneLoginPage extends StatefulWidget {
   final OtherPhoneLoginParams extra;
   OtherPhoneLoginPage({Key? key, required this.extra}) : super(key: key);
- 
 
   @override
   State<OtherPhoneLoginPage> createState() => _OtherPhoneLoginPageState();
@@ -39,7 +38,10 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
           // 可选：设置边框
           side: BorderSide(color: Colors.grey, width: 1.0.w),
         ),
-        Text('已阅读并同意"用户协议"和"隐私协议"', style: TextStyle(fontSize: 14.0.sp, color: Colors.grey)),
+        Text(
+          '已阅读并同意"用户协议"和"隐私协议"',
+          style: TextStyle(fontSize: 14.0.sp, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -47,9 +49,17 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // ⭐ 关键 让键盘抬起不挤压页面内容
       appBar: AppBar(
+        backgroundColor: Colors.white, // 背景透明
+        elevation: 0, // 去阴影
+        scrolledUnderElevation: 0, // ⭐ 滚动阴影（Flutter 3.7+）
+        surfaceTintColor: Colors.transparent, // ⭐ 滚动变色（M3）
+        shadowColor: Colors.transparent, // 兜底
+        foregroundColor: Colors.white,
+        centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
+          icon: Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
             LoginRoute().go(context);
           },
@@ -94,7 +104,9 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                             fontSize: 18.0.sp, // 设置提示文字的大小
                             color: Colors.grey[500], // 设置提示文字的颜色
                           ),
-                          contentPadding: EdgeInsets.only(left: 100.0.w), // 内容内边距
+                          contentPadding: EdgeInsets.only(
+                            left: 100.0.w,
+                          ), // 内容内边距
                           hintText: "请输入手机号",
                           fillColor: Colors.transparent,
                           filled: true,
@@ -124,7 +136,7 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                                 Text(
                                   widget.extra.code,
                                   style: TextStyle(
-                                    fontSize: 24.0.sp,
+                                    fontSize: 20.0.sp,
                                     color: Colors.black,
                                   ),
                                 ),

@@ -12,7 +12,7 @@ void main() {
         routerConfig: router,
         // 🌍 全局主题
         theme: ThemeData(
-          useMaterial3: false, // 👈 关键        // Switch 全局样式
+          useMaterial3: true, // 👈 关键        // Switch 全局样式
           switchTheme: SwitchThemeData(
             trackColor: MaterialStateProperty.resolveWith((states) {
               if (states.contains(MaterialState.selected)) {

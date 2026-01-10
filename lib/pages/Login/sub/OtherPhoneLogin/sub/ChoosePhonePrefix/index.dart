@@ -51,6 +51,7 @@ class _ChoosePhonePrefixPageState extends State<ChoosePhonePrefixPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {

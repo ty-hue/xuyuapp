@@ -36,10 +36,10 @@ class _LoginPageState extends State<LoginPage> {
               // 可选：设置边框
               side: BorderSide(color: Colors.grey, width: 1.0.w),
             ),
-            Text('已阅读并同意《中国联通认证服务条款》', style: TextStyle(color: Colors.grey)),
+            Text('已阅读并同意《中国联通认证服务条款》', style: TextStyle(color: Colors.grey,fontSize: 12.0.sp)),
           ],
         ),
-        Text('及"用户协议"和“隐私政策”', style: TextStyle(color: Colors.grey)),
+        Text('及"用户协议"和“隐私政策”', style: TextStyle(color: Colors.grey,fontSize: 12.0.sp)),
       ],
     );
   }
@@ -48,8 +48,14 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // 背景透明
+        elevation: 0, // 去阴影
+        scrolledUnderElevation: 0, // ⭐ 滚动阴影（Flutter 3.7+）
+        surfaceTintColor: Colors.transparent, // ⭐ 滚动变色（M3）
+        shadowColor: Colors.transparent, // 兜底
+        foregroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: Colors.black,),
           onPressed: () {
             HomeRoute().go(context);
           },
@@ -77,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 30.0.sp, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 10.0.h),
-                Text('认证服务由中国联通提供', style: TextStyle(color: Colors.grey)),
+                Text('认证服务由中国联通提供', style: TextStyle(color: Colors.grey,fontSize: 12.0.sp)),
                 SizedBox(height: 40.0.h),
                 SizedBox(
                   width: double.infinity,
@@ -97,13 +103,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16.0.h),
+                SizedBox(height: 20.0.h),
                 SizedBox(
                   width: double.infinity,
                   height: 50.0.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: const Color.fromARGB(179, 196, 226, 225),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0.r),
                       ),
