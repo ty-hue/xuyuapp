@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                   height: 50.0.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(179, 196, 226, 225),
+                      backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0.r),
                       ),
