@@ -2,6 +2,7 @@ import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
@@ -58,7 +59,18 @@ class SettingsPageRoute extends GoRouteData {
     return SettingsPage();
   }
 }
+// 主页访问 路由
+@TypedGoRoute<VisitorPageRoute>(
+  path: '/visitor',
+)
+class VisitorPageRoute extends GoRouteData {
+  const VisitorPageRoute();
 
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return VisitorPage();
+  }
+}
 // 所有照片路由
 @TypedGoRoute<AllPhotoRoute>(path: '/all_photo')
 class AllPhotoRoute extends GoRouteData {
