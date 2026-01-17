@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'comps/default.dart';
+import 'comps/result.dart';
 
 class SearchPage extends StatefulWidget {
   SearchPage({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
+    // 初始化搜索历史
     mineSearchHistoryManager.init();
     searchHistory = mineSearchHistoryManager.getSearchHistory();
   }
@@ -27,7 +30,32 @@ class _SearchPageState extends State<SearchPage> {
   String _searchCategory = ''; // 默认 为空
 
   // 搜索状态
-  final SearchState _searchState = SearchState.idle;
+  SearchState _searchState = SearchState.idle;
+  // 请求结果
+  List<String> searchResult = [];
+  // 分页参数
+  Map<String, num> pagination = {'page': 1, 'pageSize': 10};
+  int _searchToken = 0; // 返回上一个组件时，可能有请求正在进行，这个变量可以用于作废请求
+
+  // 请求方法
+  Future<void> _search() async {
+    _searchToken++;
+    int currentToken = _searchToken;
+    _searchCategory == '' ? _searchCategory = '0' : _searchCategory;
+    print('category: $_searchCategory');
+    print('pagination: $pagination');
+    setState(() {
+      _searchState = SearchState.searching;
+    });
+    await Future.delayed(Duration(seconds: 3));
+    // 作废请求的关键步骤
+    if(!mounted || currentToken != _searchToken){
+      return;
+    }
+    setState(() {
+      _searchState = SearchState.searchComplete;
+    });
+  }
 
   // 记录搜索关键字方法
   void _recordSearchHistory(String keyword) {
@@ -39,113 +67,21 @@ class _SearchPageState extends State<SearchPage> {
       }
       setState(() {
         searchHistory.insert(0, keyword);
-        mineSearchHistoryManager.setSearchHistory(searchHistory);
       });
     }
   }
 
-  // 搜索历史 item
-  Widget _buildSearchHistoryItem(String history) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                _recordSearchHistory(history);
-                mineSearchHistoryManager.setSearchHistory(searchHistory);
-                _searchController.text = history;
-                // 失去焦点
-                FocusScope.of(context).unfocus();
-              },
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    FontAwesomeIcons.history,
-                    size: 16.0.sp,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    history,
-                    style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                searchHistory.remove(history);
-                mineSearchHistoryManager.setSearchHistory(searchHistory);
-              });
-            },
-            child: Icon(
-              FontAwesomeIcons.close,
-              size: 16.0.w,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 搜索范围item
-  Widget _buildSearchScopeItem({
-    required String scope,
-    required IconData icon,
-    required String category,
-    required Function() onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        height: 10.h,
-        padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10.w),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: category == _searchCategory
-                ? Color.fromRGBO(253, 211, 63, 1)
-                : Color.fromRGBO(64, 66, 75, 1),
-            width: 1.w,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 爱心图标
-            Icon(
-              icon,
-              size: 15.0.w,
-              color: category == _searchCategory
-                  ? Color.fromRGBO(253, 211, 63, 1)
-                  : Colors.white,
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              scope,
-              style: TextStyle(
-                fontSize: 14.0.sp,
-                color: category == _searchCategory
-                    ? Color.fromRGBO(253, 211, 63, 1)
-                    : Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  // 清理数据
+  void _clearData(){
+    setState(() {
+      // 作废请求
+      _searchToken++;
+      _searchState = SearchState.idle;
+      _searchController.clear();
+      searchResult.clear();
+      _searchCategory = '';
+      pagination = {'page': 1, 'pageSize': 10};
+    });
   }
 
   // 自定义navbar
@@ -163,7 +99,11 @@ class _SearchPageState extends State<SearchPage> {
           children: [
             GestureDetector(
               onTap: () {
-                context.pop();
+                if (_searchState == SearchState.idle) {
+                  context.pop();
+                  return;
+                }
+                _clearData();
               },
               child: Icon(
                 Icons.arrow_back_ios_new,
@@ -255,9 +195,14 @@ class _SearchPageState extends State<SearchPage> {
             ),
             SizedBox(width: 10.w),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 if (_searchController.text.isNotEmpty) {
                   _recordSearchHistory(_searchController.text);
+                  // 失去焦点
+                  FocusScope.of(context).unfocus();
+                  mineSearchHistoryManager.setSearchHistory(searchHistory);
+                  await _search();
+                  setState(() {});
                 }
               },
               child: Container(
@@ -275,59 +220,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  List<Widget> _buildHistory() {
-    return List.generate(
-      searchHistory.length,
-      (index) => _buildSearchHistoryItem(searchHistory[index]),
-    );
-  }
-
-  // get 搜索历史
-  List<Widget> get _currentSearchHistory {
-    if (searchHistory.length <= 2) {
-      return _buildHistory();
-    }
-    if (isExpanded) {
-      return _buildHistory();
-    }
-    return [..._buildHistory().sublist(0, 2)];
-  }
-
-  // 是否显示 清除全部搜索历史按钮
-  Widget get _showClearAll {
-    if (searchHistory.length > 2 && isExpanded) {
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            searchHistory.clear();
-            isExpanded = false;
-            mineSearchHistoryManager.removeSearchHistory();
-          });
-        },
-        child: Text(
-          '清除全部搜索历史',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14.0.sp, color: Colors.grey),
-        ),
-      );
-    }
-    if (searchHistory.length > 2 && !isExpanded) {
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            isExpanded = true;
-          });
-        },
-        child: Text(
-          '全部搜索记录',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14.0.sp, color: Colors.grey),
-        ),
-      );
-    }
-    return Container();
-  }
-
   @override
   Widget build(BuildContext context) {
     double statusBarHeight = MediaQuery.of(context).padding.top;
@@ -343,120 +235,46 @@ class _SearchPageState extends State<SearchPage> {
         child: Scaffold(
           extendBodyBehindAppBar: true,
           appBar: _buildNavBar(statusBarHeight),
-          body: Container(
-            height: double.infinity,
-            color: Color.fromRGBO(22, 24, 35, 1),
-            padding: EdgeInsets.only(
-              left: 26.w,
-              right: 26.w,
-              bottom: 0.h,
-              top: statusBarHeight + 46.h + 20.h,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Column(
-                  children: searchHistory.isNotEmpty
-                      ? [
-                          ListView(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            children: _currentSearchHistory,
-                          ),
-                          SizedBox(height: 10.h),
-                          _showClearAll,
-
-                          SizedBox(height: 20.h),
-                          Divider(
-                            height: 1.h,
-                            color: Colors.white.withOpacity(0.2),
-                          ),
-                          SizedBox(height: 28.h),
-                        ]
-                      : [],
-                ),
-                Container(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        '选择搜索范围',
-                        style: TextStyle(
-                          fontSize: 16.0.sp,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 20.h),
-                      GridView.count(
-                        padding: EdgeInsets.zero,
-                        mainAxisSpacing: 20.w,
-                        crossAxisSpacing: 20.w,
-                        childAspectRatio: 3.0,
-                        crossAxisCount: 3,
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildSearchScopeItem(
-                            category: '0',
-                            scope: '喜欢',
-                            icon: FontAwesomeIcons.heart,
-                            onTap: () {
-                              setState(() {
-                                _searchCategory = '0';
-                              });
-                            },
-                          ),
-                          _buildSearchScopeItem(
-                            category: '1',
-                            scope: '收藏',
-                            icon: FontAwesomeIcons.bookmark,
-                            onTap: () {
-                              setState(() {
-                                _searchCategory = '1';
-                              });
-                            },
-                          ),
-                          _buildSearchScopeItem(
-                            category: '2',
-                            scope: '作品',
-                            icon: FontAwesomeIcons.video,
-                            onTap: () {
-                              setState(() {
-                                _searchCategory = '2';
-                              });
-                            },
-                          ),
-                          _buildSearchScopeItem(
-                            category: '3',
-                            scope: '私密',
-                            icon: FontAwesomeIcons.lock,
-                            onTap: () {
-                              setState(() {
-                                _searchCategory = '3';
-                              });
-                            },
-                          ),
-                          _buildSearchScopeItem(
-                            category: '4',
-                            scope: '观看历史',
-                            icon: FontAwesomeIcons.history,
-                            onTap: () {
-                              setState(() {
-                                _searchCategory = '4';
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          body: _searchState == SearchState.idle
+              ? DefaultView(
+                  searchData: _search, // 搜索数据方法
+                  searchController: _searchController, // 搜索框控制器
+                  statusBarHeight: statusBarHeight,
+                  searchCategory: _searchCategory,
+                  searchHistory: searchHistory,
+                  isExpanded: isExpanded,
+                  toggleExpanded: (bool val) {
+                    setState(() {
+                      isExpanded = val;
+                    });
+                  },
+                  changeCategory: (String category) {
+                    setState(() {
+                      _searchCategory = category;
+                    });
+                  },
+                  updateSearchHistory:
+                      ({
+                        String history = '',
+                        required EditSearchHistory editType,
+                      }) {
+                        if (history.isEmpty &&
+                            editType == EditSearchHistory.clear) {
+                          setState(() {
+                            searchHistory.clear();
+                          });
+                        }
+                        if (editType == EditSearchHistory.add) {
+                          _recordSearchHistory(history);
+                        }
+                        if (editType == EditSearchHistory.remove) {
+                          setState(() {
+                            searchHistory.remove(history);
+                          });
+                        }
+                      },
+                )
+              : ResultView(statusBarHeight: statusBarHeight),
         ),
       ),
     );
