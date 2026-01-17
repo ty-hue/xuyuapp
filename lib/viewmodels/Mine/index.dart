@@ -10,3 +10,4 @@ class MenuItem {
     required this.cb,
   });
 }
+

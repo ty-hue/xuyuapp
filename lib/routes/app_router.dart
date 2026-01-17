@@ -2,6 +2,7 @@ import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
@@ -59,6 +60,20 @@ class SettingsPageRoute extends GoRouteData {
     return SettingsPage();
   }
 }
+
+// 个人搜索页 路由
+@TypedGoRoute<SearchPageRoute>(
+  path: '/search_myself',
+)
+class SearchPageRoute extends GoRouteData {
+  const SearchPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return SearchPage();
+  }
+}
+
 // 主页访问 路由
 @TypedGoRoute<VisitorPageRoute>(
   path: '/visitor',

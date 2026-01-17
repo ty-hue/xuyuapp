@@ -9,6 +9,7 @@ part of 'app_router.dart';
 List<RouteBase> get $appRoutes => [
   $loginRoute,
   $settingsPageRoute,
+  $searchPageRoute,
   $visitorPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
@@ -115,6 +116,28 @@ extension $SettingsPageRouteExtension on SettingsPageRoute {
       const SettingsPageRoute();
 
   String get location => GoRouteData.$location('/settings');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $searchPageRoute => GoRouteData.$route(
+  path: '/search_myself',
+
+  factory: $SearchPageRouteExtension._fromState,
+);
+
+extension $SearchPageRouteExtension on SearchPageRoute {
+  static SearchPageRoute _fromState(GoRouterState state) =>
+      const SearchPageRoute();
+
+  String get location => GoRouteData.$location('/search_myself');
 
   void go(BuildContext context) => context.go(location);
 

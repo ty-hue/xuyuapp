@@ -4,6 +4,8 @@ class GlobalConstants {
   static const int TIME_OUT = 10; // 超时时间
   static const int SUCCESS_CODE = 1; // 成功状态
   static const String TOKEN_KEY = 'csclyf_xuyuapp_token'; // 本地存储的token的key
+  static const String MINE_SEARCH_HISTORY_KEY =
+      'csclyf_xuyuapp_mine_search_history'; // 本地存储的搜索历史的key
 }
 
 // 请求地址接口的的常量
@@ -11,4 +13,11 @@ class HttpConstants {
   static const String GET_COUNTRY_LIST = '/api/area/getCountryList';
   static const String GET_PROVINCE_LIST = '/api/area/getProvinceByCountry';
   static const String GET_CITY_LIST = '/api/area/getCityByProvince';
+}
+
+// 搜索状态
+enum SearchState {
+  idle, // 空闲状态
+  searching, // 搜索状态
+  searchComplete, // 搜索完成状态
 }

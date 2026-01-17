@@ -202,7 +202,7 @@ class _MinePageState extends State<MinePage>
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/login');
+                      SearchPageRoute().push(context);
                     },
                     child: Container(
                       padding: EdgeInsets.all(8.w),
