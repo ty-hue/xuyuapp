@@ -101,7 +101,7 @@ class _MinePageState extends State<MinePage>
               top: 0,
               child: GestureDetector(
                 onTap: () {
-                  context.pop();
+                  AddFriendRoute().push(context);
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

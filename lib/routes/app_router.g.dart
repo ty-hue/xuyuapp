@@ -10,6 +10,7 @@ List<RouteBase> get $appRoutes => [
   $loginRoute,
   $settingsPageRoute,
   $searchPageRoute,
+  $addFriendRoute,
   $visitorPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
@@ -138,6 +139,28 @@ extension $SearchPageRouteExtension on SearchPageRoute {
       const SearchPageRoute();
 
   String get location => GoRouteData.$location('/search_myself');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $addFriendRoute => GoRouteData.$route(
+  path: '/add_friend',
+
+  factory: $AddFriendRouteExtension._fromState,
+);
+
+extension $AddFriendRouteExtension on AddFriendRoute {
+  static AddFriendRoute _fromState(GoRouterState state) =>
+      const AddFriendRoute();
+
+  String get location => GoRouteData.$location('/add_friend');
 
   void go(BuildContext context) => context.go(location);
 

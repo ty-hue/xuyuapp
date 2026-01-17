@@ -1,6 +1,7 @@
 import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
@@ -49,9 +50,7 @@ class LoginRoute extends GoRouteData {
 }
 
 // 设置页 路由
-@TypedGoRoute<SettingsPageRoute>(
-  path: '/settings',
-)
+@TypedGoRoute<SettingsPageRoute>(path: '/settings')
 class SettingsPageRoute extends GoRouteData {
   const SettingsPageRoute();
 
@@ -62,9 +61,7 @@ class SettingsPageRoute extends GoRouteData {
 }
 
 // 个人搜索页 路由
-@TypedGoRoute<SearchPageRoute>(
-  path: '/search_myself',
-)
+@TypedGoRoute<SearchPageRoute>(path: '/search_myself')
 class SearchPageRoute extends GoRouteData {
   const SearchPageRoute();
 
@@ -74,10 +71,19 @@ class SearchPageRoute extends GoRouteData {
   }
 }
 
+// 添加朋友页 路由
+@TypedGoRoute<AddFriendRoute>(path: '/add_friend')
+class AddFriendRoute extends GoRouteData {
+  const AddFriendRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return AddFriendPage();
+  }
+}
+
 // 主页访问 路由
-@TypedGoRoute<VisitorPageRoute>(
-  path: '/visitor',
-)
+@TypedGoRoute<VisitorPageRoute>(path: '/visitor')
 class VisitorPageRoute extends GoRouteData {
   const VisitorPageRoute();
 
@@ -86,6 +92,7 @@ class VisitorPageRoute extends GoRouteData {
     return VisitorPage();
   }
 }
+
 // 所有照片路由
 @TypedGoRoute<AllPhotoRoute>(path: '/all_photo')
 class AllPhotoRoute extends GoRouteData {
@@ -156,7 +163,6 @@ class EditProfileRoute extends GoRouteData {
     );
   }
 }
-
 
 // 五个分支
 @TypedStatefulShellRoute<ShellRouteData>(
