@@ -11,6 +11,7 @@ List<RouteBase> get $appRoutes => [
   $settingsPageRoute,
   $searchPageRoute,
   $addFriendRoute,
+  $relationshipRoute,
   $visitorPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
@@ -161,6 +162,28 @@ extension $AddFriendRouteExtension on AddFriendRoute {
       const AddFriendRoute();
 
   String get location => GoRouteData.$location('/add_friend');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $relationshipRoute => GoRouteData.$route(
+  path: '/relationship',
+
+  factory: $RelationshipRouteExtension._fromState,
+);
+
+extension $RelationshipRouteExtension on RelationshipRoute {
+  static RelationshipRoute _fromState(GoRouterState state) =>
+      const RelationshipRoute();
+
+  String get location => GoRouteData.$location('/relationship');
 
   void go(BuildContext context) => context.go(location);
 

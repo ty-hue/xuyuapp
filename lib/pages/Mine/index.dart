@@ -279,10 +279,7 @@ class _MinePageState extends State<MinePage>
       key: _headerKey,
       decoration: BoxDecoration(
         color: const Color.fromRGBO(22, 22, 22, 1), // 关键：吸顶后需要背景色来遮挡下方内容
-       border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          )
+        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
       ),
       height: MediaQuery.of(context).padding.top + 56.h + _tabBarHeight,
       child: Column(
@@ -381,10 +378,10 @@ class _MinePageState extends State<MinePage>
             bottom: 20.h,
           ),
           // color: const Color.fromRGBO(22, 22, 22, 1),
-          decoration: BoxDecoration(color: const Color.fromRGBO(22, 22, 22, 1),border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          )),
+          decoration: BoxDecoration(
+            color: const Color.fromRGBO(22, 22, 22, 1),
+            border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -539,10 +536,7 @@ class _MinePageState extends State<MinePage>
     return Container(
       decoration: BoxDecoration(
         color: Color.fromRGBO(22, 22, 22, 1),
-        border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          )
+        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
       ),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
       child: Row(
@@ -551,93 +545,113 @@ class _MinePageState extends State<MinePage>
           Row(
             spacing: 20.w,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '6',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  RelationshipRoute().push(context);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '6',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '获赞',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      '获赞',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '4',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  RelationshipRoute().push(context);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '4',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '互关',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      '互关',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '289',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  RelationshipRoute().push(context);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '289',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '关注',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      '关注',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '28',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  RelationshipRoute().push(context);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '28',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '粉丝',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      '粉丝',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -673,10 +687,7 @@ class _MinePageState extends State<MinePage>
       width: double.infinity,
       height: 240.h,
       decoration: BoxDecoration(
-       border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          ),
+        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
         image: DecorationImage(
           image: AssetImage('lib/assets/mine_bg.png'),
           fit: BoxFit.cover,
@@ -769,10 +780,7 @@ class _MinePageState extends State<MinePage>
       decoration: BoxDecoration(
         color: const Color.fromRGBO(22, 22, 22, 1),
         // 官方的bug
-       border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          )
+        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
       ),
       child: GestureDetector(
         onTap: () {
@@ -801,17 +809,14 @@ class _MinePageState extends State<MinePage>
         color: const Color.fromRGBO(22, 22, 22, 1),
         boxShadow: [
           BoxShadow(
-          color: const Color.fromRGBO(22, 22, 22, 1),
-          blurRadius: 0.0,
-          spreadRadius: 0.0,
-          offset: Offset(0, 2.h),
-        ),
+            color: const Color.fromRGBO(22, 22, 22, 1),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+            offset: Offset(0, 2.h),
+          ),
         ],
         // 官方的bug
-       border: Border.all(
-            width: 0,
-            color: Color.fromRGBO(22, 22, 22, 1),
-          )
+        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
       ),
       child: GestureDetector(
         onTap: () {
@@ -855,7 +860,6 @@ class _MinePageState extends State<MinePage>
               decoration: BoxDecoration(
                 color: Color.fromRGBO(88, 77, 78, 0.5),
                 borderRadius: BorderRadius.circular(5.r),
-                
               ),
               child: Row(
                 children: [
