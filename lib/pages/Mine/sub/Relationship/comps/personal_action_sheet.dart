@@ -1,3 +1,4 @@
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -167,7 +168,7 @@ class _PersonalActionSheetState extends State<PersonalActionSheet> {
                     icon: FontAwesomeIcons.flag,
                     text: '举报',
                     onTap: () {
-                      print('举报');
+                      ReportPageRoute().push(context);
                     },
                   ),
                 ),

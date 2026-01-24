@@ -12,6 +12,7 @@ List<RouteBase> get $appRoutes => [
   $searchPageRoute,
   $addFriendRoute,
   $relationshipRoute,
+  $reportPageRoute,
   $visitorPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
@@ -184,6 +185,79 @@ extension $RelationshipRouteExtension on RelationshipRoute {
       const RelationshipRoute();
 
   String get location => GoRouteData.$location('/relationship');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $reportPageRoute => GoRouteData.$route(
+  path: '/report',
+
+  factory: $ReportPageRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: ':firstReportTypeCode',
+
+      factory: $ReportSecondRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: ':firstReportTypeCode/:secondReportTypeCode',
+
+      factory: $ReportLastRouteExtension._fromState,
+    ),
+  ],
+);
+
+extension $ReportPageRouteExtension on ReportPageRoute {
+  static ReportPageRoute _fromState(GoRouterState state) =>
+      const ReportPageRoute();
+
+  String get location => GoRouteData.$location('/report');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ReportSecondRouteExtension on ReportSecondRoute {
+  static ReportSecondRoute _fromState(GoRouterState state) => ReportSecondRoute(
+    firstReportTypeCode: state.pathParameters['firstReportTypeCode']!,
+  );
+
+  String get location => GoRouteData.$location(
+    '/report/${Uri.encodeComponent(firstReportTypeCode)}',
+  );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ReportLastRouteExtension on ReportLastRoute {
+  static ReportLastRoute _fromState(GoRouterState state) => ReportLastRoute(
+    firstReportTypeCode: state.pathParameters['firstReportTypeCode']!,
+    secondReportTypeCode: state.pathParameters['secondReportTypeCode']!,
+  );
+
+  String get location => GoRouteData.$location(
+    '/report/${Uri.encodeComponent(firstReportTypeCode)}/${Uri.encodeComponent(secondReportTypeCode)}',
+  );
 
   void go(BuildContext context) => context.go(location);
 

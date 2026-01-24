@@ -13,6 +13,10 @@ class HttpConstants {
   static const String GET_COUNTRY_LIST = '/api/area/getCountryList';
   static const String GET_PROVINCE_LIST = '/api/area/getProvinceByCountry';
   static const String GET_CITY_LIST = '/api/area/getCityByProvince';
+  static const String GET_FIRST_REPORT_TYPE_LIST =
+      '/api/report/getFirstReportLevels';
+  static const String GET_SECOND_REPORT_TYPE_LIST =
+      '/api/report/getSecondReportLevelsByFirstCode';
 }
 
 // 搜索状态

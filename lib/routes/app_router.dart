@@ -6,6 +6,7 @@ import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Relationship/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
+import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
@@ -18,6 +19,8 @@ import 'package:bilbili_project/routes/mine_routes/select_city_route.dart';
 import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
 import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
 import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.dart';
+import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
+import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -93,6 +96,23 @@ class RelationshipRoute extends GoRouteData {
     return RelationshipPage();
   }
 }
+
+// 举报页 路由
+@TypedGoRoute<ReportPageRoute>(path: '/report', routes: [
+  // 二级举报类型路由
+  TypedGoRoute<ReportSecondRoute>(path: ':firstReportTypeCode'),
+  // 三级举报类型路由
+  TypedGoRoute<ReportLastRoute>(path: ':firstReportTypeCode/:secondReportTypeCode'),
+])
+class ReportPageRoute extends GoRouteData {
+  const ReportPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return ReportPage();
+  }
+}
+
 // 主页访问 路由
 @TypedGoRoute<VisitorPageRoute>(path: '/visitor')
 class VisitorPageRoute extends GoRouteData {
