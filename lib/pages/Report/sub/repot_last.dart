@@ -1,3 +1,4 @@
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -184,7 +185,7 @@ class _ReportLastPageState extends State<ReportLastPage> {
                           GestureDetector(
                             onTap: () {
                               // 打开图片选择器
-                              print('打开图片选择器');
+                              AllPhotoRoute(isMultiple: true).push(context);
                             },
                             child: Container(
                               alignment: Alignment.center,

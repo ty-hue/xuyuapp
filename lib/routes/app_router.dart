@@ -127,10 +127,13 @@ class VisitorPageRoute extends GoRouteData {
 // 所有照片路由
 @TypedGoRoute<AllPhotoRoute>(path: '/all_photo')
 class AllPhotoRoute extends GoRouteData {
-  const AllPhotoRoute();
+  final bool? isMultiple; // 是否多选
+  
+  const AllPhotoRoute({this.isMultiple});
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
+    final isMultiple = this.isMultiple ?? false;
     final editorConfig =
         state.extra as EditorConfig? ??
         EditorConfig(
@@ -147,7 +150,7 @@ class AllPhotoRoute extends GoRouteData {
         );
     return CustomTransitionPage(
       key: state.pageKey,
-      child: AllPhotoPage(editorConfig: editorConfig),
+      child: AllPhotoPage(editorConfig: editorConfig,isMultiple: isMultiple),
 
       transitionDuration: const Duration(milliseconds: 300),
 

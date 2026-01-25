@@ -298,9 +298,20 @@ RouteBase get $allPhotoRoute => GoRouteData.$route(
 );
 
 extension $AllPhotoRouteExtension on AllPhotoRoute {
-  static AllPhotoRoute _fromState(GoRouterState state) => const AllPhotoRoute();
+  static AllPhotoRoute _fromState(GoRouterState state) => AllPhotoRoute(
+    isMultiple: _$convertMapValue(
+      'is-multiple',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
+  );
 
-  String get location => GoRouteData.$location('/all_photo');
+  String get location => GoRouteData.$location(
+    '/all_photo',
+    queryParams: {
+      if (isMultiple != null) 'is-multiple': isMultiple!.toString(),
+    },
+  );
 
   void go(BuildContext context) => context.go(location);
 
@@ -310,6 +321,26 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       context.pushReplacement(location);
 
   void replace(BuildContext context) => context.replace(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T? Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
+}
+
+bool _$boolConverter(String value) {
+  switch (value) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    default:
+      throw UnsupportedError('Cannot convert "$value" into a bool.');
+  }
 }
 
 RouteBase get $editProfileRoute => GoRouteData.$route(
@@ -445,26 +476,6 @@ extension $SelectCityRouteExtension on SelectCityRoute {
       context.pushReplacement(location);
 
   void replace(BuildContext context) => context.replace(location);
-}
-
-T? _$convertMapValue<T>(
-  String key,
-  Map<String, String> map,
-  T? Function(String) converter,
-) {
-  final value = map[key];
-  return value == null ? null : converter(value);
-}
-
-bool _$boolConverter(String value) {
-  switch (value) {
-    case 'true':
-      return true;
-    case 'false':
-      return false;
-    default:
-      throw UnsupportedError('Cannot convert "$value" into a bool.');
-  }
 }
 
 RouteBase get $shellRouteData => StatefulShellRouteData.$route(
