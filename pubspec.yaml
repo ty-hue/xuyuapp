@@ -47,6 +47,7 @@ dependencies:
   image_editor: ^1.6.0  
   flutter_screenutil: ^5.9.3
   flutter_spinkit: ^5.2.2
+  photo_view: ^0.15.0
 
 dev_dependencies:
   flutter_test:

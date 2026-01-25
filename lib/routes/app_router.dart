@@ -21,6 +21,7 @@ import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
 import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
+import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -103,6 +104,7 @@ class RelationshipRoute extends GoRouteData {
   TypedGoRoute<ReportSecondRoute>(path: ':firstReportTypeCode'),
   // 三级举报类型路由
   TypedGoRoute<ReportLastRoute>(path: ':firstReportTypeCode/:secondReportTypeCode'),
+  
 ])
 class ReportPageRoute extends GoRouteData {
   const ReportPageRoute();
@@ -125,7 +127,10 @@ class VisitorPageRoute extends GoRouteData {
 }
 
 // 所有照片路由
-@TypedGoRoute<AllPhotoRoute>(path: '/all_photo')
+@TypedGoRoute<AllPhotoRoute>(path: '/all_photo', routes: [
+  // 单张图片预览路由
+  TypedGoRoute<SingleImagePreviewRoute>(path: 'single_image_preview'),
+])
 class AllPhotoRoute extends GoRouteData {
   final bool? isMultiple; // 是否多选
   

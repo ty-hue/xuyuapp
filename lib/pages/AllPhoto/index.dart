@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:bilbili_project/components/loading.dart';
+import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -348,20 +350,12 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
           // 单选模式：加载原图进行裁剪（核心修复）
           await _loadOriginalImage(photo);
         } else {
-          // 多选模式：跨相册保留选中状态
-          if (isMaxSelected) return; // 达到4张上限，禁止选择新图片
-
-          setState(() {
-            if (isSelected) {
-              // 已选中，取消选中
-              selectedImages.remove(photo);
-            } else {
-              // 未选中，添加选中（最多4张）
-              if (selectedImages.length < 4) {
-                selectedImages.add(photo);
-              }
-            }
-          });
+          // 多选模式：进行单图预览
+          Uint8List? data = await photo.originBytes;
+          context.push(
+            SingleImagePreviewRoute().location,
+            extra: {photo.id: data},
+          );
         }
       },
       child: Stack(
@@ -369,7 +363,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
           Positioned.fill(
             child: hasThumbnail
                 ? (thumbnailData != null
-                      ? Image.memory(thumbnailData, fit: BoxFit.cover)
+                      ? Hero(
+                          tag: photo.id,
+                          child: Image.memory(thumbnailData, fit: BoxFit.cover),
+                        )
                       : Container(color: Colors.grey.shade300))
                 : Container(
                     color: Colors.grey.shade200,
@@ -380,23 +377,40 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
               ? Positioned(
                   right: 4.w,
                   top: 4.h,
-                  child: Container(
-                    width: 22.0.w,
-                    height: 22.0.h,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected
-                          ? Color.fromRGBO(253, 44, 85, 1)
-                          : Colors.transparent,
-                      border: Border.all(color: Colors.white, width: 2.0.r),
-                    ),
-                    child: Text(
-                      getPhotoIndexInSelected(photo),
-                      style: TextStyle(
-                        fontSize: 12.0.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (isMaxSelected) return; // 达到4张上限，禁止选择新图片
+
+                      setState(() {
+                        if (isSelected) {
+                          // 已选中，取消选中
+                          selectedImages.remove(photo);
+                        } else {
+                          // 未选中，添加选中（最多4张）
+                          if (selectedImages.length < 4) {
+                            selectedImages.add(photo);
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: 22.0.w,
+                      height: 22.0.h,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? Color.fromRGBO(253, 44, 85, 1)
+                            : Colors.transparent,
+                        border: Border.all(color: Colors.white, width: 2.0.r),
+                      ),
+                      child: Text(
+                        getPhotoIndexInSelected(photo),
+                        style: TextStyle(
+                          fontSize: 12.0.sp,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -423,9 +437,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
         duration: Duration(milliseconds: 300),
         height: isExpanded ? height - 57.0.h : 0,
         padding: EdgeInsets.symmetric(horizontal: 16.0.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-        ),
+        decoration: BoxDecoration(color: Colors.white),
         child: ListView.builder(
           itemCount: albumsWithThumbnail.length,
           itemBuilder: (_, index) {
@@ -583,59 +595,69 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                     final thumbnailData =
                                         _globalThumbnailCache[photo.id];
 
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                        6.0.r,
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          thumbnailData != null
-                                              ? Image.memory(
-                                                  thumbnailData,
-                                                  fit: BoxFit.cover,
-                                                  width: 80.0.w,
-                                                  height: 80.0.h,
-                                                )
-                                              : Container(
-                                                  color: Colors.grey.shade300,
-                                                ),
-                                          Positioned(
-                                            right: 0,
-                                            top: 0,
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                // 删除选中（跨相册生效）
-                                                setState(() {
-                                                  selectedImages.remove(photo);
-                                                });
-                                              },
-                                              child: Container(
-                                                width: 18.0.r,
-                                                height: 18.0.r,
-                                                decoration: BoxDecoration(
-                                                  color: Color.fromRGBO(
-                                                    12,
-                                                    9,
-                                                    6,
-                                                    1,
+                                    return GestureDetector(
+                                      onTap: () async {
+                                        context.push(
+                                          SingleImagePreviewRoute().location,
+                                          extra: {photo.id: thumbnailData},
+                                        );
+                                      },
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          6.0.r,
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            thumbnailData != null
+                                                ? Image.memory(
+                                                    thumbnailData,
+                                                    fit: BoxFit.cover,
+                                                    width: 80.0.w,
+                                                    height: 80.0.h,
+                                                  )
+                                                : Container(
+                                                    color: Colors.grey.shade300,
                                                   ),
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                        bottomLeft:
-                                                            Radius.circular(
-                                                              6.0.r,
-                                                            ),
-                                                      ),
-                                                ),
-                                                child: Icon(
-                                                  FontAwesomeIcons.xmark,
-                                                  size: 10.0.r,
-                                                  color: Colors.white,
+                                            Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  // 删除选中（跨相册生效）
+                                                  setState(() {
+                                                    selectedImages.remove(
+                                                      photo,
+                                                    );
+                                                  });
+                                                },
+                                                child: Container(
+                                                  width: 18.0.r,
+                                                  height: 18.0.r,
+                                                  decoration: BoxDecoration(
+                                                    color: Color.fromRGBO(
+                                                      12,
+                                                      9,
+                                                      6,
+                                                      1,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                6.0.r,
+                                                              ),
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    FontAwesomeIcons.xmark,
+                                                    size: 10.0.r,
+                                                    color: Colors.white,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     );
                                   },

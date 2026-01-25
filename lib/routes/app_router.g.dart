@@ -295,6 +295,13 @@ RouteBase get $allPhotoRoute => GoRouteData.$route(
   path: '/all_photo',
 
   factory: $AllPhotoRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'single_image_preview',
+
+      factory: $SingleImagePreviewRouteExtension._fromState,
+    ),
+  ],
 );
 
 extension $AllPhotoRouteExtension on AllPhotoRoute {
@@ -312,6 +319,23 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       if (isMultiple != null) 'is-multiple': isMultiple!.toString(),
     },
   );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $SingleImagePreviewRouteExtension on SingleImagePreviewRoute {
+  static SingleImagePreviewRoute _fromState(GoRouterState state) =>
+      const SingleImagePreviewRoute();
+
+  String get location =>
+      GoRouteData.$location('/all_photo/single_image_preview');
 
   void go(BuildContext context) => context.go(location);
 
