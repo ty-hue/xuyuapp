@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
 import 'package:extended_image/extended_image.dart';
@@ -13,12 +14,21 @@ import 'package:image_editor/image_editor.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AllPhotoPage extends StatefulWidget {
+  final int maxSelectCount; // 最大选择数量
+  final int
+  featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
+  final String firstReportTypeCode; // 一级上报类型编码
+  final String secondReportTypeCode; // 二级上报类型编码
   final bool isMultiple; // 是否多选
   final EditorConfig editorConfig;
   const AllPhotoPage({
     Key? key,
     required this.editorConfig,
     required this.isMultiple,
+    required this.maxSelectCount,
+    required this.featureCode,
+    required this.firstReportTypeCode,
+    required this.secondReportTypeCode,
   }) : super(key: key);
   @override
   State<AllPhotoPage> createState() => _AllPhotoPageState();
@@ -36,7 +46,6 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
   int _currentPage = 0; // 当前页码
   bool _isLoading = false; // 是否正在加载
   bool _hasMoreData = true; // 是否还有更多数据
-
   List<AssetEntity> currentAlbumImages = []; // 当前相册已加载的图片
   List<AssetPathEntity> albums = [];
   bool isExpanded = false; // 是否显示相册列表
@@ -186,6 +195,24 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     }
   }
 
+  // 多选模式下 点击下一步按钮
+  void _handleNextStep() {
+    switch (widget.featureCode) {
+      case -1:
+        break;
+      case 1:
+        context.push(
+          ReportLastRoute(
+            firstReportTypeCode: widget.firstReportTypeCode,
+            secondReportTypeCode: widget.secondReportTypeCode,
+          ).location,
+          extra: selectedImages,
+        );
+        break;
+      default:
+        break;
+    }
+  }
   // 封装相册数据
   Future<void> _handleAlbums() async {
     for (final album in albums) {
@@ -341,7 +368,8 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     // 判断当前图片是否被选中
     final isSelected = selectedImages.contains(photo);
     // 判断是否达到选中上限且当前图片未被选中
-    final isMaxSelected = selectedImages.length >= 4 && !isSelected;
+    final isMaxSelected =
+        selectedImages.length >= widget.maxSelectCount && !isSelected;
 
     return GestureDetector(
       key: ValueKey(photo.id), // 使用 photo.id 作为唯一标识符
@@ -696,10 +724,10 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                                           ),
                                         ),
                                         onPressed: isAllowNext
-                                            ? _cropAndSaveImage
+                                            ? _handleNextStep
                                             : null,
                                         child: Text(
-                                          '下一步（${selectedImages.length}/4）',
+                                          '下一步（${selectedImages.length}/${widget.maxSelectCount}）',
                                           style: TextStyle(
                                             fontSize: 12.0.sp,
                                             color: isAllowNext

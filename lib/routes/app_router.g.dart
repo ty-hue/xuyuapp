@@ -311,12 +311,25 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       state.uri.queryParameters,
       _$boolConverter,
     ),
+    maxSelectCount: _$convertMapValue(
+      'max-select-count',
+      state.uri.queryParameters,
+      int.tryParse,
+    ),
+    featureCode: _$convertMapValue(
+      'feature-code',
+      state.uri.queryParameters,
+      int.tryParse,
+    ),
   );
 
   String get location => GoRouteData.$location(
     '/all_photo',
     queryParams: {
       if (isMultiple != null) 'is-multiple': isMultiple!.toString(),
+      if (maxSelectCount != null)
+        'max-select-count': maxSelectCount!.toString(),
+      if (featureCode != null) 'feature-code': featureCode!.toString(),
     },
   );
 

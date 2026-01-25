@@ -12,4 +12,5 @@ class ReportSecondRoute extends GoRouteData {
       firstReportTypeCode: firstReportTypeCode,
     );
   }
+
 }

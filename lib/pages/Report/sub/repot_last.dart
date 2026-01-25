@@ -1,15 +1,24 @@
+import 'package:bilbili_project/pages/Report/sub/report_second.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
+import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 class ReportLastPage extends StatefulWidget {
   final String firstReportTypeCode;
   final String secondReportTypeCode;
+  final List<AssetEntity> selectedImages;
   ReportLastPage({
     Key? key,
     required this.firstReportTypeCode,
     required this.secondReportTypeCode,
+    required this.selectedImages,
   }) : super(key: key);
 
   @override
@@ -19,11 +28,85 @@ class ReportLastPage extends StatefulWidget {
 class _ReportLastPageState extends State<ReportLastPage> {
   final TextEditingController _reportReasonController = TextEditingController();
   String _reportReason = '';
-  List<String> _reportImages = [];
+  List<Uint8List> _reportImages = [];
   bool get _isSubmitEnabled =>
       _reportReason.isNotEmpty || _reportImages.isNotEmpty;
   void _submitReport() async {
     print('发怂提交举报请求');
+  }
+
+  // 获取缩略图
+  Future<void> _getThumbnailData() async {
+    for (final photo in widget.selectedImages) {
+      final thumbnailData = await photo.thumbnailDataWithSize(
+        ThumbnailSize(200.0.w.toInt(), 200.0.h.toInt()),
+      );
+      if (thumbnailData != null) {
+        _reportImages.add(thumbnailData);
+      }
+    }
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  List<Widget> _buildReportImageWidgets() {
+    return _reportImages
+        .map(
+          (image) => GestureDetector(
+            onTap: () {},
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: Container(
+                // margin: EdgeInsets.all(4.0.r),
+                child: Stack(
+                  children: [
+                    Image.memory(
+                      image,
+                      width: 60.w,
+                      height: 60.h,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          // 删除选中（跨相册生效）
+                          setState(() {
+                            _reportImages.remove(image);
+                          });
+                        },
+                        child: Container(
+                          width: 18.0.r,
+                          height: 18.0.r,
+                          decoration: BoxDecoration(
+                            color: Color.fromRGBO(12, 9, 6, 1),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(6.0.r),
+                            ),
+                          ),
+                          child: Icon(
+                            FontAwesomeIcons.xmark,
+                            size: 10.0.r,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _getThumbnailData();
   }
 
   @override
@@ -41,7 +124,7 @@ class _ReportLastPageState extends State<ReportLastPage> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
               onPressed: () {
-                Navigator.pop(context);
+                context.pop(context);
               },
             ),
             title: Text(
@@ -182,38 +265,65 @@ class _ReportLastPageState extends State<ReportLastPage> {
                             ),
                           ),
                           SizedBox(height: 12.h),
-                          GestureDetector(
-                            onTap: () {
-                              // 打开图片选择器
-                              AllPhotoRoute(isMultiple: true).push(context);
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: 80.h,
-                              width: 80.w,
-                              decoration: BoxDecoration(
-                                color: Color.fromRGBO(29, 29, 29, 1),
-                                borderRadius: BorderRadius.circular(6.r),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                spacing: 4.h,
-                                children: [
-                                  Icon(
-                                    Icons.add,
-                                    color: Color.fromRGBO(106, 106, 106, 1),
-                                    size: 30.sp,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 8.w,
+                            children: [
+                              // 已选择图片列表
+                              ..._buildReportImageWidgets(),
+                              GestureDetector(
+                                onTap: () {
+                                  if (_reportImages.length >= 4) {
+                                    ToastUtils.showToast(
+                                      context,
+                                      msg: '最多上传4张图片',
+                                    );
+                                    return;
+                                  }
+                                  // 打开图片选择器
+                                  AllPhotoRoute(
+                                    isMultiple: true,
+                                    firstReportTypeCode:
+                                        widget.firstReportTypeCode,
+                                    secondReportTypeCode:
+                                        widget.secondReportTypeCode,
+                                    featureCode: 1,
+                                  ).push(context);
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: 60.h,
+                                  width: 60.w,
+                                  decoration: BoxDecoration(
+                                    color: Color.fromRGBO(29, 29, 29, 1),
+                                    borderRadius: BorderRadius.circular(6.r),
                                   ),
-                                  Text(
-                                    '0/4',
-                                    style: TextStyle(
-                                      color: Color.fromRGBO(106, 106, 106, 1),
-                                      fontSize: 12.sp,
-                                    ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    spacing: 4.h,
+                                    children: [
+                                      Icon(
+                                        Icons.add,
+                                        color: Color.fromRGBO(106, 106, 106, 1),
+                                        size: 30.sp,
+                                      ),
+                                      Text(
+                                        '${_reportImages.length}/4',
+                                        style: TextStyle(
+                                          color: Color.fromRGBO(
+                                            106,
+                                            106,
+                                            106,
+                                            1,
+                                          ),
+                                          fontSize: 12.sp,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
