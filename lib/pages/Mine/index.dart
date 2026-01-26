@@ -683,119 +683,122 @@ class _MinePageState extends State<MinePage>
 
   // 背景图片 + 头像 + 用户名 + 账号
   Widget _buildProfileInfo() {
-    return GestureDetector(onTap: () {
-      PreviewRoute(
-        mode: '1',
-        tag: '',
-        imageUrl:
-            'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
-      ).push(context);
-    },child: Container(
-      alignment: Alignment.bottomLeft,
-      width: double.infinity,
-      height: 240.h,
-      decoration: BoxDecoration(
-        border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
-        image: DecorationImage(
-          image: NetworkImage(
-            'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
+    return GestureDetector(
+      onTap: () {
+        PreviewRoute(
+          mode: '1',
+          tag: '',
+          imageUrl:
+              'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
+        ).push(context);
+      },
+      child: Container(
+        alignment: Alignment.bottomLeft,
+        width: double.infinity,
+        height: 240.h,
+        decoration: BoxDecoration(
+          border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
+          image: DecorationImage(
+            image: NetworkImage(
+              'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
+            ),
+            fit: BoxFit.cover,
           ),
-          fit: BoxFit.cover,
         ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 20.h,
-          bottom: 10.h,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    PreviewRoute(
-                      mode: '0',
-                      tag: 'avatar',
-                      imageUrl:
-                          'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
-                    ).push(context);
-                  },
-                  child: Container(
-                    width: 80.w,
-                    height: 80.h,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 2.w),
-                      shape: BoxShape.circle,
-                    ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 20.h,
+            bottom: 10.h,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      PreviewRoute(
+                        mode: '0',
+                        tag: 'avatar',
+                        imageUrl:
+                            'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
+                      ).push(context);
+                    },
                     child: Hero(
                       tag: 'avatar',
-                      child: ClipOval(
-                        child: Image.network(
-                          'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
-                          fit: BoxFit.cover,
+                      child: Container(
+                        width: 84.w,
+                        height: 84.h,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 2.w),
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
+                            ),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: () {
-                      context.go('/create');
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      width: 24.w,
-                      height: 24.h,
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 190, 190, 49),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        FontAwesomeIcons.plus,
-                        color: Colors.white,
-                        size: 16.r,
-                        fontWeight: FontWeight.bold,
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        context.go('/create');
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: 24.w,
+                        height: 24.h,
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 190, 190, 49),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          FontAwesomeIcons.plus,
+                          color: Colors.white,
+                          size: 16.r,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(width: 10.w),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'llg',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
+                ],
+              ),
+              SizedBox(width: 10.w),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'llg',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                Text(
-                  '絮语号：sdk19991212',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '絮语号：sdk19991212',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),);
+    );
   }
 
   // 个性签名
