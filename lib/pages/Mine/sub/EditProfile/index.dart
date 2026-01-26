@@ -379,28 +379,28 @@ class _EditProfilePageState extends State<EditProfilePage>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              width: 60.w,
-              child: Text(
-                label,
-                style: TextStyle(color: Colors.grey, fontSize: 16.sp),
+            Expanded(
+              flex: 3,
+              child: Container(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  label,
+                  style: TextStyle(color: Colors.grey, fontSize: 16.sp),
+                ),
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(left: 80.w, right: 80.w),
-                child: Text(
-                  content,
-                  style: TextStyle(
-                    color: label == '简介' ? Colors.grey : Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  maxLines: 1,
-                  textAlign: TextAlign.left,
+              flex: 7,
+              child: Text(
+                content,
+                style: TextStyle(
+                  color: label == '简介' ? Colors.grey : Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                maxLines: 1,
+                textAlign: TextAlign.left,
               ),
             ),
             Icon(

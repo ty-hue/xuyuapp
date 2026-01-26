@@ -27,6 +27,7 @@ class _UpdateUserInfoFieldState extends State<UpdateUserInfoFieldPage> {
             '取消',
             style: TextStyle(
               color: Colors.white,
+              fontSize: 16.sp,
             ),
           ),
         ),
@@ -48,6 +49,7 @@ class _UpdateUserInfoFieldState extends State<UpdateUserInfoFieldPage> {
               '保存',
               style: TextStyle(
                 color: const Color.fromARGB(255, 212, 38, 47),
+                fontSize: 16.sp,
               ),
             ),
           ),
