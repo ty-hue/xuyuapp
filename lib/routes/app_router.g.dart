@@ -10,6 +10,7 @@ List<RouteBase> get $appRoutes => [
   $loginRoute,
   $settingsPageRoute,
   $searchPageRoute,
+  $previewRoute,
   $addFriendRoute,
   $relationshipRoute,
   $reportPageRoute,
@@ -141,6 +142,34 @@ extension $SearchPageRouteExtension on SearchPageRoute {
       const SearchPageRoute();
 
   String get location => GoRouteData.$location('/search_myself');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $previewRoute => GoRouteData.$route(
+  path: '/preview',
+
+  factory: $PreviewRouteExtension._fromState,
+);
+
+extension $PreviewRouteExtension on PreviewRoute {
+  static PreviewRoute _fromState(GoRouterState state) => PreviewRoute(
+    mode: state.uri.queryParameters['mode']!,
+    imageUrl: state.uri.queryParameters['image-url']!,
+    tag: state.uri.queryParameters['tag']!,
+  );
+
+  String get location => GoRouteData.$location(
+    '/preview',
+    queryParams: {'mode': mode, 'image-url': imageUrl, 'tag': tag},
+  );
 
   void go(BuildContext context) => context.go(location);
 

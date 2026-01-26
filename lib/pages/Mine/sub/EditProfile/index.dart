@@ -305,10 +305,20 @@ class _EditProfilePageState extends State<EditProfilePage>
   Widget _buildFlexibleHeader() {
     return Stack(
       children: [
-        Image.network(
-          'https://gips1.baidu.com/it/u=1024042145,2716310167&fm=3028&app=3028&f=JPEG&fmt=auto?w=1440&h=2560',
-          width: MediaQuery.of(context).size.width,
-          fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () {
+            PreviewRoute(
+              mode: '1',
+              tag: '',
+              imageUrl:
+                  'https://gips1.baidu.com/it/u=1024042145,2716310167&fm=3028&app=3028&f=JPEG&fmt=auto?w=1440&h=2560',
+            ).push(context);
+          },
+          child: Image.network(
+            'https://gips1.baidu.com/it/u=1024042145,2716310167&fm=3028&app=3028&f=JPEG&fmt=auto?w=1440&h=2560',
+            width: MediaQuery.of(context).size.width,
+            fit: BoxFit.cover,
+          ),
         ),
         Positioned(
           bottom: 0,

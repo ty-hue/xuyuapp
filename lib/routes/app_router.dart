@@ -3,6 +3,7 @@ import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/Preview/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Relationship/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
@@ -74,6 +75,21 @@ class SearchPageRoute extends GoRouteData {
     return SearchPage();
   }
 }
+// 预览页 路由
+@TypedGoRoute<PreviewRoute>(path: '/preview')
+class PreviewRoute extends GoRouteData {
+  final String mode;
+  final String imageUrl;
+  final String tag;
+  PreviewRoute({ required this.mode,  required this.imageUrl, required this.tag});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return PreviewPage(mode: mode, imageUrl: imageUrl, tag: tag);
+  }
+}
+
+
 
 // 添加朋友页 路由
 @TypedGoRoute<AddFriendRoute>(path: '/add_friend')

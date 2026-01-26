@@ -1,4 +1,5 @@
 import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
+import 'package:bilbili_project/pages/Mine/sub/Preview/index.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -548,7 +549,6 @@ class _MinePageState extends State<MinePage>
               GestureDetector(
                 onTap: () {
                   // 弹出dialog
-                  
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -683,14 +683,23 @@ class _MinePageState extends State<MinePage>
 
   // 背景图片 + 头像 + 用户名 + 账号
   Widget _buildProfileInfo() {
-    return Container(
+    return GestureDetector(onTap: () {
+      PreviewRoute(
+        mode: '1',
+        tag: '',
+        imageUrl:
+            'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
+      ).push(context);
+    },child: Container(
       alignment: Alignment.bottomLeft,
       width: double.infinity,
       height: 240.h,
       decoration: BoxDecoration(
         border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
         image: DecorationImage(
-          image: AssetImage('lib/assets/mine_bg.png'),
+          image: NetworkImage(
+            'https://pic.rmb.bdstatic.com/a5a5448a468ca88ebc57ef6bdbec13ee@wm_1,k_cGljX2JqaHdhdGVyLmpwZw==',
+          ),
           fit: BoxFit.cover,
         ),
       ),
@@ -706,15 +715,30 @@ class _MinePageState extends State<MinePage>
           children: [
             Stack(
               children: [
-                Container(
-                  width: 80.w,
-                  height: 80.h,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2.w),
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: AssetImage('lib/assets/avatar.webp'),
-                      fit: BoxFit.cover,
+                GestureDetector(
+                  onTap: () {
+                    PreviewRoute(
+                      mode: '0',
+                      tag: 'avatar',
+                      imageUrl:
+                          'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
+                    ).push(context);
+                  },
+                  child: Container(
+                    width: 80.w,
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 2.w),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Hero(
+                      tag: 'avatar',
+                      child: ClipOval(
+                        child: Image.network(
+                          'https://ww2.sinaimg.cn/mw690/008yzw28ly1hwmic0i3o4j30u00u0djl.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -771,7 +795,7 @@ class _MinePageState extends State<MinePage>
           ],
         ),
       ),
-    );
+    ),);
   }
 
   // 个性签名

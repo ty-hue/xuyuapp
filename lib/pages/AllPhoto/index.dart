@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/routes/app_router.dart';
-import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
 import 'package:extended_image/extended_image.dart';
@@ -83,7 +82,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
     if (albums.isEmpty) return;
     if (!mounted) return;
     setState(() {
-      albums.length > 0 ? title = albums[0].name : title = '所有照片';
+      albums.isNotEmpty ? title = albums[0].name : title = '所有照片';
       albums = albums;
     });
   }
