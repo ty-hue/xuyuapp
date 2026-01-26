@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'comps/default.dart';
-import 'comps/Result/result.dart';
+import 'comps/Result/index.dart';
 
 class SearchPage extends StatefulWidget {
   SearchPage({Key? key}) : super(key: key);
@@ -276,7 +276,7 @@ class _SearchPageState extends State<SearchPage> {
                         }
                       },
                 )
-              : ResultView(statusBarHeight: statusBarHeight),
+              : ResultView(statusBarHeight: statusBarHeight,currentIndex: _searchCategory == '' ? 0 : int.parse(_searchCategory)),
         ),
       ),
     );

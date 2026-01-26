@@ -4,8 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'comps/tab_view_comp.dart';
 
 class ResultView extends StatefulWidget {
+  final int currentIndex;
   final double statusBarHeight;
-  ResultView({Key? key, required this.statusBarHeight}) : super(key: key);
+  ResultView({
+    Key? key,
+    required this.statusBarHeight,
+    required this.currentIndex,
+  }) : super(key: key);
 
   @override
   State<ResultView> createState() => _ResultViewState();
@@ -17,7 +22,11 @@ class _ResultViewState extends State<ResultView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 5);
+    _tabController = TabController(
+      vsync: this,
+      length: 5,
+      initialIndex: widget.currentIndex,
+    );
   }
 
   Widget _buildTabBarWidget() {
@@ -29,7 +38,7 @@ class _ResultViewState extends State<ResultView>
         border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
       ),
       child: TabBar(
-        padding: EdgeInsets.only(left: 20.w,right: 20.w), // ✅ 关键
+        padding: EdgeInsets.only(left: 20.w, right: 20.w), // ✅ 关键
         controller: _tabController,
         indicatorColor: const Color.fromARGB(255, 190, 173, 21),
         indicatorWeight: 3.h,
