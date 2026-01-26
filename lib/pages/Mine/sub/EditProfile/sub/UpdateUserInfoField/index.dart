@@ -19,15 +19,18 @@ class _UpdateUserInfoFieldState extends State<UpdateUserInfoFieldPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(22, 22, 22, 1),
-        leading: TextButton(
-          onPressed: () {
+        leading: GestureDetector(
+          onTap: () {
             context.pop();
           },
-          child: Text(
-            '取消',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16.sp,
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(
+              '取消',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+              ),
             ),
           ),
         ),
@@ -40,18 +43,22 @@ class _UpdateUserInfoFieldState extends State<UpdateUserInfoFieldPage> {
           ),
         ),
         centerTitle: true,
+        actionsPadding: EdgeInsets.only(right: 10.w),
         actions: [
-          TextButton(
-            onPressed: () {
+          GestureDetector(
+            onTap: () {
               print('保存');
             },
-            child: Text(
-              '保存',
-              style: TextStyle(
-                color: const Color.fromARGB(255, 212, 38, 47),
-                fontSize: 16.sp,
+            child:Container(
+              alignment: Alignment.center,
+              child: Text(
+                '保存',
+                style: TextStyle(
+                  color: const Color.fromARGB(255, 212, 38, 47),
+                  fontSize: 16.sp,
+                ),
               ),
-            ),
+            )
           ),
         ],
       ),
