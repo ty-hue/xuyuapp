@@ -336,9 +336,9 @@ class _ReportLastPageState extends State<ReportLastPage> {
                   height: 48.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isSubmitEnabled
-                          ? Color.fromRGBO(31, 94, 253, 1)
-                          : Color.fromRGBO(10, 32, 86, 1),
+                      disabledBackgroundColor: Color.fromRGBO(31,94,253, 0.2),
+                      backgroundColor: 
+                           Color.fromRGBO(31, 94, 253, 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
                       ),
