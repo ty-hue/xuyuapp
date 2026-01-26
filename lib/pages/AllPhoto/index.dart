@@ -17,8 +17,7 @@ class AllPhotoPage extends StatefulWidget {
   final int maxSelectCount; // 最大选择数量
   final int
   featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
-  final String firstReportTypeCode; // 一级上报类型编码
-  final String secondReportTypeCode; // 二级上报类型编码
+
   final bool isMultiple; // 是否多选
   final EditorConfig editorConfig;
   const AllPhotoPage({
@@ -27,8 +26,7 @@ class AllPhotoPage extends StatefulWidget {
     required this.isMultiple,
     required this.maxSelectCount,
     required this.featureCode,
-    required this.firstReportTypeCode,
-    required this.secondReportTypeCode,
+
   }) : super(key: key);
   @override
   State<AllPhotoPage> createState() => _AllPhotoPageState();
@@ -201,18 +199,13 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
       case -1:
         break;
       case 1:
-        context.push(
-          ReportLastRoute(
-            firstReportTypeCode: widget.firstReportTypeCode,
-            secondReportTypeCode: widget.secondReportTypeCode,
-          ).location,
-          extra: selectedImages,
-        );
+        context.pop(selectedImages);
         break;
       default:
         break;
     }
   }
+
   // 封装相册数据
   Future<void> _handleAlbums() async {
     for (final album in albums) {

@@ -143,14 +143,12 @@ class AllPhotoRoute extends GoRouteData {
   final int? maxSelectCount; // 最大选择数量
   final int?
   featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
-  final String? firstReportTypeCode; // 一级上报类型编码
-  final String? secondReportTypeCode; // 二级上报类型编码
+
   const AllPhotoRoute({
     this.isMultiple,
     this.maxSelectCount,
     this.featureCode,
-    this.firstReportTypeCode,
-    this.secondReportTypeCode,
+
   });
 
   @override
@@ -158,8 +156,7 @@ class AllPhotoRoute extends GoRouteData {
     final isMultiple = this.isMultiple ?? false;
     final maxSelectCount = this.maxSelectCount ?? 4;
     final featureCode = this.featureCode ?? -1;
-    final firstReportTypeCode = this.firstReportTypeCode ?? '-1';
-    final secondReportTypeCode = this.secondReportTypeCode ?? '-1';
+
     final editorConfig =
         state.extra as EditorConfig? ??
         EditorConfig(
@@ -181,8 +178,7 @@ class AllPhotoRoute extends GoRouteData {
         isMultiple: isMultiple,
         maxSelectCount: maxSelectCount,
         featureCode: featureCode,
-        firstReportTypeCode: firstReportTypeCode,
-        secondReportTypeCode: secondReportTypeCode,
+
       ),
 
       transitionDuration: const Duration(milliseconds: 300),

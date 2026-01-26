@@ -1,6 +1,4 @@
-import 'package:bilbili_project/pages/Report/sub/report_second.dart';
 import 'package:bilbili_project/routes/app_router.dart';
-import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:flutter/material.dart';
@@ -29,20 +27,24 @@ class _ReportLastPageState extends State<ReportLastPage> {
   final TextEditingController _reportReasonController = TextEditingController();
   String _reportReason = '';
   List<Uint8List> _reportImages = [];
+  List<Uint8List> _reportOriginImages = []; // 存储图片原始数据
   bool get _isSubmitEnabled =>
       _reportReason.isNotEmpty || _reportImages.isNotEmpty;
   void _submitReport() async {
-    print('发怂提交举报请求');
+    print('发送提交举报请求');
   }
 
   // 获取缩略图
-  Future<void> _getThumbnailData() async {
-    for (final photo in widget.selectedImages) {
+  Future<void> _getThumbnailData(List<AssetEntity> selectedImages) async {
+    for (final photo in selectedImages) {
       final thumbnailData = await photo.thumbnailDataWithSize(
         ThumbnailSize(200.0.w.toInt(), 200.0.h.toInt()),
       );
       if (thumbnailData != null) {
         _reportImages.add(thumbnailData);
+        // 存储图片原始数据
+        final originBytes = await photo.originBytes;
+        _reportOriginImages.add(originBytes!);
       }
     }
     if (!mounted) return;
@@ -53,11 +55,16 @@ class _ReportLastPageState extends State<ReportLastPage> {
     return _reportImages
         .map(
           (image) => GestureDetector(
-            onTap: () {},
+            onTap: () async {
+              final index = _reportImages.indexOf(image);
+              context.push(
+                SingleImagePreviewRoute().location,
+                extra: {'image': _reportOriginImages[index]},
+              );
+            },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.r),
-              child: Container(
-                // margin: EdgeInsets.all(4.0.r),
+              child: SizedBox(
                 child: Stack(
                   children: [
                     Image.memory(
@@ -100,13 +107,6 @@ class _ReportLastPageState extends State<ReportLastPage> {
           ),
         )
         .toList();
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _getThumbnailData();
   }
 
   @override
@@ -272,7 +272,7 @@ class _ReportLastPageState extends State<ReportLastPage> {
                               // 已选择图片列表
                               ..._buildReportImageWidgets(),
                               GestureDetector(
-                                onTap: () {
+                                onTap: () async {
                                   if (_reportImages.length >= 4) {
                                     ToastUtils.showToast(
                                       context,
@@ -281,14 +281,14 @@ class _ReportLastPageState extends State<ReportLastPage> {
                                     return;
                                   }
                                   // 打开图片选择器
-                                  AllPhotoRoute(
+                                  final selectedImages = await AllPhotoRoute(
                                     isMultiple: true,
-                                    firstReportTypeCode:
-                                        widget.firstReportTypeCode,
-                                    secondReportTypeCode:
-                                        widget.secondReportTypeCode,
+                                    maxSelectCount: 4 - _reportImages.length,
                                     featureCode: 1,
                                   ).push(context);
+                                  if (selectedImages != null) {
+                                    await _getThumbnailData(selectedImages);
+                                  }
                                 },
                                 child: Container(
                                   alignment: Alignment.center,

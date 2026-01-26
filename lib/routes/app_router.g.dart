@@ -342,8 +342,6 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       state.uri.queryParameters,
       int.tryParse,
     ),
-    firstReportTypeCode: state.uri.queryParameters['first-report-type-code'],
-    secondReportTypeCode: state.uri.queryParameters['second-report-type-code'],
   );
 
   String get location => GoRouteData.$location(
@@ -353,10 +351,6 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       if (maxSelectCount != null)
         'max-select-count': maxSelectCount!.toString(),
       if (featureCode != null) 'feature-code': featureCode!.toString(),
-      if (firstReportTypeCode != null)
-        'first-report-type-code': firstReportTypeCode,
-      if (secondReportTypeCode != null)
-        'second-report-type-code': secondReportTypeCode,
     },
   );
 
