@@ -26,8 +26,8 @@ class ReportLastPage extends StatefulWidget {
 class _ReportLastPageState extends State<ReportLastPage> {
   final TextEditingController _reportReasonController = TextEditingController();
   String _reportReason = '';
-  List<Uint8List> _reportImages = [];
-  List<Uint8List> _reportOriginImages = []; // 存储图片原始数据
+  final List<Uint8List> _reportImages = [];
+  final List<Uint8List> _reportOriginImages = []; // 存储图片原始数据
   bool get _isSubmitEnabled =>
       _reportReason.isNotEmpty || _reportImages.isNotEmpty;
   void _submitReport() async {
@@ -120,6 +120,7 @@ class _ReportLastPageState extends State<ReportLastPage> {
       child: SafeArea(
         top: false,
         child: Scaffold(
+          resizeToAvoidBottomInset: false,
           appBar: AppBar(
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
