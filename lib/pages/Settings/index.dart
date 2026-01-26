@@ -24,87 +24,107 @@ class _SettingsState extends State<SettingsPage> {
     );
   }
 
- Widget _buildGroupItem({
-  required String itemName,
-  required IconData icon,
-  bool needUnderline = true,
-  bool needTrailingIcon = true,
-  required Function()? cb,
-}) {
-  return Material(
-    color: const Color.fromRGBO(35, 35, 35, 1), // 默认背景
-    child: InkWell(
-      onTap: cb,
-      splashColor: Colors.white.withOpacity(0.08), // 水波纹
-      highlightColor: Colors.white.withOpacity(0.05), // 按下态 ⭐
-      child: SizedBox(
-        height: 54.h,
-        child: Padding(
-          padding:  EdgeInsets.only(left: 16.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Icon(icon, color: Colors.grey, size: 20.r),
-               SizedBox(width: 10.w),
-              Expanded(
-                child: Container(
-                  padding:  EdgeInsets.only(right: 16.w),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: needUnderline
-                          ?  BorderSide(color: Colors.grey, width: 0.5.w)
-                          : BorderSide.none,
+  Widget _buildGroupItem({
+    required String itemName,
+    required IconData icon,
+    bool needUnderline = true,
+    bool needTrailingIcon = true,
+    required Function()? cb,
+    bool isFirst = false, // 是否为第一个
+  }) {
+    return Material(
+      color: const Color.fromRGBO(35, 35, 35, 1), // 默认背景
+      // 如果isFirst为true 则设置左上和右上的圆角， 如果needUnderline为true 则设置左下和右下的圆角 其余情况无圆角
+      borderRadius: BorderRadius.vertical(
+        top: isFirst ? Radius.circular(8.r) : Radius.zero,
+        bottom: !needUnderline ? Radius.circular(8.r) : Radius.zero,
+      ),
+      
+      clipBehavior: Clip.antiAlias, // ⭐️关键
+
+      child: InkWell(
+        onTap: cb,
+        splashColor: Colors.white.withOpacity(0.08), // 水波纹
+        highlightColor: Colors.white.withOpacity(0.05), // 按下态 ⭐
+        child: SizedBox(
+          height: 54.h,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(icon, color: Colors.grey, size: 20.r),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(right: 16.w),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: needUnderline
+                            ? BorderSide(color: Colors.grey, width: 0.5.w)
+                            : BorderSide.none,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          itemName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        needTrailingIcon
+                            ? Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.grey,
+                                size: 14.r,
+                              )
+                            : const SizedBox.shrink(),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        itemName,
-                        style:  TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      needTrailingIcon
-                          ?  Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.grey,
-                              size: 14.r,
-                            )
-                          : const SizedBox.shrink(),
-                    ],
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,color: Colors.white,size: 20.r,),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20.r),
           onPressed: () {
             context.pop();
           },
         ),
         backgroundColor: Color.fromRGBO(11, 11, 11, 1),
-        title: Text('设置',style: TextStyle(color: Colors.white,fontSize: 16.sp,fontWeight: FontWeight.bold),),
+        title: Text(
+          '设置',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.only(left: 16.w, right: 16.w,top: 16.h,bottom: 60.h),
+          padding: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            top: 16.h,
+            bottom: 60.h,
+          ),
           color: Color.fromRGBO(11, 11, 11, 1),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -113,25 +133,27 @@ class _SettingsState extends State<SettingsPage> {
               SizedBox(height: 10.h),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.r),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildGroupItem(itemName: '账号与安全', icon: Icons.person,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '隐私设置', icon: Icons.lock,cb: (){
-                      }),
-                      _buildGroupItem(
-                        itemName: '支付设置',
-                        icon: Icons.payment,
-                        needUnderline: false,
-                        cb: (){
-                        },
-                      ),
-                    ],
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildGroupItem(
+                      isFirst: true,
+                      itemName: '账号与安全',
+                      icon: Icons.person,
+                      cb: () {},
+                    ),
+                    _buildGroupItem(
+                      itemName: '隐私设置',
+                      icon: Icons.lock,
+                      cb: () {},
+                    ),
+                    _buildGroupItem(
+                      itemName: '支付设置',
+                      icon: Icons.payment,
+                      needUnderline: false,
+                      cb: () {},
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 20.h),
@@ -145,46 +167,57 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                   child: Column(
                     children: [
-                      _buildGroupItem(itemName: '通用设置', icon: Icons.settings,cb: (){
-                      }),
+                      _buildGroupItem(
+                        isFirst: true,
+                        itemName: '通用设置',
+                        icon: Icons.settings,
+                        cb: () {},
+                      ),
                       _buildGroupItem(
                         itemName: '通知设置',
                         icon: Icons.notifications,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '通知消息管理',
                         icon: Icons.notifications_active,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
-                      _buildGroupItem(itemName: '聊天与通话设置', icon: Icons.phone,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '播放设置', icon: Icons.play_arrow,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '背景设置', icon: Icons.wallpaper,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '长辈模式', icon: Icons.people_alt,cb: (){
-                      }),
+                      _buildGroupItem(
+                        itemName: '聊天与通话设置',
+                        icon: Icons.phone,
+                        cb: () {},
+                      ),
+                      _buildGroupItem(
+                        itemName: '播放设置',
+                        icon: Icons.play_arrow,
+                        cb: () {},
+                      ),
+                      _buildGroupItem(
+                        itemName: '背景设置',
+                        icon: Icons.wallpaper,
+                        cb: () {},
+                      ),
+                      _buildGroupItem(
+                        itemName: '长辈模式',
+                        icon: Icons.people_alt,
+                        cb: () {},
+                      ),
                       _buildGroupItem(
                         itemName: '字体大小',
                         icon: Icons.text_fields,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '清理缓存',
                         icon: Icons.cleaning_services,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '系统权限',
                         icon: Icons.system_update_alt,
                         needUnderline: false,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                     ],
                   ),
@@ -201,54 +234,67 @@ class _SettingsState extends State<SettingsPage> {
                   ),
                   child: Column(
                     children: [
-                      _buildGroupItem(itemName: '关于絮语', icon: Icons.info,cb: (){
-                      }),
+                      _buildGroupItem(
+                        isFirst: true,
+                        itemName: '关于絮语',
+                        icon: Icons.info,
+                        cb: () {},
+                      ),
                       _buildGroupItem(
                         itemName: '了解与管理广告推送',
                         icon: Icons.ad_units_sharp,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
-                      _buildGroupItem(itemName: '反馈与帮助', icon: Icons.help,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '絮语规则中心', icon: Icons.rule,cb: (){
-                      }),
+                      _buildGroupItem(
+                        itemName: '反馈与帮助',
+                        icon: Icons.help,
+                        cb: () {},
+                      ),
+                      _buildGroupItem(
+                        itemName: '絮语规则中心',
+                        icon: Icons.rule,
+                        cb: () {},
+                      ),
                       _buildGroupItem(
                         itemName: '资质证照',
                         icon: Icons.verified_user,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '用户协议',
                         icon: Icons.description,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '隐私政策及简明版',
                         icon: Icons.privacy_tip,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '应用权限',
                         icon: Icons.perm_identity,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
-                      _buildGroupItem(itemName: '个人信息收集清单', icon: Icons.info,cb: (){
-                      }),
-                      _buildGroupItem(itemName: '第三方信息共享清单', icon: Icons.info,cb: (){
-                      }),
+                      _buildGroupItem(
+                        itemName: '个人信息收集清单',
+                        icon: Icons.info,
+                        cb: () {},
+                      ),
+                      _buildGroupItem(
+                        itemName: '第三方信息共享清单',
+                        icon: Icons.info,
+                        cb: () {},
+                      ),
 
-                      _buildGroupItem(itemName: '个人信息管理', icon: Icons.info,cb: (){
-                      }),
+                      _buildGroupItem(
+                        itemName: '个人信息管理',
+                        icon: Icons.info,
+                        cb: () {},
+                      ),
                       _buildGroupItem(
                         itemName: '开源软件声明',
                         icon: Icons.code,
-                        cb: (){
-                        },
+                        cb: () {},
                         needUnderline: false,
                       ),
                     ],
@@ -265,25 +311,32 @@ class _SettingsState extends State<SettingsPage> {
                   child: Column(
                     children: [
                       _buildGroupItem(
+                        isFirst: true,
                         itemName: '切换账号',
                         icon: Icons.switch_account,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                       _buildGroupItem(
                         itemName: '退出登录',
                         icon: Icons.exit_to_app,
                         needUnderline: false,
                         needTrailingIcon: false,
-                        cb: (){
-                        },
+                        cb: () {},
                       ),
                     ],
                   ),
                 ),
               ),
               SizedBox(height: 60.h),
-              Text('絮语 version 1.0.0',style: TextStyle(color: Colors.grey,fontSize: 14.sp,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
+              Text(
+                '絮语 version 1.0.0',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
