@@ -33,7 +33,7 @@ class _ReportSecondPageState extends State<ReportSecondPage> {
       ReportLastRoute(
         firstReportTypeCode: widget.firstReportTypeCode,
         secondReportTypeCode: '-1',
-      ).push(context);
+      ).replace(context);
     }
   }
 
