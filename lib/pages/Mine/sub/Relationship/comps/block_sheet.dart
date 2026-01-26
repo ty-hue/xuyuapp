@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class BlockSheet extends StatefulWidget {
   final bool initialValue;
@@ -82,6 +83,7 @@ class _BlockSheetState extends State<BlockSheet> {
                       text: '确认拉黑',
                       color: Color.fromRGBO(254, 102, 87, 1),
                       onTap: () {
+                        Navigator.pop(context);
                         print('确认拉黑');
                       },
                     ),
@@ -93,6 +95,7 @@ class _BlockSheetState extends State<BlockSheet> {
                       text: '不让他看作品',
                       color: Color.fromRGBO(22, 24, 35, 1),
                       onTap: () {
+                        Navigator.pop(context);
                         print('不让他看作品');
                       },
                     ),
@@ -106,6 +109,7 @@ class _BlockSheetState extends State<BlockSheet> {
                 color: Color.fromRGBO(22, 24, 35, 1),
                 text: '取消',
                 onTap: () {
+                  Navigator.pop(context);
                   print('取消');
                 },
               ),

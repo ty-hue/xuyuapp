@@ -86,7 +86,7 @@ class _DontSeeSheetState extends State<DontSeeSheet> {
     return ClipRRect(
       borderRadius: BorderRadius.all(Radius.circular(16.r)),
       child: Container(
-        height: 320.h,
+        height: 340.h,
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         color: Color.fromRGBO(243, 243, 244, 1),
         child: Column(
