@@ -64,8 +64,6 @@ class _DefaultViewState extends State<DefaultView> {
       onTap: onTap,
       child: Container(
         alignment: Alignment.center,
-        height: 10.h,
-        padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10.w),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
@@ -233,8 +231,7 @@ class _DefaultViewState extends State<DefaultView> {
                   ]
                 : [],
           ),
-          Container(
-            child: Column(
+        Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -246,7 +243,7 @@ class _DefaultViewState extends State<DefaultView> {
                 GridView.count(
                   padding: EdgeInsets.zero,
                   mainAxisSpacing: 20.w,
-                  crossAxisSpacing: 20.w,
+                  crossAxisSpacing: 20.h,
                   childAspectRatio: 3.0,
                   crossAxisCount: 3,
                   shrinkWrap: true,
@@ -306,7 +303,7 @@ class _DefaultViewState extends State<DefaultView> {
                 ),
               ],
             ),
-          ),
+          
         ],
       ),
     );

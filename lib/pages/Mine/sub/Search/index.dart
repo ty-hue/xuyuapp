@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'comps/default.dart';
-import 'comps/result.dart';
+import 'comps/Result/result.dart';
 
 class SearchPage extends StatefulWidget {
   SearchPage({Key? key}) : super(key: key);
@@ -205,13 +205,15 @@ class _SearchPageState extends State<SearchPage> {
                   setState(() {});
                 }
               },
-              child: Container(
-                width: 40.0.w,
-                alignment: Alignment.center,
-                child: Text(
-                  '搜索',
-                  style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '搜索',
+                    style: TextStyle(fontSize: 14.0.sp, color: Colors.white),
+                  ),
+                ],
               ),
             ),
           ],
