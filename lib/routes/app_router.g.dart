@@ -181,10 +181,22 @@ RouteBase get $relationshipRoute => GoRouteData.$route(
 );
 
 extension $RelationshipRouteExtension on RelationshipRoute {
-  static RelationshipRoute _fromState(GoRouterState state) =>
-      const RelationshipRoute();
+  static RelationshipRoute _fromState(GoRouterState state) => RelationshipRoute(
+    initialIndex:
+        _$convertMapValue(
+          'initial-index',
+          state.uri.queryParameters,
+          int.parse,
+        ) ??
+        0,
+  );
 
-  String get location => GoRouteData.$location('/relationship');
+  String get location => GoRouteData.$location(
+    '/relationship',
+    queryParams: {
+      if (initialIndex != 0) 'initial-index': initialIndex.toString(),
+    },
+  );
 
   void go(BuildContext context) => context.go(location);
 
@@ -194,6 +206,15 @@ extension $RelationshipRouteExtension on RelationshipRoute {
       context.pushReplacement(location);
 
   void replace(BuildContext context) => context.replace(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T? Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
 }
 
 RouteBase get $reportPageRoute => GoRouteData.$route(
@@ -321,6 +342,8 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       state.uri.queryParameters,
       int.tryParse,
     ),
+    firstReportTypeCode: state.uri.queryParameters['first-report-type-code'],
+    secondReportTypeCode: state.uri.queryParameters['second-report-type-code'],
   );
 
   String get location => GoRouteData.$location(
@@ -330,6 +353,10 @@ extension $AllPhotoRouteExtension on AllPhotoRoute {
       if (maxSelectCount != null)
         'max-select-count': maxSelectCount!.toString(),
       if (featureCode != null) 'feature-code': featureCode!.toString(),
+      if (firstReportTypeCode != null)
+        'first-report-type-code': firstReportTypeCode,
+      if (secondReportTypeCode != null)
+        'second-report-type-code': secondReportTypeCode,
     },
   );
 
@@ -358,15 +385,6 @@ extension $SingleImagePreviewRouteExtension on SingleImagePreviewRoute {
       context.pushReplacement(location);
 
   void replace(BuildContext context) => context.replace(location);
-}
-
-T? _$convertMapValue<T>(
-  String key,
-  Map<String, String> map,
-  T? Function(String) converter,
-) {
-  final value = map[key];
-  return value == null ? null : converter(value);
 }
 
 bool _$boolConverter(String value) {

@@ -5,7 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class RelationshipPage extends StatefulWidget {
-  RelationshipPage({Key? key}) : super(key: key);
+  final int initialIndex; // 👈 外部传进来的初始 tab
+  RelationshipPage({Key? key, required this.initialIndex}) : super(key: key);
 
   @override
   State<RelationshipPage> createState() => _RelationshipPageState();
@@ -17,7 +18,11 @@ class _RelationshipPageState extends State<RelationshipPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 4);
+    _tabController = TabController(
+      vsync: this,
+      length: 3,
+      initialIndex: widget.initialIndex,
+    );
   }
 
   Widget _buildTabBarWidget() {
@@ -39,7 +44,6 @@ class _RelationshipPageState extends State<RelationshipPage>
           Tab(text: '互关'),
           Tab(text: '关注'),
           Tab(text: '粉丝'),
-          Tab(text: '朋友'),
         ],
         labelStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
         unselectedLabelStyle: TextStyle(
@@ -114,10 +118,9 @@ class _RelationshipPageState extends State<RelationshipPage>
             child: TabBarView(
               controller: _tabController,
               children: [
-                TabViewComp(),
-                TabViewComp(),
-                TabViewComp(),
-                TabViewComp(),
+                TabViewComp(currentIndex: 0),
+                TabViewComp(currentIndex: 1),
+                TabViewComp(currentIndex: 2),
               ],
             ),
           ),

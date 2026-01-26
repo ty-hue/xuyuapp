@@ -547,7 +547,8 @@ class _MinePageState extends State<MinePage>
             children: [
               GestureDetector(
                 onTap: () {
-                  RelationshipRoute().push(context);
+                  // 弹出dialog
+                  
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -601,7 +602,7 @@ class _MinePageState extends State<MinePage>
               ),
               GestureDetector(
                 onTap: () {
-                  RelationshipRoute().push(context);
+                  RelationshipRoute(initialIndex: 1).push(context);
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -628,7 +629,7 @@ class _MinePageState extends State<MinePage>
               ),
               GestureDetector(
                 onTap: () {
-                  RelationshipRoute().push(context);
+                  RelationshipRoute(initialIndex: 2).push(context);
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

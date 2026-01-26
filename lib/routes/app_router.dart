@@ -89,22 +89,27 @@ class AddFriendRoute extends GoRouteData {
 // 关系页 路由
 @TypedGoRoute<RelationshipRoute>(path: '/relationship')
 class RelationshipRoute extends GoRouteData {
-  const RelationshipRoute();
+  final int initialIndex; // 👈 外部传进来的初始 tab
+  RelationshipRoute({this.initialIndex = 0});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return RelationshipPage();
+    return RelationshipPage(initialIndex: initialIndex);
   }
 }
 
 // 举报页 路由
-@TypedGoRoute<ReportPageRoute>(path: '/report', routes: [
-  // 二级举报类型路由
-  TypedGoRoute<ReportSecondRoute>(path: ':firstReportTypeCode'),
-  // 三级举报类型路由
-  TypedGoRoute<ReportLastRoute>(path: ':firstReportTypeCode/:secondReportTypeCode'),
-  
-])
+@TypedGoRoute<ReportPageRoute>(
+  path: '/report',
+  routes: [
+    // 二级举报类型路由
+    TypedGoRoute<ReportSecondRoute>(path: ':firstReportTypeCode'),
+    // 三级举报类型路由
+    TypedGoRoute<ReportLastRoute>(
+      path: ':firstReportTypeCode/:secondReportTypeCode',
+    ),
+  ],
+)
 class ReportPageRoute extends GoRouteData {
   const ReportPageRoute();
 
@@ -126,17 +131,27 @@ class VisitorPageRoute extends GoRouteData {
 }
 
 // 所有照片路由
-@TypedGoRoute<AllPhotoRoute>(path: '/all_photo', routes: [
-  // 单张图片预览路由
-  TypedGoRoute<SingleImagePreviewRoute>(path: 'single_image_preview'),
-])
+@TypedGoRoute<AllPhotoRoute>(
+  path: '/all_photo',
+  routes: [
+    // 单张图片预览路由
+    TypedGoRoute<SingleImagePreviewRoute>(path: 'single_image_preview'),
+  ],
+)
 class AllPhotoRoute extends GoRouteData {
   final bool? isMultiple; // 是否多选
   final int? maxSelectCount; // 最大选择数量
-  final int? featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
+  final int?
+  featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
   final String? firstReportTypeCode; // 一级上报类型编码
   final String? secondReportTypeCode; // 二级上报类型编码
-  const AllPhotoRoute({this.isMultiple,this.maxSelectCount,this.featureCode,this.firstReportTypeCode,this.secondReportTypeCode});
+  const AllPhotoRoute({
+    this.isMultiple,
+    this.maxSelectCount,
+    this.featureCode,
+    this.firstReportTypeCode,
+    this.secondReportTypeCode,
+  });
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -161,7 +176,14 @@ class AllPhotoRoute extends GoRouteData {
         );
     return CustomTransitionPage(
       key: state.pageKey,
-      child: AllPhotoPage(editorConfig: editorConfig,isMultiple: isMultiple,maxSelectCount: maxSelectCount,featureCode: featureCode,firstReportTypeCode: firstReportTypeCode,secondReportTypeCode: secondReportTypeCode),
+      child: AllPhotoPage(
+        editorConfig: editorConfig,
+        isMultiple: isMultiple,
+        maxSelectCount: maxSelectCount,
+        featureCode: featureCode,
+        firstReportTypeCode: firstReportTypeCode,
+        secondReportTypeCode: secondReportTypeCode,
+      ),
 
       transitionDuration: const Duration(milliseconds: 300),
 

@@ -6,7 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TabViewComp extends StatefulWidget {
-  TabViewComp({Key? key}) : super(key: key);
+  final int currentIndex;
+  TabViewComp({Key? key, required this.currentIndex}) : super(key: key);
 
   @override
   State<TabViewComp> createState() => _TabViewCompState();
@@ -244,7 +245,11 @@ class _TabViewCompState extends State<TabViewComp> {
                 spacing: 4.w,
                 children: [
                   Text(
-                    '我的粉丝（27人）',
+                    '我的${widget.currentIndex == 0
+                        ? '互关'
+                        : widget.currentIndex == 1
+                        ? '关注'
+                        : '粉丝'}（27人）',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.bold,
@@ -318,50 +323,54 @@ class _TabViewCompState extends State<TabViewComp> {
                                   ),
                                 ],
                               ),
-                              Row(
-                                spacing: 8.w,
-                                children: [
-                                  SizedBox(
-                                    width: 90.w,
-                                    height: 30.h,
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color.fromRGBO(
-                                          253,
-                                          44,
-                                          85,
-                                          1,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
+                              widget.currentIndex == 1 ||
+                                      widget.currentIndex == 2
+                                  ? Row(
+                                      spacing: 8.w,
+                                      children: [
+                                        SizedBox(
+                                          width: 90.w,
+                                          height: 30.h,
+                                          child: ElevatedButton(
+                                            onPressed: () {},
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Color.fromRGBO(
+                                                253,
+                                                44,
+                                                85,
+                                                1,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '关注',
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      child: Text(
-                                        '关注',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // 处理点击事件
-                                      _openPersonalActionSheet();
-                                    },
-                                    child: Icon(
-                                      FontAwesomeIcons.ellipsis,
-                                      size: 16.sp,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                        widget.currentIndex == 2
+                                            ? GestureDetector(
+                                                onTap: () {
+                                                  // 处理点击事件
+                                                  _openPersonalActionSheet();
+                                                },
+                                                child: Icon(
+                                                  FontAwesomeIcons.ellipsis,
+                                                  size: 16.sp,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            : SizedBox.shrink(),
+                                      ],
+                                    )
+                                  : SizedBox.shrink(),
                             ],
                           ),
                         ),
