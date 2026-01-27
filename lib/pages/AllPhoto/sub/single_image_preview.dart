@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -17,11 +18,14 @@ class _SingleImagePreviewPageState extends State<SingleImagePreviewPage> {
       onTap: () => Navigator.pop(context),
       child: Hero(
         tag: widget.imageMap.keys.first,
-        child: Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: PhotoView(
-              imageProvider: MemoryImage(widget.imageMap.values.first!),
+        child: WithStatusbarColorView(
+          statusBarColor: Colors.black,
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: PhotoView(
+                imageProvider: MemoryImage(widget.imageMap.values.first!),
+              ),
             ),
           ),
         ),

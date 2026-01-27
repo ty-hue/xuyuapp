@@ -1,3 +1,5 @@
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -35,290 +37,275 @@ class _AddFriendState extends State<AddFriendPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '添加朋友',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(22, 22, 22, 1),
+      child: Scaffold(
+        appBar: StaticAppBar(
+          title: '添加朋友',
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          backgroundColor: Color.fromRGBO(22, 22, 22, 1),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.settings, color: Colors.white, size: 24.sp),
+              onPressed: () {},
+            ),
+          ],
         ),
-        centerTitle: true,
-        backgroundColor: Color.fromRGBO(22, 22, 22, 1),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-          onPressed: () {
-            context.pop();
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings, color: Colors.white, size: 24.sp),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        color: Color.fromRGBO(22, 22, 22, 1),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Stack(
-                children: [
-                  Row(
-                    children: [
-                      AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        width: _isFocused
-                            ? MediaQuery.of(context).size.width - 32.w - 50.w
-                            : MediaQuery.of(context).size.width - 32.w,
-                        height: 40.0.h,
-                        child: Form(
-                          child: Stack(
-                            children: [
-                              TextFormField(
-                                controller: _searchController,
-                                focusNode: _searchFocusNode,
-                                // 监听聚焦事件
-                                onFieldSubmitted: (value) {},
-                                validator: (value) {
-                                  return null;
-                                },
-                                cursorColor: Color.fromRGBO(
-                                  209,
-                                  176,
-                                  40,
-                                  1,
-                                ), // 光标颜色
-                                cursorWidth: 2.w, // 光标宽度
-                                cursorHeight: 20.h, // 光标高度，可选，不设置默认文字高度
-                                cursorRadius: Radius.circular(2.r), // 光标圆角
-                                style: TextStyle(
-                                  fontSize: 14.0.sp, // 设置输入文字的大小
-                                  color: Colors.white, // 设置输入文字的颜色
-                                  // fontWeight: FontWeight.bold, // 还可以设置粗细等
-                                ),
-                                decoration: InputDecoration(
-                                  // 2. 设置提示文字的样式
-                                  hintStyle: TextStyle(
-                                    fontSize: 14.0.sp, // 设置提示文字的大小
-                                    color: Color.fromRGBO(
-                                      105,
-                                      105,
-                                      105,
-                                      1,
-                                    ), // 设置提示文字的颜色
-                                  ),
-                                  contentPadding: EdgeInsets.only(
-                                    left: 40.0.w,
-                                  ), // 内容内边距
-                                  hintText: "搜索用户名/抖音号",
-                                  fillColor: Color.fromRGBO(56, 56, 56, 1),
-                                  filled: true,
-                                  // ⭐ 圆角无边框
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                bottom: 0,
-                                left: 0,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // 处理点击事件
+        body: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          color: Color.fromRGBO(22, 22, 22, 1),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Stack(
+                  children: [
+                    Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
+                          width: _isFocused
+                              ? MediaQuery.of(context).size.width - 32.w - 50.w
+                              : MediaQuery.of(context).size.width - 32.w,
+                          height: 40.0.h,
+                          child: Form(
+                            child: Stack(
+                              children: [
+                                TextFormField(
+                                  controller: _searchController,
+                                  focusNode: _searchFocusNode,
+                                  // 监听聚焦事件
+                                  onFieldSubmitted: (value) {},
+                                  validator: (value) {
+                                    return null;
                                   },
-                                  child: Container(
-                                    width: 40.0.w,
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          FontAwesomeIcons.search,
-                                          size: 16.0.w,
-                                          color: Color.fromRGBO(
-                                            105,
-                                            105,
-                                            105,
-                                            1,
-                                          ),
-                                        ),
-                                      ],
+                                  cursorColor: Color.fromRGBO(
+                                    209,
+                                    176,
+                                    40,
+                                    1,
+                                  ), // 光标颜色
+                                  cursorWidth: 2.w, // 光标宽度
+                                  cursorHeight: 20.h, // 光标高度，可选，不设置默认文字高度
+                                  cursorRadius: Radius.circular(2.r), // 光标圆角
+                                  style: TextStyle(
+                                    fontSize: 14.0.sp, // 设置输入文字的大小
+                                    color: Colors.white, // 设置输入文字的颜色
+                                    // fontWeight: FontWeight.bold, // 还可以设置粗细等
+                                  ),
+                                  decoration: InputDecoration(
+                                    // 2. 设置提示文字的样式
+                                    hintStyle: TextStyle(
+                                      fontSize: 14.0.sp, // 设置提示文字的大小
+                                      color: Color.fromRGBO(
+                                        105,
+                                        105,
+                                        105,
+                                        1,
+                                      ), // 设置提示文字的颜色
+                                    ),
+                                    contentPadding: EdgeInsets.only(
+                                      left: 40.0.w,
+                                    ), // 内容内边距
+                                    hintText: "搜索用户名/抖音号",
+                                    fillColor: Color.fromRGBO(56, 56, 56, 1),
+                                    filled: true,
+                                    // ⭐ 圆角无边框
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: BorderSide.none,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: AnimatedOpacity(
-                      opacity: _isFocused ? 1.0 : 0.0,
-                      duration: Duration(milliseconds: 600),
-                      child: _isFocused
-                          ? GestureDetector(
-                              onTap: () {
-                                // 处理点击事件
-                                _searchController.clear();
-                                _searchFocusNode.unfocus();
-                                setState(() {
-                                  _isFocused = false;
-                                });
-                              },
-                              child: Container(
-                                width: 50.0.w,
-                                height: 40.h,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  '取消',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromRGBO(172, 57, 84, 1),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : SizedBox.shrink(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Container(
-                padding: EdgeInsets.only(top: 16.h),
-                height: 40.h,
-                child: Row(
-                  spacing: 4.w,
-                  children: [
-                    Text(
-                      '为你推荐',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromRGBO(138, 138, 138, 1),
-                      ),
-                    ),
-                    Icon(
-                      FontAwesomeIcons.infoCircle,
-                      size: 16.sp,
-                      color: Color.fromRGBO(138, 138, 138, 1),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverList.builder(
-              itemCount: 10,
-              itemBuilder: (context, index) {
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          // 处理点击事件
-                          print('点击了用户$index');
-                        },
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 64.0.w,
-                              height: 64.0.h,
-                              child: CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                  'https://q8.itc.cn/q_70/images03/20250114/d9d8d1106f454c2b83ea395927bfc020.jpeg',
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Column(
-                              spacing: 6.h,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '用户昵称',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  '可能认识的人',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.normal,
-                                    color: Color.fromRGBO(105, 105, 105, 1),
+                                Positioned(
+                                  top: 0,
+                                  bottom: 0,
+                                  left: 0,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // 处理点击事件
+                                    },
+                                    child: Container(
+                                      width: 40.0.w,
+                                      alignment: Alignment.center,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            FontAwesomeIcons.search,
+                                            size: 16.0.w,
+                                            color: Color.fromRGBO(
+                                              105,
+                                              105,
+                                              105,
+                                              1,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: AnimatedOpacity(
+                        opacity: _isFocused ? 1.0 : 0.0,
+                        duration: Duration(milliseconds: 600),
+                        child: _isFocused
+                            ? GestureDetector(
+                                onTap: () {
+                                  // 处理点击事件
+                                  _searchController.clear();
+                                  _searchFocusNode.unfocus();
+                                  setState(() {
+                                    _isFocused = false;
+                                  });
+                                },
+                                child: Container(
+                                  width: 50.0.w,
+                                  height: 40.h,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    '取消',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color.fromRGBO(172, 57, 84, 1),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: EdgeInsets.only(top: 16.h),
+                  height: 40.h,
+                  child: Row(
+                    spacing: 4.w,
+                    children: [
+                      Text(
+                        '为你推荐',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromRGBO(138, 138, 138, 1),
                         ),
                       ),
-                      SizedBox(
-                        width: 90.w,
-                        height: 34.h,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromRGBO(253, 44, 85, 1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                          ),
-                          child: Text(
-                            '关注',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                      Icon(
+                        FontAwesomeIcons.infoCircle,
+                        size: 16.sp,
+                        color: Color.fromRGBO(138, 138, 138, 1),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+              ),
+              SliverList.builder(
+                itemCount: 10,
+                itemBuilder: (context, index) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            // 处理点击事件
+                            print('点击了用户$index');
+                          },
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 64.0.w,
+                                height: 64.0.h,
+                                child: CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                    'https://q8.itc.cn/q_70/images03/20250114/d9d8d1106f454c2b83ea395927bfc020.jpeg',
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Column(
+                                spacing: 6.h,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '用户昵称',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '可能认识的人',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.normal,
+                                      color: Color.fromRGBO(105, 105, 105, 1),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 90.w,
+                          height: 34.h,
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(253, 44, 85, 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            child: Text(
+                              '关注',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

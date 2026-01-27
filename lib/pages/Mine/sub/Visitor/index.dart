@@ -1,3 +1,6 @@
+import 'package:bilbili_project/components/appBar_text_btn.dart';
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/close_visitor_view.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/open_visitor_view.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/visitor_setting_sheet.dart';
@@ -13,20 +16,18 @@ class VisitorPage extends StatefulWidget {
 
 class _VisitorPageState extends State<VisitorPage> {
   bool isShowVisitor = false;
-  void _openVisitorSettingSheet() async{
-  final result =  await showModalBottomSheet<bool>(
+  void _openVisitorSettingSheet() async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (BuildContext context) {
-        return VisitorSettingSheet(
-          initialValue: isShowVisitor,
-        );
+        return VisitorSettingSheet(initialValue: isShowVisitor);
       },
     );
-    if(result != null){
+    if (result != null) {
       setState(() {
         isShowVisitor = result;
       });
@@ -35,38 +36,36 @@ class _VisitorPageState extends State<VisitorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color.fromRGBO(22, 24, 35, 1),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(22, 24, 35, 1),
+      child: Scaffold(
+        appBar: StaticAppBar(
+          title: '主页访客',
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          backgroundColor: Color.fromRGBO(22, 24, 35, 1),
+          actions: [
+            AppBarTextBtn(
+              onTap: () {
+                _openVisitorSettingSheet();
+              },
+              text: '设置',
+            ),
+          ],
         ),
-        title: Text(
-          '主页访客',
-          style: TextStyle(fontSize: 18.sp, color: Colors.white),
+        body: Container(
+          color: Color.fromRGBO(22, 24, 35, 1),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          child: isShowVisitor
+              ? OpenVisitorView()
+              : CloseVisitorView(
+                  onTap: (bool isShow) async {
+                    setState(() {
+                      isShowVisitor = isShow;
+                    });
+                  },
+                ),
         ),
-        centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: () {
-              _openVisitorSettingSheet();
-            },
-            child: Text('设置', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
-      body: Container(
-        color: Color.fromRGBO(22, 24, 35, 1),
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
-        child: isShowVisitor ? OpenVisitorView() : CloseVisitorView(onTap: (bool isShow) async{
-          setState(() {
-            isShowVisitor = isShow;
-          });
-        },),
-      )
     );
   }
 }

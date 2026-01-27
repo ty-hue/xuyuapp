@@ -1,3 +1,5 @@
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
@@ -111,252 +113,227 @@ class _ReportLastPageState extends State<ReportLastPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color.fromRGBO(14, 16, 23, 1), // Android
-        statusBarIconBrightness: Brightness.light, // Android 图标白色
-        statusBarBrightness: Brightness.dark, // iOS 白字
-      ),
-      child: SafeArea(
-        top: false,
-        child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              onPressed: () {
-                context.pop(context);
-              },
-            ),
-            title: Text(
-              '账号举报',
-              style: TextStyle(color: Colors.white, fontSize: 18.sp),
-            ),
-            centerTitle: true,
-            backgroundColor: Color.fromRGBO(14, 16, 23, 1),
-          ),
-          body: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            decoration: BoxDecoration(color: Color.fromRGBO(14, 16, 23, 1)),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Column(
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(14, 16, 23, 1),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: StaticAppBar(
+          title: '账号举报',
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          backgroundColor: Color.fromRGBO(14, 16, 23, 1),
+        ),
+        body: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          decoration: BoxDecoration(color: Color.fromRGBO(14, 16, 23, 1)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Column(
+                    spacing: 4.h,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '举报理由',
+                        style: TextStyle(
+                          color: Color.fromRGBO(127, 129, 134, 1),
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      Text(
+                        '网暴他人',
+                        style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 20.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color.fromRGBO(22, 22, 22, 1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Column(
                       spacing: 4.h,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '举报理由',
+                          '举报描述',
                           style: TextStyle(
-                            color: Color.fromRGBO(127, 129, 134, 1),
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                             fontSize: 14.sp,
                           ),
                         ),
-                        Text(
-                          '网暴他人',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
+                        SizedBox(height: 12.h),
+                        Form(
+                          child: TextFormField(
+                            onChanged: (value) {
+                              setState(() {
+                                _reportReason = value;
+                              });
+                            },
+                            controller: _reportReasonController,
+                            maxLines: 5,
+                            maxLength: 200,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.white,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '请详细填写，以提高举报成功率',
+                              counterText: '0/200',
+                              hintStyle: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey[500],
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12.w, // 左右内边距
+                                vertical: 12.h, // 上下内边距
+                              ),
+                              fillColor: Color.fromRGBO(29, 29, 29, 1),
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  10.r,
+                                ), // ✅ 圆角
+                                borderSide: BorderSide.none, // ✅ 无边框
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                borderSide: BorderSide.none,
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                borderSide: BorderSide.none,
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 20.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 20.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color.fromRGBO(22, 22, 22, 1),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Column(
-                        spacing: 4.h,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '举报描述',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
-                            ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 20.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color.fromRGBO(22, 22, 22, 1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Column(
+                      spacing: 4.h,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '图片材料提交',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
                           ),
-                          SizedBox(height: 12.h),
-                          Form(
-                            child: TextFormField(
-                              onChanged: (value) {
-                                setState(() {
-                                  _reportReason = value;
-                                });
+                        ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 8.w,
+                          children: [
+                            // 已选择图片列表
+                            ..._buildReportImageWidgets(),
+                            GestureDetector(
+                              onTap: () async {
+                                if (_reportImages.length >= 4) {
+                                  ToastUtils.showToast(
+                                    context,
+                                    msg: '最多上传4张图片',
+                                  );
+                                  return;
+                                }
+                                // 打开图片选择器
+                                final selectedImages = await AllPhotoRoute(
+                                  isMultiple: true,
+                                  maxSelectCount: 4 - _reportImages.length,
+                                  featureCode: 1,
+                                ).push(context);
+                                if (selectedImages != null) {
+                                  await _getThumbnailData(selectedImages);
+                                }
                               },
-                              controller: _reportReasonController,
-                              maxLines: 5,
-                              maxLength: 200,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: Colors.white,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: '请详细填写，以提高举报成功率',
-                                counterText: '0/200',
-                                hintStyle: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey[500],
+                              child: Container(
+                                alignment: Alignment.center,
+                                height: 60.h,
+                                width: 60.w,
+                                decoration: BoxDecoration(
+                                  color: Color.fromRGBO(29, 29, 29, 1),
+                                  borderRadius: BorderRadius.circular(6.r),
                                 ),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12.w, // 左右内边距
-                                  vertical: 12.h, // 上下内边距
-                                ),
-                                fillColor: Color.fromRGBO(29, 29, 29, 1),
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    10.r,
-                                  ), // ✅ 圆角
-                                  borderSide: BorderSide.none, // ✅ 无边框
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide.none,
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide.none,
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 20.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color.fromRGBO(22, 22, 22, 1),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Column(
-                        spacing: 4.h,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '图片材料提交',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 8.w,
-                            children: [
-                              // 已选择图片列表
-                              ..._buildReportImageWidgets(),
-                              GestureDetector(
-                                onTap: () async {
-                                  if (_reportImages.length >= 4) {
-                                    ToastUtils.showToast(
-                                      context,
-                                      msg: '最多上传4张图片',
-                                    );
-                                    return;
-                                  }
-                                  // 打开图片选择器
-                                  final selectedImages = await AllPhotoRoute(
-                                    isMultiple: true,
-                                    maxSelectCount: 4 - _reportImages.length,
-                                    featureCode: 1,
-                                  ).push(context);
-                                  if (selectedImages != null) {
-                                    await _getThumbnailData(selectedImages);
-                                  }
-                                },
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  height: 60.h,
-                                  width: 60.w,
-                                  decoration: BoxDecoration(
-                                    color: Color.fromRGBO(29, 29, 29, 1),
-                                    borderRadius: BorderRadius.circular(6.r),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    spacing: 4.h,
-                                    children: [
-                                      Icon(
-                                        Icons.add,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  spacing: 4.h,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      color: Color.fromRGBO(106, 106, 106, 1),
+                                      size: 30.sp,
+                                    ),
+                                    Text(
+                                      '${_reportImages.length}/4',
+                                      style: TextStyle(
                                         color: Color.fromRGBO(106, 106, 106, 1),
-                                        size: 30.sp,
+                                        fontSize: 12.sp,
                                       ),
-                                      Text(
-                                        '${_reportImages.length}/4',
-                                        style: TextStyle(
-                                          color: Color.fromRGBO(
-                                            106,
-                                            106,
-                                            106,
-                                            1,
-                                          ),
-                                          fontSize: 12.sp,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48.h,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      disabledBackgroundColor: Color.fromRGBO(31,94,253, 0.2),
-                      backgroundColor: 
-                           Color.fromRGBO(31, 94, 253, 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                height: 48.h,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    disabledBackgroundColor: Color.fromRGBO(31, 94, 253, 0.2),
+                    backgroundColor: Color.fromRGBO(31, 94, 253, 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
-                    onPressed: _isSubmitEnabled ? () => _submitReport() : null,
-                    child: Text(
-                      '提交',
-                      style: TextStyle(
-                        color: _isSubmitEnabled
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.5),
-                        fontSize: 16.sp,
-                      ),
+                  ),
+                  onPressed: _isSubmitEnabled ? () => _submitReport() : null,
+                  child: Text(
+                    '提交',
+                    style: TextStyle(
+                      color: _isSubmitEnabled
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.5),
+                      fontSize: 16.sp,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

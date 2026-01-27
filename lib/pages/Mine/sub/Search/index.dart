@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/utils/mineSearchHistoryManager.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +50,7 @@ class _SearchPageState extends State<SearchPage> {
     });
     await Future.delayed(Duration(seconds: 3));
     // 作废请求的关键步骤
-    if(!mounted || currentToken != _searchToken){
+    if (!mounted || currentToken != _searchToken) {
       return;
     }
     setState(() {
@@ -72,7 +73,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // 清理数据
-  void _clearData(){
+  void _clearData() {
     setState(() {
       // 作废请求
       _searchToken++;
@@ -226,58 +227,56 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color.fromRGBO(22, 24, 35, 1), // Android
-        statusBarIconBrightness: Brightness.light, // Android 图标白色
-        statusBarBrightness: Brightness.dark, // iOS 白字
-      ),
-      child: SafeArea(
-        top: false,
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: _buildNavBar(statusBarHeight),
-          body: _searchState == SearchState.idle
-              ? DefaultView(
-                  searchData: _search, // 搜索数据方法
-                  searchController: _searchController, // 搜索框控制器
-                  statusBarHeight: statusBarHeight,
-                  searchCategory: _searchCategory,
-                  searchHistory: searchHistory,
-                  isExpanded: isExpanded,
-                  toggleExpanded: (bool val) {
-                    setState(() {
-                      isExpanded = val;
-                    });
-                  },
-                  changeCategory: (String category) {
-                    setState(() {
-                      _searchCategory = category;
-                    });
-                  },
-                  updateSearchHistory:
-                      ({
-                        String history = '',
-                        required EditSearchHistory editType,
-                      }) {
-                        if (history.isEmpty &&
-                            editType == EditSearchHistory.clear) {
-                          setState(() {
-                            searchHistory.clear();
-                          });
-                        }
-                        if (editType == EditSearchHistory.add) {
-                          _recordSearchHistory(history);
-                        }
-                        if (editType == EditSearchHistory.remove) {
-                          setState(() {
-                            searchHistory.remove(history);
-                          });
-                        }
-                      },
-                )
-              : ResultView(statusBarHeight: statusBarHeight,currentIndex: _searchCategory == '' ? 0 : int.parse(_searchCategory)),
-        ),
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(22, 24, 35, 1),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: _buildNavBar(statusBarHeight),
+        body: _searchState == SearchState.idle
+            ? DefaultView(
+                searchData: _search, // 搜索数据方法
+                searchController: _searchController, // 搜索框控制器
+                statusBarHeight: statusBarHeight,
+                searchCategory: _searchCategory,
+                searchHistory: searchHistory,
+                isExpanded: isExpanded,
+                toggleExpanded: (bool val) {
+                  setState(() {
+                    isExpanded = val;
+                  });
+                },
+                changeCategory: (String category) {
+                  setState(() {
+                    _searchCategory = category;
+                  });
+                },
+                updateSearchHistory:
+                    ({
+                      String history = '',
+                      required EditSearchHistory editType,
+                    }) {
+                      if (history.isEmpty &&
+                          editType == EditSearchHistory.clear) {
+                        setState(() {
+                          searchHistory.clear();
+                        });
+                      }
+                      if (editType == EditSearchHistory.add) {
+                        _recordSearchHistory(history);
+                      }
+                      if (editType == EditSearchHistory.remove) {
+                        setState(() {
+                          searchHistory.remove(history);
+                        });
+                      }
+                    },
+              )
+            : ResultView(
+                statusBarHeight: statusBarHeight,
+                currentIndex: _searchCategory == ''
+                    ? 0
+                    : int.parse(_searchCategory),
+              ),
       ),
     );
   }

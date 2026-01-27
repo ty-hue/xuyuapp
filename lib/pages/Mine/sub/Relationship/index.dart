@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/tab-view-comp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -97,32 +98,25 @@ class _RelationshipPageState extends State<RelationshipPage>
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color.fromRGBO(22, 24, 35, 1), // Android
-        statusBarIconBrightness: Brightness.light, // Android 图标白色
-        statusBarBrightness: Brightness.dark, // iOS 白字
-      ),
-      child: SafeArea(
-        top: false,
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: _buildNavBar(MediaQuery.of(context).padding.top),
-          body: Container(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 46.h + 20.h,
-              left: 16.w,
-              right: 16.w,
-            ),
-            color: Color.fromRGBO(22, 24, 35, 1),
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                TabViewComp(currentIndex: 0),
-                TabViewComp(currentIndex: 1),
-                TabViewComp(currentIndex: 2),
-              ],
-            ),
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(22, 24, 35, 1),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: _buildNavBar(MediaQuery.of(context).padding.top),
+        body: Container(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 46.h + 20.h,
+            left: 16.w,
+            right: 16.w,
+          ),
+          color: Color.fromRGBO(22, 24, 35, 1),
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              TabViewComp(currentIndex: 0),
+              TabViewComp(currentIndex: 1),
+              TabViewComp(currentIndex: 2),
+            ],
           ),
         ),
       ),

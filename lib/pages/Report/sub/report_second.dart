@@ -1,4 +1,6 @@
 import 'package:bilbili_project/api/Report/index.dart';
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Report/comps/report_type.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
@@ -46,44 +48,28 @@ class _ReportSecondPageState extends State<ReportSecondPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color.fromRGBO(14, 16, 23, 1), // Android
-        statusBarIconBrightness: Brightness.light, // Android 图标白色
-        statusBarBrightness: Brightness.dark, // iOS 白字
-      ),
-      child: SafeArea(
-        top: false,
-        child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            title: Text(
-              '账号举报',
-              style: TextStyle(color: Colors.white, fontSize: 18.sp),
-            ),
-            centerTitle: true,
-            backgroundColor: Color.fromRGBO(14, 16, 23, 1),
-          ),
-          body: ReportTypeView(
-            selectedReport: _selectedReport,
-            reportTypes: reportTypes,
-            next: (reportTypeCode) {
-              ReportLastRoute(
-                firstReportTypeCode: widget.firstReportTypeCode,
-                secondReportTypeCode: reportTypeCode.toString(),
-              ).push(context);
-            },
-            changeSelectedReport: ({required int selectedReport}) {
-              setState(() {
-                _selectedReport = selectedReport;
-              });
-            },
-          ),
+    return WithStatusbarColorView(
+      statusBarColor: Color.fromRGBO(14, 16, 23, 1),
+      child: Scaffold(
+        appBar: StaticAppBar(
+          title: '账号举报',
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          backgroundColor: Color.fromRGBO(14, 16, 23, 1),
+        ),
+        body: ReportTypeView(
+          selectedReport: _selectedReport,
+          reportTypes: reportTypes,
+          next: (reportTypeCode) {
+            ReportLastRoute(
+              firstReportTypeCode: widget.firstReportTypeCode,
+              secondReportTypeCode: reportTypeCode.toString(),
+            ).push(context);
+          },
+          changeSelectedReport: ({required int selectedReport}) {
+            setState(() {
+              _selectedReport = selectedReport;
+            });
+          },
         ),
       ),
     );

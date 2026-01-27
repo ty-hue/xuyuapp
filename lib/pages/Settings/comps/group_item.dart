@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+class GroupItemView extends StatelessWidget {
+  final String itemName;
+  final IconData icon;
+  final bool needUnderline;
+  final bool needTrailingIcon;
+  final Function()? cb;
+  final bool isFirst; // 是否为第一个
+  GroupItemView({
+    Key? key,
+    required this.itemName,
+    required this.icon,
+    this.needUnderline = true,
+    this.needTrailingIcon = true,
+    this.isFirst = false,
+    required this.cb,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color.fromRGBO(35, 35, 35, 1), // 默认背景
+      // 如果isFirst为true 则设置左上和右上的圆角， 如果needUnderline为true 则设置左下和右下的圆角 其余情况无圆角
+      borderRadius: BorderRadius.vertical(
+        top: isFirst ? Radius.circular(8.r) : Radius.zero,
+        bottom: !needUnderline ? Radius.circular(8.r) : Radius.zero,
+      ),
+
+      clipBehavior: Clip.antiAlias, // ⭐️关键
+
+      child: InkWell(
+        onTap: cb,
+        splashColor: Colors.white.withOpacity(0.08), // 水波纹
+        highlightColor: Colors.white.withOpacity(0.05), // 按下态 ⭐
+        child: SizedBox(
+          height: 54.h,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(icon, color: Colors.grey, size: 20.r),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(right: 16.w),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: needUnderline
+                            ? BorderSide(color: Colors.grey, width: 0.5.w)
+                            : BorderSide.none,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          itemName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        needTrailingIcon
+                            ? Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.grey,
+                                size: 14.r,
+                              )
+                            : const SizedBox.shrink(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

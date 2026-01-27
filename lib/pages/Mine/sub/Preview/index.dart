@@ -1,3 +1,6 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/SaveImageUtils.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
@@ -25,18 +28,16 @@ class PreviewPage extends StatefulWidget {
 class _PreviewPageState extends State<PreviewPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return WithStatusbarColorView(
+      statusBarColor: Colors.black,
+      child: Scaffold(
         backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.white, size: 24.sp),
-          onPressed: () => Navigator.pop(context),
+        appBar: StaticAppBar(
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          backgroundColor: Colors.black,
+          leadingChild: BackIconBtn(icon: Icons.close, size: 24.sp),
         ),
-      ),
-      body: SafeArea(
-        child: Container(
+        body: Container(
           padding: EdgeInsets.symmetric(vertical: 20.h),
           child: Stack(
             children: [
