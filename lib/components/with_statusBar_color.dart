@@ -16,7 +16,7 @@ class WithStatusbarColorView extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        bottom: false,
+        bottom: true,
         child: child,
       ));
   }
