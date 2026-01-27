@@ -1,6 +1,6 @@
 import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
-import 'package:bilbili_project/pages/Mine/sub/Preview/index.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -549,6 +549,89 @@ class _MinePageState extends State<MinePage>
               GestureDetector(
                 onTap: () {
                   // 弹出dialog
+                  DialogUtils.showCustomDialog(
+                    context,
+                    Builder(
+                      builder: (context) {
+                        return Container(
+                          width: 140.w,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                alignment: Alignment.center,
+                                height: 180.h,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'lib/assets/agree_dialog.png',
+                                      height: 80.h,
+                                      fit: BoxFit.fitHeight,
+                                    ),
+                                    SizedBox(height: 20.h),
+                                    Text(
+                                      '“llg”共获得 6 个赞',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 10.h),
+                                    Text(
+                                      '获赞数包含作品、私密',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14.sp,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              Container(
+                                width: double.infinity,
+                                height: 50.h,
+                                decoration: BoxDecoration(
+                                  // 上边框
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      width: 1.w,
+                                    ),
+                                  ),
+                                ),
+                                child: TextButton(
+                                  // 矩形按钮 无圆角
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.zero,
+                                    ),
+                                  ),
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text(
+                                    "我知道了",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
