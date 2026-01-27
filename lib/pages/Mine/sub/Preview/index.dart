@@ -35,7 +35,7 @@ class _PreviewPageState extends State<PreviewPage> {
         appBar: StaticAppBar(
           statusBarHeight: MediaQuery.of(context).padding.top,
           backgroundColor: Colors.black,
-          leadingChild: BackIconBtn(icon: Icons.close, size: 24.sp),
+          leadingChild: BackIconBtn(icon: Icons.close, size: 24),
         ),
         body: Container(
           padding: EdgeInsets.symmetric(vertical: 20.h),
