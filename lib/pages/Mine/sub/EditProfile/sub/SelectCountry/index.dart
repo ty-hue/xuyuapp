@@ -1,5 +1,5 @@
 import 'package:bilbili_project/api/EditProfile/index.dart';
-import 'package:bilbili_project/pages/Mine/comps/custom_azlistview.dart';
+import 'package:bilbili_project/components/custom_azlistview.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/mine_routes/select_city_route.dart';
 import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';

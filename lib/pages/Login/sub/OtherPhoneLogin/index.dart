@@ -1,22 +1,42 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
+import 'package:bilbili_project/components/phone_input.dart';
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Login/comps/login_other_method.dart';
-import 'package:bilbili_project/pages/Login/sub/OtherPhoneLogin/params/params.dart';
-import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
 import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 // ignore: must_be_immutable
 class OtherPhoneLoginPage extends StatefulWidget {
-  final OtherPhoneLoginParams extra;
-  OtherPhoneLoginPage({Key? key, required this.extra}) : super(key: key);
+  OtherPhoneLoginPage({Key? key}) : super(key: key);
 
   @override
   State<OtherPhoneLoginPage> createState() => _OtherPhoneLoginPageState();
 }
 
 class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
+  String phonePrefix = '+86';
+  String phoneNumber = '';
+  bool get isAllowSubmit {
+    if(phoneNumber.isEmpty){
+      return false;
+    }
+    if(phonePrefix == '+86'){
+      if(phoneNumber.length != 11){
+        return false;
+      }
+      return true;
+    }else{
+      if(phoneNumber.isNotEmpty){
+        return true;
+      }
+      return false;
+    }
+    
+  }
   bool _isChecked = false;
   Widget _buildCheckbox() {
     return Row(
@@ -48,22 +68,16 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WithStatusbarColorView(
+      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarColor: Colors.white,
+      child: Scaffold(
       resizeToAvoidBottomInset: false, // ⭐ 关键 让键盘抬起不挤压页面内容
-      appBar: AppBar(
-        backgroundColor: Colors.white, // 背景透明
-        elevation: 0, // 去阴影
-        scrolledUnderElevation: 0, // ⭐ 滚动阴影（Flutter 3.7+）
-        surfaceTintColor: Colors.transparent, // ⭐ 滚动变色（M3）
-        shadowColor: Colors.transparent, // 兜底
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {
-            LoginRoute().go(context);
-          },
-        ),
+      appBar: StaticAppBar(
+        backgroundColor: Colors.white,
+        statusBarHeight: MediaQuery.of(context).padding.top,
+        leadingChild: BackIconBtn(color: Colors.black,size: 30.0),
       ),
       body: Stack(
         children: [
@@ -87,70 +101,18 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                 ),
                 SizedBox(height: 60.0.h),
                 Form(
-                  child: Stack(
-                    children: [
-                      TextFormField(
-                        validator: (value) {
-                          return null;
-                        },
-                        style: TextStyle(
-                          fontSize: 20.0.sp, // 设置输入文字的大小
-                          color: Colors.black87, // 设置输入文字的颜色
-                          // fontWeight: FontWeight.bold, // 还可以设置粗细等
-                        ),
-                        decoration: InputDecoration(
-                          // 2. 设置提示文字的样式
-                          hintStyle: TextStyle(
-                            fontSize: 18.0.sp, // 设置提示文字的大小
-                            color: Colors.grey[500], // 设置提示文字的颜色
-                          ),
-                          contentPadding: EdgeInsets.only(
-                            left: 100.0.w,
-                          ), // 内容内边距
-                          hintText: "请输入手机号",
-                          fillColor: Colors.transparent,
-                          filled: true,
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blue),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            // 处理点击事件
-                            ChoosePhonePrefixRoute().go(context);
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  widget.extra.code,
-                                  style: TextStyle(
-                                    fontSize: 20.0.sp,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                Icon(
-                                  FontAwesomeIcons.angleDown,
-                                  size: 20.r,
-                                  color: Colors.black,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: PhoneInputView(
+                    onPhoneNumberChanged: (number) {
+                      setState(() {
+                        phoneNumber = number;
+                      });
+                    },
+                    prefix: phonePrefix,
+                    onPhonePrefixChanged: (prefix) {
+                      setState(() {
+                        phonePrefix = prefix;
+                      });
+                    },
                   ),
                 ),
                 SizedBox(height: 28.0.h),
@@ -159,15 +121,16 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
                   height: 48.0.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      disabledBackgroundColor: Colors.blue.withOpacity(0.5),
                       backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0.r),
                       ),
                       // minimumSize: Size(200, 50),
                     ),
-                    onPressed: () {
+                    onPressed: isAllowSubmit ? () {
                       FillCodeRoute().go(context);
-                    },
+                    } : null,
                     child: Text(
                       '获取短信验证码',
                       style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
@@ -181,6 +144,6 @@ class _OtherPhoneLoginPageState extends State<OtherPhoneLoginPage> {
           LoginOtherMethod(),
         ],
       ),
-    );
+    ));
   }
 }

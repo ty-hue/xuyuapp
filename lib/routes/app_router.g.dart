@@ -113,6 +113,25 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
   path: '/settings',
 
   factory: $SettingsPageRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'account_safe',
+
+      factory: $AccountSafeRouteExtension._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: 'change_phone',
+
+          factory: $ChangePhoneRouteExtension._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'change_phone_second',
+
+          factory: $ChangePhoneSecondRouteExtension._fromState,
+        ),
+      ],
+    ),
+  ],
 );
 
 extension $SettingsPageRouteExtension on SettingsPageRoute {
@@ -120,6 +139,56 @@ extension $SettingsPageRouteExtension on SettingsPageRoute {
       const SettingsPageRoute();
 
   String get location => GoRouteData.$location('/settings');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $AccountSafeRouteExtension on AccountSafeRoute {
+  static AccountSafeRoute _fromState(GoRouterState state) =>
+      const AccountSafeRoute();
+
+  String get location => GoRouteData.$location('/settings/account_safe');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ChangePhoneRouteExtension on ChangePhoneRoute {
+  static ChangePhoneRoute _fromState(GoRouterState state) =>
+      const ChangePhoneRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/change_phone');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ChangePhoneSecondRouteExtension on ChangePhoneSecondRoute {
+  static ChangePhoneSecondRoute _fromState(GoRouterState state) =>
+      const ChangePhoneSecondRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/change_phone_second');
 
   void go(BuildContext context) => context.go(location);
 

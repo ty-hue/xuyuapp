@@ -21,11 +21,13 @@ class AreaItem {
   final String code;
   final String groupCn;
   final bool hasSub;
+  final String phonePrefix;
   const AreaItem({
     required this.name,
     required this.code,
     required this.groupCn,
     required this.hasSub,
+    required this.phonePrefix,
   });
   factory AreaItem.fromJson(Map<String, dynamic> json) {
     return AreaItem(
@@ -33,6 +35,7 @@ class AreaItem {
       code: json['code'],
       groupCn: json['groupCn'],
       hasSub: json['hasSub'],
+      phonePrefix: json['phonePrefix'],
     );
   }
 }

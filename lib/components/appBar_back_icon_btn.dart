@@ -6,7 +6,13 @@ class BackIconBtn extends StatelessWidget {
   final double size;
   final Color color;
   final IconData icon;
-  const BackIconBtn({super.key, this.size = 20.0, this.color = Colors.white, this.icon = Icons.arrow_back_ios_new});
+
+  const BackIconBtn({
+    super.key,
+    this.size = 20.0,
+    this.color = Colors.white,
+    this.icon = Icons.arrow_back_ios_new,
+  });
 
   @override
   Widget build(BuildContext context) {

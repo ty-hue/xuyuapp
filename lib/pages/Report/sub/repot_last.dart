@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
@@ -118,6 +119,7 @@ class _ReportLastPageState extends State<ReportLastPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: StaticAppBar(
+         
           title: '账号举报',
           statusBarHeight: MediaQuery.of(context).padding.top,
           backgroundColor: Color.fromRGBO(14, 16, 23, 1),

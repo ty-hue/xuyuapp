@@ -12,6 +12,7 @@ class StaticAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double statusBarHeight;
   final Widget leadingChild;
   final FontWeight titleFontWeight;
+  final Color titleColor;
   const StaticAppBar({
     Key? key,
     this.title = '',
@@ -23,6 +24,8 @@ class StaticAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingChild = const BackIconBtn(),
     this.statusBarHeight = 0.0,
     this.titleFontWeight = FontWeight.normal,
+    this.titleColor = Colors.white,
+    
   }) : super(key: key);
 
   @override
@@ -68,7 +71,7 @@ class StaticAppBar extends StatelessWidget implements PreferredSizeWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: titleColor,
                           fontSize: titleFontSize.sp,
                           fontWeight: titleFontWeight,
                         ),

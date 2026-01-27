@@ -23,6 +23,9 @@ import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.
 import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
+import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
+import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +58,12 @@ class LoginRoute extends GoRouteData {
 }
 
 // 设置页 路由
-@TypedGoRoute<SettingsPageRoute>(path: '/settings')
+@TypedGoRoute<SettingsPageRoute>(path: '/settings', routes: [
+  TypedGoRoute<AccountSafeRoute>(path: 'account_safe',routes: [
+    TypedGoRoute<ChangePhoneRoute>(path: 'change_phone'),
+    TypedGoRoute<ChangePhoneSecondRoute>(path: 'change_phone_second'),
+  ]),
+])
 class SettingsPageRoute extends GoRouteData {
   const SettingsPageRoute();
 

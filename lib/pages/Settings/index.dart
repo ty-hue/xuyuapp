@@ -1,7 +1,10 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
+import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -43,7 +46,9 @@ class _SettingsState extends State<SettingsPage> {
       statusBarColor: Color.fromRGBO(11, 11, 11, 1),
       child: Scaffold(
         appBar: StaticAppBar(
+          
           title: '设置',
+          titleFontWeight: FontWeight.bold,
           backgroundColor: Color.fromRGBO(11, 11, 11, 1),
           statusBarHeight: MediaQuery.of(context).padding.top,
         ),
@@ -70,7 +75,9 @@ class _SettingsState extends State<SettingsPage> {
                         isFirst: true,
                         itemName: '账号与安全',
                         icon: Icons.person,
-                        cb: () {},
+                        cb: () {
+                          AccountSafeRoute().push(context);
+                        },
                       ),
                       _buildGroupItem(
                         itemName: '隐私设置',

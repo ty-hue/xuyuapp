@@ -1,4 +1,5 @@
 import 'package:bilbili_project/api/Report/index.dart';
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Report/comps/report_type.dart';
@@ -8,6 +9,7 @@ import 'package:bilbili_project/viewmodels/Report/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class ReportSecondPage extends StatefulWidget {
   final String firstReportTypeCode;
@@ -52,6 +54,7 @@ class _ReportSecondPageState extends State<ReportSecondPage> {
       statusBarColor: Color.fromRGBO(14, 16, 23, 1),
       child: Scaffold(
         appBar: StaticAppBar(
+         
           title: '账号举报',
           statusBarHeight: MediaQuery.of(context).padding.top,
           backgroundColor: Color.fromRGBO(14, 16, 23, 1),

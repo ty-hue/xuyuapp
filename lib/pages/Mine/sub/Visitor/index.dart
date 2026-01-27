@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/appBar_text_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
@@ -6,6 +7,7 @@ import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/open_visitor_view.d
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/visitor_setting_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class VisitorPage extends StatefulWidget {
   VisitorPage({Key? key}) : super(key: key);
@@ -40,6 +42,7 @@ class _VisitorPageState extends State<VisitorPage> {
       statusBarColor: Color.fromRGBO(22, 24, 35, 1),
       child: Scaffold(
         appBar: StaticAppBar(
+          
           title: '主页访客',
           statusBarHeight: MediaQuery.of(context).padding.top,
           backgroundColor: Color.fromRGBO(22, 24, 35, 1),

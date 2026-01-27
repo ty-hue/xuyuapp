@@ -8,6 +8,8 @@ class GroupItemView extends StatelessWidget {
   final bool needTrailingIcon;
   final Function()? cb;
   final bool isFirst; // 是否为第一个
+  final Color backgroundColor; // 背景颜色
+  final Widget attachedWidget; 
   GroupItemView({
     Key? key,
     required this.itemName,
@@ -15,13 +17,15 @@ class GroupItemView extends StatelessWidget {
     this.needUnderline = true,
     this.needTrailingIcon = true,
     this.isFirst = false,
+    this.backgroundColor = const Color.fromRGBO(35, 35, 35, 1),
     required this.cb,
+    this.attachedWidget = const SizedBox.shrink(), // 附加文本默认空字符串
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color.fromRGBO(35, 35, 35, 1), // 默认背景
+      color: backgroundColor, // 默认背景
       // 如果isFirst为true 则设置左上和右上的圆角， 如果needUnderline为true 则设置左下和右下的圆角 其余情况无圆角
       borderRadius: BorderRadius.vertical(
         top: isFirst ? Radius.circular(8.r) : Radius.zero,
@@ -65,13 +69,20 @@ class GroupItemView extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        needTrailingIcon
-                            ? Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.grey,
-                                size: 14.r,
-                              )
-                            : const SizedBox.shrink(),
+                        Row(
+                          spacing: 4.w,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            attachedWidget,
+                            needTrailingIcon
+                                ? Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.grey,
+                                    size: 14.r,
+                                  )
+                                : const SizedBox.shrink(),
+                          ],
+                        ),
                       ],
                     ),
                   ),

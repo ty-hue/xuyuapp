@@ -1,16 +1,20 @@
 import 'package:azlistview/azlistview.dart';
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class CustomAzlistview extends StatefulWidget {
+  final bool isSelectPhoneMode; // 是否是选择电话前缀模式
   final List<AreaGroup> areaList;
   final Function(AreaItem) onSelect;
   final bool? isCountry;
   CustomAzlistview({
+    this.isSelectPhoneMode = false,
     required this.areaList,
     required this.onSelect,
     this.isCountry,
@@ -50,49 +54,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
               ),
             ),
           ),
-          // Container(
-          //   padding: EdgeInsets.symmetric(
-          //     vertical: 20,
-          //     horizontal: 8,
-          //   ),
-          //   // 添加底部边框
-          //   decoration: BoxDecoration(
-          //     border: Border(
-          //       bottom: BorderSide(
-          //         color: Colors.white.withOpacity(0.1),
-          //         width: 0.5,
-          //       ),
-          //     ),
-          //   ),
-          //   child: Column(
-          //     spacing: 24,
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     crossAxisAlignment: CrossAxisAlignment.stretch,
-          //     children: [
-          //       Row(
-          //         spacing: 4,
-          //         children: [
-          //           Icon(
-          //             Icons.location_on,
-          //             color: Colors.grey,
-          //             size: 12,
-          //           ),
-          //           Text(
-          //             '当前位置',
-          //             style: TextStyle(
-          //               fontSize: 12,
-          //               color: Colors.grey,
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //       Text(
-          //         '湖南·长沙',
-          //         style: TextStyle(fontSize: 14, color: Colors.white),
-          //       ),
-          //     ],
-          //   ),
-          // ),
+
           Container(
             padding: EdgeInsets.symmetric(vertical: 20, horizontal: 8),
             // 添加底部边框
@@ -126,6 +88,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
                         name: '中国',
                         hasSub: true,
                         groupCn: 'Z',
+                        phonePrefix: '+86',
                       ),
                     );
                   },
@@ -146,6 +109,60 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
     );
   }
 
+  // 选择电话前缀模式专用
+  Widget _buildPhoneHeaderItem() {
+    final _areaItem = AreaItem(
+      code: '1',
+      name: '中国大陆',
+      hasSub: true,
+      groupCn: 'Z',
+      phonePrefix: '+86',
+    );
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withOpacity(0.1),
+            width: 0.5.w,
+          ),
+        ),
+      ),
+      width: MediaQuery.of(context).size.width,
+      // padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.only(left: 16.0.w, right: 16.0.w),
+                trailing: Container(
+                  width: 60.0.w,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _areaItem.phonePrefix,
+                    style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                  ),
+                ),
+                title: Text(
+                  _areaItem.name,
+                  style: TextStyle(fontSize: 14.0.sp, color: Colors.white),
+                ),
+                onTap: () {
+                  widget.onSelect(_areaItem);
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WithStatusbarColorView(
@@ -156,6 +173,7 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
           backgroundColor: Color.fromRGBO(22, 22, 22, 1),
           title: '选择地区',
           titleFontWeight: FontWeight.bold,
+          titleColor: Colors.white,
         ),
         body: Container(
           decoration: BoxDecoration(
@@ -198,12 +216,15 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
             itemCount: widget.areaList.length,
             itemBuilder: (context, index) {
               if (index == 0 && widget.isCountry == true) {
-                return _buildHeaderItem();
+                if (widget.isSelectPhoneMode) {
+                  return _buildPhoneHeaderItem();
+                } else {
+                  return _buildHeaderItem();
+                }
               }
               final item = widget.areaList[index].items;
               return Container(
                 padding: EdgeInsets.only(bottom: 30.0.h),
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(item.length, (index) {
@@ -222,6 +243,23 @@ class _CustomAzlistviewState extends State<CustomAzlistview> {
                         ),
                       ),
                       child: ListTile(
+                        contentPadding: EdgeInsets.only(
+                          left: 16.0.w,
+                          right: 16.0.w,
+                        ),
+                        trailing: widget.isSelectPhoneMode
+                            ? Container(
+                                width: 60.0.w,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  item[index].phonePrefix,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              )
+                            : null,
                         title: Text(
                           item[index].name,
                           style: TextStyle(

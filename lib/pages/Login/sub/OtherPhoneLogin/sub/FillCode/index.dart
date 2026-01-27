@@ -1,6 +1,8 @@
+import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 class FillCodePage extends StatefulWidget {
@@ -13,74 +15,86 @@ class FillCodePage extends StatefulWidget {
 class _FillCodePageState extends State<FillCodePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            context.pop();
-          },
+    return WithStatusbarColorView(
+      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarColor: Colors.white,
+      child: Scaffold(
+        appBar: StaticAppBar(
+          backgroundColor: Colors.white,
+          statusBarHeight: MediaQuery.of(context).padding.top,
+          leadingChild: BackIconBtn(color: Colors.black, size: 30.0),
         ),
-      ),
-      body: Container(
-        width: double.infinity,
-        padding: EdgeInsets.only(top: 20.0.h, left: 30.0.w, right: 30.0.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '输入验证码',
-              style: TextStyle(fontSize: 28.0.sp, color: Colors.black),
-              textAlign: TextAlign.left,
-            ),
-            SizedBox(height: 10.0.h),
-            Text(
-              '验证码已发送至 +8615573010566',
-              style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
-            ),
-            SizedBox(height: 36.0.h),
-            PinCodeTextField(
-              autoFocus: true,
-              appContext: context, // 必须提供 context
-              length: 4, // 验证码的长度
-              obscureText: false, // 是否隐藏文本
-              animationType: AnimationType.fade, // 输入时的动画类型
-              pinTheme: PinTheme(
-                borderWidth: 1.0.w,
-                selectedBorderWidth: 1.0.w,
-                shape: PinCodeFieldShape.underline, // 输入框的形状，也可以是 underline
-                fieldWidth: 70.0.w,
-                activeColor: const Color.fromARGB(255, 158, 90, 104), // 激活时的边框颜色
-                inactiveColor: Colors.black, // 未激活时的边框颜色
-                selectedColor: const Color.fromARGB(255, 132, 121, 228), // 选中时的边框颜色
-                activeFillColor: Colors.transparent, // 激活时的填充颜色
-                inactiveFillColor: Colors.transparent, // 未激活时的填充颜色
-                selectedFillColor: Colors.transparent, // 选中时的填充颜色
+        body: Container(
+          width: double.infinity,
+          padding: EdgeInsets.only(top: 20.0.h, left: 30.0.w, right: 30.0.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '输入验证码',
+                style: TextStyle(fontSize: 28.0.sp, color: Colors.black),
+                textAlign: TextAlign.left,
               ),
-              animationDuration: const Duration(milliseconds:  300),
-              backgroundColor: Colors.transparent,
-              enableActiveFill: true,
-              textStyle: TextStyle(fontSize: 26.0.sp, color: Colors.black),
-              onCompleted: (v) {
-                // 输入完成后的回调
-                print("Completed: $v");
-              },
-              onChanged: (value) {
-                // 文本变化时的回调
-                print(value);
-              },
-              beforeTextPaste: (text) {
-                // 在粘贴之前的回调，可以用来阻止粘贴
-                print("Allowing to paste $text");
-                return true; // 返回 true 允许粘贴
-              },
-            ),
-            SizedBox(height: 10.0.h),
-           Text(
-            '54s后重新获取',
-            style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
-           ),
-          ],
+              SizedBox(height: 10.0.h),
+              Text(
+                '验证码已发送至 +8615573010566',
+                style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
+              ),
+              SizedBox(height: 36.0.h),
+              PinCodeTextField(
+                autoFocus: true,
+                appContext: context, // 必须提供 context
+                length: 4, // 验证码的长度
+                obscureText: false, // 是否隐藏文本
+                animationType: AnimationType.fade, // 输入时的动画类型
+                pinTheme: PinTheme(
+                  borderWidth: 1.0.w,
+                  selectedBorderWidth: 1.0.w,
+                  shape: PinCodeFieldShape.underline, // 输入框的形状，也可以是 underline
+                  fieldWidth: 70.0.w,
+                  activeColor: const Color.fromARGB(
+                    255,
+                    158,
+                    90,
+                    104,
+                  ), // 激活时的边框颜色
+                  inactiveColor: Colors.black, // 未激活时的边框颜色
+                  selectedColor: const Color.fromARGB(
+                    255,
+                    132,
+                    121,
+                    228,
+                  ), // 选中时的边框颜色
+                  activeFillColor: Colors.transparent, // 激活时的填充颜色
+                  inactiveFillColor: Colors.transparent, // 未激活时的填充颜色
+                  selectedFillColor: Colors.transparent, // 选中时的填充颜色
+                ),
+                animationDuration: const Duration(milliseconds: 300),
+                backgroundColor: Colors.transparent,
+                enableActiveFill: true,
+                textStyle: TextStyle(fontSize: 26.0.sp, color: Colors.black),
+                onCompleted: (v) {
+                  // 输入完成后的回调
+                  print("Completed: $v");
+                },
+                onChanged: (value) {
+                  // 文本变化时的回调
+                  print(value);
+                },
+                beforeTextPaste: (text) {
+                  // 在粘贴之前的回调，可以用来阻止粘贴
+                  print("Allowing to paste $text");
+                  return true; // 返回 true 允许粘贴
+                },
+              ),
+              SizedBox(height: 10.0.h),
+              Text(
+                '54s后重新获取',
+                style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
