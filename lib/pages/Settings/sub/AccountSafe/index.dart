@@ -1,14 +1,12 @@
-import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
-import 'package:bilbili_project/pages/Settings/sub/AccountSafe/sub/ChangePhone/index.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 
 class AccountSafePage extends StatefulWidget {
   AccountSafePage({Key? key}) : super(key: key);
@@ -144,7 +142,7 @@ class _AccountSafeState extends State<AccountSafePage> {
                             ),
                             icon: Icons.lock,
                             cb: () {
-                              // 跳转手机号绑定页
+                              ChangePasswordRoute().push(context);
                             },
                           ),
                         ],

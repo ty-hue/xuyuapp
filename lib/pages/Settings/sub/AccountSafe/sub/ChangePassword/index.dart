@@ -1,5 +1,5 @@
 import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
-import 'package:bilbili_project/components/phone_input.dart';
+import 'package:bilbili_project/components/password_input.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
@@ -7,33 +7,27 @@ import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class ChangePhoneSecondPage extends StatefulWidget {
-  ChangePhoneSecondPage({Key? key}) : super(key: key);
+class ChangePasswordPage extends StatefulWidget {
+  ChangePasswordPage({Key? key}) : super(key: key);
 
   @override
-  _ChangePhoneSecondState createState() => _ChangePhoneSecondState();
+  _ChangePasswordState createState() => _ChangePasswordState();
 }
 
-class _ChangePhoneSecondState extends State<ChangePhoneSecondPage> {
-  bool get isAllowSubmit {
-    if (phoneNumber.isEmpty) {
-      return false;
-    }
-    if (phonePrefix == '+86') {
-      if (phoneNumber.length != 11) {
-        return false;
-      }
-      return true;
-    } else {
-      if (phoneNumber.isNotEmpty) {
-        return true;
-      }
-      return false;
-    }
+class _ChangePasswordState extends State<ChangePasswordPage> {
+  // 校验密码
+  bool _validatePwd() {
+    // 密码需要8-20位，至少包含字母、数字、符号的任意两种
+    return pwd.isNotEmpty && pwd.length < 8 ||
+        pwd.length > 20 ||
+        !RegExp(r'[A-Za-z]').hasMatch(pwd) ||
+        !RegExp(r'[0-9]').hasMatch(pwd) ||
+        !RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(pwd);
   }
 
-  String phonePrefix = '+86';
-  String phoneNumber = '';
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String pwd = '';
+  bool isShowError = false;
   @override
   Widget build(BuildContext context) {
     return WithStatusbarColorView(
@@ -60,7 +54,7 @@ class _ChangePhoneSecondState extends State<ChangePhoneSecondPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '请输入新手机号',
+                    '请输入新登录密码',
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.8),
                       fontSize: 24.sp,
@@ -69,23 +63,44 @@ class _ChangePhoneSecondState extends State<ChangePhoneSecondPage> {
                   ),
                   SizedBox(height: 10.h),
                   Text(
-                    '换绑新手机号之后，可以用新的手机号及当前密码登录',
+                    '密码需要8-20位，至少包含字母、数字、符号的任意两种',
                     style: TextStyle(color: Colors.grey, fontSize: 14.sp),
                   ),
                   SizedBox(height: 20.h),
+                  // 输入框
                   Form(
-                    child: PhoneInputView(
-                      onPhoneNumberChanged: (number) {
+                    key: _formKey,
+                    child: PasswordInputView(
+                      onPasswordChanged: (value) {
                         setState(() {
-                          phoneNumber = number;
+                          isShowError = false;
+                          pwd = value;
                         });
                       },
-                      prefix: phonePrefix,
-                      onPhonePrefixChanged: (prefix) {
-                        setState(() {
-                          phonePrefix = prefix;
-                        });
-                      },
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  isShowError
+                      ? Padding(
+                          padding: EdgeInsets.only(
+                            left: 20.w,
+                            top: 6.h,
+                            bottom: 6.h,
+                          ),
+                          child: Text(
+                            '密码需要8-20位，至少包含字母、数字、符号的任意两种',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.w),
+                    child: Text(
+                      '通过短信验证可以使用新密码',
+                      style: TextStyle(color: Colors.grey, fontSize: 12.sp),
                     ),
                   ),
                   SizedBox(height: 20.h),
@@ -104,13 +119,19 @@ class _ChangePhoneSecondState extends State<ChangePhoneSecondPage> {
                         ),
                         backgroundColor: Color.fromRGBO(254, 43, 84, 1),
                       ),
-                      onPressed: isAllowSubmit
+                      onPressed: pwd.isNotEmpty && pwd.length >= 8
                           ? () {
-                              FillCodeRoute().push(context);
+                              if (!_validatePwd()) {
+                                FillCodeRoute().push(context);
+                              } else {
+                                setState(() {
+                                  isShowError = true;
+                                });
+                              }
                             }
                           : null,
                       child: Text(
-                        '验证并绑定手机号',
+                        '获取短信验证码',
                         style: TextStyle(color: Colors.white, fontSize: 16.sp),
                       ),
                     ),

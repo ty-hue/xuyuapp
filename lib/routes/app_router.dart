@@ -24,6 +24,7 @@ import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
+import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
@@ -63,6 +64,7 @@ class LoginRoute extends GoRouteData {
     TypedGoRoute<ChangePhoneRoute>(path: 'change_phone'),
     TypedGoRoute<ChangePhoneSecondRoute>(path: 'change_phone_second'),
   ]),
+  TypedGoRoute<ChangePasswordRoute>(path: 'change_password'),
 ])
 class SettingsPageRoute extends GoRouteData {
   const SettingsPageRoute();

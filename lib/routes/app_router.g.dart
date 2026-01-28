@@ -131,6 +131,11 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
         ),
       ],
     ),
+    GoRouteData.$route(
+      path: 'change_password',
+
+      factory: $ChangePasswordRouteExtension._fromState,
+    ),
   ],
 );
 
@@ -189,6 +194,22 @@ extension $ChangePhoneSecondRouteExtension on ChangePhoneSecondRoute {
 
   String get location =>
       GoRouteData.$location('/settings/account_safe/change_phone_second');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ChangePasswordRouteExtension on ChangePasswordRoute {
+  static ChangePasswordRoute _fromState(GoRouterState state) =>
+      const ChangePasswordRoute();
+
+  String get location => GoRouteData.$location('/settings/change_password');
 
   void go(BuildContext context) => context.go(location);
 

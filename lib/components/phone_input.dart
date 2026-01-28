@@ -24,10 +24,10 @@ class _PhoneInputViewState extends State<PhoneInputView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 14.h),
+      // padding: EdgeInsets.symmetric(vertical: 14.h),
       decoration: BoxDecoration(
         color: Color.fromRGBO(248, 248, 248, 1),
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
@@ -79,9 +79,42 @@ class _PhoneInputViewState extends State<PhoneInputView> {
               decoration: InputDecoration(
                 isDense: true, //彻底解决高度问题
                 hintText: '请输入手机号',
-                border: InputBorder.none,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), // 圆角
+                  borderSide: BorderSide.none, // 去掉边框线
+                ),
                 hintStyle: TextStyle(color: Colors.grey, fontSize: 16.sp),
-                contentPadding: EdgeInsets.only(left: 10.w),
+                contentPadding: EdgeInsets.only(
+                  left: 10.w,
+                  top: 14.h,
+                  bottom: 14.h,
+                ),
+                suffixIcon: _phoneController.text.isNotEmpty
+                    ? Padding(
+                        padding: EdgeInsets.only(right: 20.w),
+                        child: GestureDetector(
+                          onTap: () {
+                            _phoneController.clear();
+                            widget.onPhoneNumberChanged('');
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromRGBO(169, 169, 173, 1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              size: 13.0.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    : null,
+                suffixIconConstraints: BoxConstraints(
+                  minWidth: 40.0.w,
+                  minHeight: 40.0.h,
+                ),
               ),
             ),
           ),
