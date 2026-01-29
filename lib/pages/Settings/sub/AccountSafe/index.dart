@@ -5,6 +5,8 @@ import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
+import 'package:bilbili_project/routes/settings_routes/delete_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/recover_account_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -22,7 +24,6 @@ class _AccountSafeState extends State<AccountSafePage> {
       statusBarColor: Color.fromRGBO(22, 24, 36, 1),
       child: Scaffold(
         appBar: StaticAppBar(
-         
           title: '账号与安全',
           titleFontWeight: FontWeight.bold,
           backgroundColor: Color.fromRGBO(22, 24, 36, 1),
@@ -172,24 +173,16 @@ class _AccountSafeState extends State<AccountSafePage> {
                             itemName: '找回账号',
                             icon: Icons.find_in_page,
                             cb: () {
-                              // 跳转手机号绑定页
-                            },
-                          ),
-                          GroupItemView(
-                            backgroundColor: Color.fromRGBO(29, 31, 43, 1),
-                            itemName: '注销账号',
-                            icon: Icons.exit_to_app,
-                            cb: () {
-                              // 跳转手机号绑定页
+                              RecoverAccountRoute().push(context);
                             },
                           ),
                           GroupItemView(
                             needUnderline: false,
                             backgroundColor: Color.fromRGBO(29, 31, 43, 1),
-                            itemName: '抖音安全中心',
-                            icon: Icons.security,
+                            itemName: '注销账号',
+                            icon: Icons.exit_to_app,
                             cb: () {
-                              // 跳转手机号绑定页
+                              DeleteAccountRoute().push(context);
                             },
                           ),
                         ],

@@ -129,12 +129,22 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
 
           factory: $ChangePhoneSecondRouteExtension._fromState,
         ),
-      ],
-    ),
-    GoRouteData.$route(
-      path: 'change_password',
+        GoRouteData.$route(
+          path: 'change_password',
 
-      factory: $ChangePasswordRouteExtension._fromState,
+          factory: $ChangePasswordRouteExtension._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'recover_account',
+
+          factory: $RecoverAccountRouteExtension._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'delete_account',
+
+          factory: $DeleteAccountRouteExtension._fromState,
+        ),
+      ],
     ),
   ],
 );
@@ -209,7 +219,42 @@ extension $ChangePasswordRouteExtension on ChangePasswordRoute {
   static ChangePasswordRoute _fromState(GoRouterState state) =>
       const ChangePasswordRoute();
 
-  String get location => GoRouteData.$location('/settings/change_password');
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/change_password');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $RecoverAccountRouteExtension on RecoverAccountRoute {
+  static RecoverAccountRoute _fromState(GoRouterState state) =>
+      const RecoverAccountRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/recover_account');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $DeleteAccountRouteExtension on DeleteAccountRoute {
+  static DeleteAccountRoute _fromState(GoRouterState state) =>
+      const DeleteAccountRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/delete_account');
 
   void go(BuildContext context) => context.go(location);
 

@@ -27,6 +27,8 @@ import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
+import 'package:bilbili_project/routes/settings_routes/delete_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/recover_account_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -59,13 +61,21 @@ class LoginRoute extends GoRouteData {
 }
 
 // 设置页 路由
-@TypedGoRoute<SettingsPageRoute>(path: '/settings', routes: [
-  TypedGoRoute<AccountSafeRoute>(path: 'account_safe',routes: [
-    TypedGoRoute<ChangePhoneRoute>(path: 'change_phone'),
-    TypedGoRoute<ChangePhoneSecondRoute>(path: 'change_phone_second'),
-  ]),
-  TypedGoRoute<ChangePasswordRoute>(path: 'change_password'),
-])
+@TypedGoRoute<SettingsPageRoute>(
+  path: '/settings',
+  routes: [
+    TypedGoRoute<AccountSafeRoute>(
+      path: 'account_safe',
+      routes: [
+        TypedGoRoute<ChangePhoneRoute>(path: 'change_phone'),
+        TypedGoRoute<ChangePhoneSecondRoute>(path: 'change_phone_second'),
+        TypedGoRoute<ChangePasswordRoute>(path: 'change_password'),
+        TypedGoRoute<RecoverAccountRoute>(path: 'recover_account'),
+        TypedGoRoute<DeleteAccountRoute>(path: 'delete_account'),
+      ],
+    ),
+  ],
+)
 class SettingsPageRoute extends GoRouteData {
   const SettingsPageRoute();
 
@@ -85,21 +95,20 @@ class SearchPageRoute extends GoRouteData {
     return SearchPage();
   }
 }
+
 // 预览页 路由
 @TypedGoRoute<PreviewRoute>(path: '/preview')
 class PreviewRoute extends GoRouteData {
   final String mode;
   final String imageUrl;
   final String tag;
-  PreviewRoute({ required this.mode,  required this.imageUrl, required this.tag});
+  PreviewRoute({required this.mode, required this.imageUrl, required this.tag});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return PreviewPage(mode: mode, imageUrl: imageUrl, tag: tag);
   }
 }
-
-
 
 // 添加朋友页 路由
 @TypedGoRoute<AddFriendRoute>(path: '/add_friend')
@@ -170,12 +179,7 @@ class AllPhotoRoute extends GoRouteData {
   final int?
   featureCode; // 功能码： 用于下一步按钮具体要做什么 -1：（没有下一步按钮）什么都不做 1：带参数跳转到reportLast页
 
-  const AllPhotoRoute({
-    this.isMultiple,
-    this.maxSelectCount,
-    this.featureCode,
-
-  });
+  const AllPhotoRoute({this.isMultiple, this.maxSelectCount, this.featureCode});
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -204,7 +208,6 @@ class AllPhotoRoute extends GoRouteData {
         isMultiple: isMultiple,
         maxSelectCount: maxSelectCount,
         featureCode: featureCode,
-
       ),
 
       transitionDuration: const Duration(milliseconds: 300),

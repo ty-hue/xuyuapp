@@ -1,5 +1,5 @@
 import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
-import 'package:bilbili_project/components/password_input.dart';
+import 'package:bilbili_project/components/custom_input.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
@@ -70,8 +70,11 @@ class _ChangePasswordState extends State<ChangePasswordPage> {
                   // 输入框
                   Form(
                     key: _formKey,
-                    child: PasswordInputView(
-                      onPasswordChanged: (value) {
+                    child: CustomInputView(
+                      hintText: '请输入密码',
+                      obscureText: true,
+                      keyboardType: TextInputType.visiblePassword,
+                      onChanged: (value) {
                         setState(() {
                           isShowError = false;
                           pwd = value;
