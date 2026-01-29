@@ -144,6 +144,11 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
 
           factory: $DeleteAccountRouteExtension._fromState,
         ),
+        GoRouteData.$route(
+          path: 'delete_account_second',
+
+          factory: $DeleteAccountSecondRouteExtension._fromState,
+        ),
       ],
     ),
   ],
@@ -255,6 +260,23 @@ extension $DeleteAccountRouteExtension on DeleteAccountRoute {
 
   String get location =>
       GoRouteData.$location('/settings/account_safe/delete_account');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $DeleteAccountSecondRouteExtension on DeleteAccountSecondRoute {
+  static DeleteAccountSecondRoute _fromState(GoRouterState state) =>
+      const DeleteAccountSecondRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/account_safe/delete_account_second');
 
   void go(BuildContext context) => context.go(location);
 

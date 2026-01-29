@@ -28,6 +28,7 @@ import 'package:bilbili_project/routes/settings_routes/change_password_route.dar
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
 import 'package:bilbili_project/routes/settings_routes/delete_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/delete_account_second_route.dart';
 import 'package:bilbili_project/routes/settings_routes/recover_account_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
@@ -72,6 +73,7 @@ class LoginRoute extends GoRouteData {
         TypedGoRoute<ChangePasswordRoute>(path: 'change_password'),
         TypedGoRoute<RecoverAccountRoute>(path: 'recover_account'),
         TypedGoRoute<DeleteAccountRoute>(path: 'delete_account'),
+        TypedGoRoute<DeleteAccountSecondRoute>(path: 'delete_account_second'),
       ],
     ),
   ],
