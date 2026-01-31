@@ -14,6 +14,7 @@ class SwitchSheetSkeleton extends StatefulWidget {
   final bool isNeedCloseIcon;
   final Color? closeIconColor;
   final String? avatarUrl;
+  final IconData? titleIcon;
   SwitchSheetSkeleton({
     Key? key,
     required this.title,
@@ -26,6 +27,7 @@ class SwitchSheetSkeleton extends StatefulWidget {
     this.isNeedCloseIcon = true,
     this.closeIconColor,
     this.avatarUrl,
+    this.titleIcon,
   }) : super(key: key);
 
   @override
@@ -84,7 +86,7 @@ class _SwitchSheetSkeletonState extends State<SwitchSheetSkeleton> {
                           padding: EdgeInsets.all(20.w),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(shape: BoxShape.circle),
-                          child: Icon(FontAwesomeIcons.userGroup, size: 50.r, color: widget.closeIconColor ?? Color.fromRGBO(111,111,119, 1)),
+                          child: Icon(widget.titleIcon ?? FontAwesomeIcons.userGroup, size: 50.r, color: widget.closeIconColor ?? Color.fromRGBO(111,111,119, 1)),
                         ),
                         !value
                             ? Positioned(

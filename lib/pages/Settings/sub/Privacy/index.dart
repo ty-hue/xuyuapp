@@ -10,6 +10,7 @@ import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PrivacyPage extends StatefulWidget {
   PrivacyPage({Key? key}) : super(key: key);
@@ -128,6 +129,15 @@ class _PrivacyState extends State<PrivacyPage> {
     });
   }
 
+  // 是否设置为私密账号
+  bool isPrivateAccount = false;
+  // 修改isPrivateAccount
+  Future<void> _setPrivateAccount(bool value) async {
+    setState(() {
+      isPrivateAccount = value;
+    });
+  }
+
   Future<void> _openSwitchSheet({
     required String title,
     required String subTitle,
@@ -136,6 +146,7 @@ class _PrivacyState extends State<PrivacyPage> {
     ValueChanged<bool>? onChanged,
     bool immediatelyClose = false,
     bool isNeedCloseIcon = false,
+    required IconData titleIcon,
   }) async {
     await SheetUtils(
       SwitchSheetSkeleton(
@@ -146,6 +157,7 @@ class _PrivacyState extends State<PrivacyPage> {
         value: value,
         onChanged: onChanged,
         isNeedCloseIcon: isNeedCloseIcon,
+        titleIcon: titleIcon,
       ),
     ).openAsyncSheet<bool>(context: context);
   }
@@ -214,6 +226,7 @@ class _PrivacyState extends State<PrivacyPage> {
                             label: '可以被没有关注的人搜索到',
                             value: isAllowDontFollowSearch,
                             onChanged: _setAllowDontFollowSearch,
+                            titleIcon: FontAwesomeIcons.userGroup,
                           );
                         },
                       ),
@@ -231,6 +244,7 @@ class _PrivacyState extends State<PrivacyPage> {
                             label: '在他人关注和粉丝列表公开出现',
                             value: isAllowPulicInOtherList,
                             onChanged: _setAllowPulicInOtherList,
+                            titleIcon: FontAwesomeIcons.userGroup,
                           );
                         },
                       ),
@@ -248,6 +262,7 @@ class _PrivacyState extends State<PrivacyPage> {
                             label: '把我推荐给可能认识的人',
                             value: isAllowRecommend,
                             onChanged: _setAllowRecommend,
+                            titleIcon: FontAwesomeIcons.userGroup,
                           );
                         },
                       ),
@@ -287,7 +302,16 @@ class _PrivacyState extends State<PrivacyPage> {
                               fontSize: 13.sp,
                             ),
                           ),
-                          cb: () {},
+                          cb: () async {
+                            await _openSwitchSheet(
+                              title: '私密账号',
+                              subTitle: '关闭后，你的账号将在抖音内公开出现。',
+                              label: '私密账号',
+                              value: isPrivateAccount,
+                              onChanged: _setPrivateAccount,
+                              titleIcon: FontAwesomeIcons.lock,
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -341,6 +365,7 @@ class _PrivacyState extends State<PrivacyPage> {
                               label: '推荐可能认识的人给我',
                               value: isAllowRecommendOtherToMe,
                               onChanged: _setAllowRecommendOtherToMe,
+                              titleIcon: FontAwesomeIcons.userGroup,
                             );
                           },
                         ),
@@ -397,6 +422,7 @@ class _PrivacyState extends State<PrivacyPage> {
                               label: '主页访客记录',
                               value: isAllowVisitor,
                               onChanged: _setAllowVisitor,
+                              titleIcon: FontAwesomeIcons.userGroup,
                             );
                           },
                         ),
@@ -419,6 +445,7 @@ class _PrivacyState extends State<PrivacyPage> {
                               label: '作品浏览记录',
                               value: isAllowBrowseRecord,
                               onChanged: _setAllowBrowseRecord,
+                              titleIcon: FontAwesomeIcons.userGroup,
                             );
                           },
                         ),
