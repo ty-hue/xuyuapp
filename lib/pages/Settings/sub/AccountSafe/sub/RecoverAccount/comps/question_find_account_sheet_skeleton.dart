@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class QuestionFindAccountSheet extends StatefulWidget {
+class QuestionFindAccountSheetSkeleton extends StatefulWidget {
   @override
-  State<QuestionFindAccountSheet> createState() =>
-      _QuestionFindAccountSheetState();
+  State<QuestionFindAccountSheetSkeleton> createState() =>
+      _QuestionFindAccountSheetSkeletonState();
 }
 
-class _QuestionFindAccountSheetState extends State<QuestionFindAccountSheet> {
+class _QuestionFindAccountSheetSkeletonState extends State<QuestionFindAccountSheetSkeleton> {
   @override
   void initState() {
     super.initState();
@@ -15,8 +15,7 @@ class _QuestionFindAccountSheetState extends State<QuestionFindAccountSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ClipRRect(
+    return  ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(16.r)),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 24.h),
@@ -91,7 +90,7 @@ class _QuestionFindAccountSheetState extends State<QuestionFindAccountSheet> {
             ],
           ),
         ),
-      ),
-    );
+      );
+    
   }
 }

@@ -1,9 +1,10 @@
+import 'package:bilbili_project/components/agree_sheet_skeleton.dart';
 import 'package:bilbili_project/components/custom_input.dart';
 import 'package:bilbili_project/components/phone_input.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
-import 'package:bilbili_project/pages/Settings/sub/AccountSafe/sub/RecoverAccount/comps/agree_sheet.dart';
-import 'package:bilbili_project/pages/Settings/sub/AccountSafe/sub/RecoverAccount/comps/question_find_account_sheet.dart';
+import 'package:bilbili_project/pages/Settings/sub/AccountSafe/sub/RecoverAccount/comps/question_find_account_sheet_skeleton.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -95,38 +96,24 @@ class _RecoverAccountState extends State<RecoverAccountPage> {
     );
   }
 
-  void _openQuestionFindAccountSheet() async {
-    await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-      ),
-      builder: (BuildContext context) {
-        return QuestionFindAccountSheet();
-      },
-    );
+  Future<void> _openQuestionFindAccountSheet() async {
+    await SheetUtils(
+      QuestionFindAccountSheetSkeleton(),
+    ).openAsyncSheet(context: context);
   }
 
-  void _openAgreeSheet() async {
-    await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+  Future<void> _openAgreeSheet() async {
+    await SheetUtils(
+      AgreeSheetSkeleton(
+        onAgree: () {
+          setState(() {
+            isRead = true;
+            _submit();
+            Navigator.pop(context);
+          });
+        },
       ),
-      builder: (BuildContext context) {
-        return AgreeSheet(
-          onAgree: () {
-            setState(() {
-              isRead = true;
-              _submit();
-              Navigator.pop(context);
-            });
-          },
-        );
-      },
-    );
+    ).openAsyncSheet(context: context);
   }
 
   void _submit() {
