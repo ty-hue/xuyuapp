@@ -24,11 +24,13 @@ import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
+import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
 import 'package:bilbili_project/routes/settings_routes/delete_account_route.dart';
 import 'package:bilbili_project/routes/settings_routes/delete_account_second_route.dart';
+import 'package:bilbili_project/routes/settings_routes/privacy_route.dart';
 import 'package:bilbili_project/routes/settings_routes/recover_account_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
@@ -76,6 +78,8 @@ class LoginRoute extends GoRouteData {
         TypedGoRoute<DeleteAccountSecondRoute>(path: 'delete_account_second'),
       ],
     ),
+    TypedGoRoute<PrivacyRoute>(path: 'privacy'),
+    TypedGoRoute<ActionPageRoute>(path: 'action'),
   ],
 )
 class SettingsPageRoute extends GoRouteData {

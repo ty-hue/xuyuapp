@@ -151,6 +151,16 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
         ),
       ],
     ),
+    GoRouteData.$route(
+      path: 'privacy',
+
+      factory: $PrivacyRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'action',
+
+      factory: $ActionPageRouteExtension._fromState,
+    ),
   ],
 );
 
@@ -277,6 +287,37 @@ extension $DeleteAccountSecondRouteExtension on DeleteAccountSecondRoute {
 
   String get location =>
       GoRouteData.$location('/settings/account_safe/delete_account_second');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $PrivacyRouteExtension on PrivacyRoute {
+  static PrivacyRoute _fromState(GoRouterState state) => const PrivacyRoute();
+
+  String get location => GoRouteData.$location('/settings/privacy');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ActionPageRouteExtension on ActionPageRoute {
+  static ActionPageRoute _fromState(GoRouterState state) =>
+      const ActionPageRoute();
+
+  String get location => GoRouteData.$location('/settings/action');
 
   void go(BuildContext context) => context.go(location);
 

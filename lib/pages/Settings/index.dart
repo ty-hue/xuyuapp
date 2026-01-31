@@ -4,6 +4,7 @@ import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
+import 'package:bilbili_project/routes/settings_routes/privacy_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -43,7 +44,6 @@ class _SettingsState extends State<SettingsPage> {
       statusBarColor: Color.fromRGBO(11, 11, 11, 1),
       child: Scaffold(
         appBar: StaticAppBar(
-          
           title: '设置',
           titleFontWeight: FontWeight.bold,
           backgroundColor: Color.fromRGBO(11, 11, 11, 1),
@@ -79,13 +79,10 @@ class _SettingsState extends State<SettingsPage> {
                       _buildGroupItem(
                         itemName: '隐私设置',
                         icon: Icons.lock,
-                        cb: () {},
-                      ),
-                      _buildGroupItem(
-                        itemName: '支付设置',
-                        icon: Icons.payment,
+                        cb: () {
+                          PrivacyRoute().push(context);
+                        },
                         needUnderline: false,
-                        cb: () {},
                       ),
                     ],
                   ),

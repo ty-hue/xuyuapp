@@ -10,6 +10,7 @@ class GroupItemView extends StatelessWidget {
   final bool isFirst; // 是否为第一个
   final Color backgroundColor; // 背景颜色
   final Widget attachedWidget; 
+  final bool isNeedIcon; // 是否需要图标
   GroupItemView({
     Key? key,
     required this.itemName,
@@ -20,6 +21,7 @@ class GroupItemView extends StatelessWidget {
     this.backgroundColor = const Color.fromRGBO(35, 35, 35, 1),
     required this.cb,
     this.attachedWidget = const SizedBox.shrink(), // 附加文本默认空字符串
+    this.isNeedIcon = true
   }) : super(key: key);
 
   @override
@@ -46,7 +48,9 @@ class GroupItemView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(icon, color: Colors.grey, size: 20.r),
+                isNeedIcon
+                ? Icon(icon, color: Colors.grey, size: 20.r)
+                : const SizedBox.shrink(),
                 SizedBox(width: 10.w),
                 Expanded(
                   child: Container(
