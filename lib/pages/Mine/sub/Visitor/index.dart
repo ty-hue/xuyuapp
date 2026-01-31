@@ -1,9 +1,10 @@
 import 'package:bilbili_project/components/appBar_text_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/switch_sheet_skeleton.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/close_visitor_view.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/open_visitor_view.dart';
-import 'package:bilbili_project/pages/Mine/sub/Visitor/comps/visitor_setting_sheet.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -16,17 +17,24 @@ class VisitorPage extends StatefulWidget {
 
 class _VisitorPageState extends State<VisitorPage> {
   bool isShowVisitor = false;
-  void _openVisitorSettingSheet() async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+  Future<void> _openSwitchSheet({
+    required String title,
+    required String subTitle,
+    required String label,
+    required bool value,
+    bool immediatelyClose = true,
+    bool isNeedCloseIcon = true,
+  }) async {
+    final result = await SheetUtils(
+      SwitchSheetSkeleton(
+        immediatelyClose: immediatelyClose,
+        title: title,
+        subTitle: subTitle,
+        label: label,
+        value: value,
+        isNeedCloseIcon: isNeedCloseIcon,
       ),
-      builder: (BuildContext context) {
-        return VisitorSettingSheet(initialValue: isShowVisitor);
-      },
-    );
+    ).openAsyncSheet<bool>(context: context);
     if (result != null) {
       setState(() {
         isShowVisitor = result;
@@ -40,14 +48,18 @@ class _VisitorPageState extends State<VisitorPage> {
       statusBarColor: Color.fromRGBO(22, 24, 35, 1),
       child: Scaffold(
         appBar: StaticAppBar(
-          
           title: '主页访客',
           statusBarHeight: MediaQuery.of(context).padding.top,
           backgroundColor: Color.fromRGBO(22, 24, 35, 1),
           actions: [
             AppBarTextBtn(
               onTap: () {
-                _openVisitorSettingSheet();
+                _openSwitchSheet(
+                  title: '主页访客',
+                  subTitle: '关闭后，你查看他人主页时不会留下记录，同时，你也无法查看谁访问了你的主页。',
+                  label: '展示主页访客',
+                  value: isShowVisitor,
+                );
               },
               text: '设置',
             ),
