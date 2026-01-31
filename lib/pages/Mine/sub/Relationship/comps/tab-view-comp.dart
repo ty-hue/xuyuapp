@@ -1,6 +1,7 @@
-import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/block_sheet.dart';
-import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/dont_see_sheet.dart';
-import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/personal_action_sheet.dart';
+import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/block_sheet_skeleton.dart';
+import 'package:bilbili_project/pages/Mine/sub/Relationship/comps/person_action_sheet_skeleton.dart';
+import 'package:bilbili_project/components/switch_sheet_skeleton.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -30,40 +31,30 @@ class _TabViewCompState extends State<TabViewComp> {
   bool isShowPersonalActionSheet = false;
   bool isShowDontSeeSheet = false;
   bool isShowBlockSheet = false;
-  void _openPersonalActionSheet() async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+  Future<void> _openPersonalActionSheet() async {
+    await SheetUtils(
+      PersonalActionSheetSkeleton(
+        openDontSeeSheet: _openDontSeeSheet,
+        openBlockSheet: _openBlockSheet,
       ),
-      builder: (BuildContext context) {
-        return PersonalActionSheet(
-          initialValue: isShowPersonalActionSheet,
-          openDontSeeSheet: _openDontSeeSheet,
-          openBlockSheet: _openBlockSheet,
-        );
-      },
-    );
-    if (result != null) {
-      setState(() {
-        isShowPersonalActionSheet = result;
-      });
-    }
+    ).openAsyncSheet<bool>(context: context);
   }
 
   Future<void> _openDontSeeSheet() async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+    final result = await SheetUtils(
+      SwitchSheetSkeleton(
+        immediatelyClose: true,
+        title: '海阔天空',
+        subTitle: '开启后它将看不到我发布的内容',
+        label: '不让他看',
+        value: isShowDontSeeSheet,
+        avatarUrl: 'https://q8.itc.cn/q_70/images03/20250114/d9d8d1106f454c2b83ea395927bfc020.jpeg',
+        isNeedCloseIcon: true,
       ),
-      builder: (BuildContext context) {
-        return DontSeeSheet(initialValue: isShowDontSeeSheet);
-      },
-    );
+    ).openAsyncSheet<bool>(context: context);
     if (result != null) {
+      // 在这里发送请求更新数据
+      print('不让他看：$result');
       setState(() {
         isShowDontSeeSheet = result;
       });
@@ -71,17 +62,14 @@ class _TabViewCompState extends State<TabViewComp> {
   }
 
   Future<void> _openBlockSheet() async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+    final result = await SheetUtils(
+      BlockSheetSkeleton(
+        value: isShowBlockSheet,
       ),
-      builder: (BuildContext context) {
-        return BlockSheet(initialValue: isShowBlockSheet);
-      },
-    );
+    ).openAsyncSheet<bool>(context: context);
     if (result != null) {
+      // 在这里发送请求更新数据
+      print('拉黑：$result');
       setState(() {
         isShowBlockSheet = result;
       });

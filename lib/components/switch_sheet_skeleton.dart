@@ -13,6 +13,7 @@ class SwitchSheetSkeleton extends StatefulWidget {
   final Color? backgroundColor;
   final bool isNeedCloseIcon;
   final Color? closeIconColor;
+  final String? avatarUrl;
   SwitchSheetSkeleton({
     Key? key,
     required this.title,
@@ -24,6 +25,7 @@ class SwitchSheetSkeleton extends StatefulWidget {
     this.backgroundColor,
     this.isNeedCloseIcon = true,
     this.closeIconColor,
+    this.avatarUrl,
   }) : super(key: key);
 
   @override
@@ -66,7 +68,16 @@ class _SwitchSheetSkeletonState extends State<SwitchSheetSkeleton> {
               children: [
                 Column(
                   children: [
-                    Stack(
+                    widget.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              widget.avatarUrl!,
+                              fit: BoxFit.cover,
+                              width: 80.w,
+                              height: 80.h,
+                            ),
+                          )
+                        : Stack(
                       clipBehavior: Clip.none,
                       children: [
                         Container(
@@ -102,6 +113,7 @@ class _SwitchSheetSkeletonState extends State<SwitchSheetSkeleton> {
                             : SizedBox.shrink(),
                       ],
                     ),
+                      
                     SizedBox(height: 20.h),
                     Text(
                       widget.title,

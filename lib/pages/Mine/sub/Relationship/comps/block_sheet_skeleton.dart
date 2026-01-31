@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 
-class BlockSheet extends StatefulWidget {
-  final bool initialValue;
+class BlockSheetSkeleton extends StatefulWidget {
+  final bool value;
 
-  const BlockSheet({required this.initialValue});
+  const BlockSheetSkeleton({required this.value});
 
   @override
-  State<BlockSheet> createState() => _BlockSheetState();
+  State<BlockSheetSkeleton> createState() => _BlockSheetState();
 }
 
-class _BlockSheetState extends State<BlockSheet> {
-  late bool _block;
+class _BlockSheetState extends State<BlockSheetSkeleton> {
+  late bool value;
 
   @override
   void initState() {
     super.initState();
-    _block = widget.initialValue;
+    value = widget.value;
   }
 
 
@@ -83,7 +82,7 @@ class _BlockSheetState extends State<BlockSheet> {
                       text: '确认拉黑',
                       color: Color.fromRGBO(254, 102, 87, 1),
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(context, true);
                         print('确认拉黑');
                       },
                     ),
@@ -95,7 +94,7 @@ class _BlockSheetState extends State<BlockSheet> {
                       text: '不让他看作品',
                       color: Color.fromRGBO(22, 24, 35, 1),
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(context, false);
                         print('不让他看作品');
                       },
                     ),

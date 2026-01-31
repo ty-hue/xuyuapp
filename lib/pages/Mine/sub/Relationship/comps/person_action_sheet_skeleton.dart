@@ -3,24 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class PersonalActionSheet extends StatefulWidget {
-  final bool initialValue;
+class PersonalActionSheetSkeleton extends StatefulWidget {
   final Future<void> Function() openDontSeeSheet;
   final Future<void> Function() openBlockSheet;
 
-  const PersonalActionSheet({required this.initialValue, required this.openDontSeeSheet, required this.openBlockSheet});
+  const PersonalActionSheetSkeleton({
+    required this.openDontSeeSheet,
+    required this.openBlockSheet,
+  });
 
   @override
-  State<PersonalActionSheet> createState() => _PersonalActionSheetState();
+  State<PersonalActionSheetSkeleton> createState() =>
+      _PersonalActionSheetState();
 }
 
-class _PersonalActionSheetState extends State<PersonalActionSheet> {
-  late bool _value;
-
+class _PersonalActionSheetState extends State<PersonalActionSheetSkeleton> {
   @override
   void initState() {
     super.initState();
-    _value = widget.initialValue;
   }
 
   Widget _buildSingleActionBtn({
@@ -61,30 +61,26 @@ class _PersonalActionSheetState extends State<PersonalActionSheet> {
     required String text,
     required VoidCallback onTap,
   }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 18.w),
-      height: 50.h,
-      decoration: BoxDecoration(color: Colors.white),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-              color: Color.fromRGBO(22, 24, 35, 1),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w),
+        height: 50.h,
+        decoration: BoxDecoration(color: Colors.white),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: Color.fromRGBO(22, 24, 35, 1),
+              ),
             ),
-          ),
-          GestureDetector(
-            onTap: onTap,
-            child: Icon(
-              icon,
-              color: Color.fromRGBO(80, 81, 89, 1),
-              size: 24.sp,
-            ),
-          ),
-        ],
+            Icon(icon, color: Color.fromRGBO(80, 81, 89, 1), size: 24.sp),
+          ],
+        ),
       ),
     );
   }
@@ -176,9 +172,9 @@ class _PersonalActionSheetState extends State<PersonalActionSheet> {
                   child: _buildSingleActionBtn(
                     icon: FontAwesomeIcons.userLock,
                     text: '拉黑',
-                    onTap: () {
+                    onTap: () async {
+                      await widget.openBlockSheet();
                       Navigator.pop(context);
-                      widget.openBlockSheet();
                     },
                   ),
                 ),
@@ -193,9 +189,9 @@ class _PersonalActionSheetState extends State<PersonalActionSheet> {
                     _buildActionItem(
                       icon: FontAwesomeIcons.plus,
                       text: '不让他（她）看',
-                      onTap: () {
+                      onTap: () async {
+                        await widget.openDontSeeSheet();
                         Navigator.pop(context);
-                        widget.openDontSeeSheet();
                       },
                     ),
                     _buildActionItem(
@@ -203,6 +199,7 @@ class _PersonalActionSheetState extends State<PersonalActionSheet> {
                       text: '移除粉丝',
                       onTap: () {
                         print('移除粉丝');
+                        Navigator.pop(context);
                       },
                     ),
                   ],
