@@ -2,31 +2,33 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class AgePickerSheet extends StatefulWidget {
+class AgePickerSheetSkeleton extends StatefulWidget {
   final Function(DateTime) onConfirm;
 
-  const AgePickerSheet({required this.onConfirm, Key? key}) : super(key: key);
+  const AgePickerSheetSkeleton({
+    required this.onConfirm,
+    Key? key,
+  }) : super(key: key);
 
   @override
-  State<AgePickerSheet> createState() => _AgePickerSheetState();
+  State<AgePickerSheetSkeleton> createState() => _AgePickerSheetSkeletonState();
 }
 
-class _AgePickerSheetState extends State<AgePickerSheet> {
+class _AgePickerSheetSkeletonState extends State<AgePickerSheetSkeleton> {
   int year = 2000;
   int month = 1;
   int day = 1;
-
+  late bool isAllowSelect;
   late FixedExtentScrollController yearController;
   late FixedExtentScrollController monthController;
   late FixedExtentScrollController dayController;
 
   final int startYear = 1945;
   late int currentYear;
-  bool _isShowAge = false;
   @override
   void initState() {
     super.initState();
-
+    isAllowSelect = false;
     currentYear = DateTime.now().year;
 
     yearController = FixedExtentScrollController(
@@ -52,7 +54,7 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
 
     return Container(
       height: 260.0.h,
-      decoration:  BoxDecoration(
+      decoration: BoxDecoration(
         color: Color.fromRGBO(198, 199, 199, 1),
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),
       ),
@@ -68,13 +70,19 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
                   onTap: () => Navigator.pop(context),
                   child: Row(
                     children: [
-                      Text('不展示', style: TextStyle(color: Colors.black, fontSize: 14.0.sp),),
+                      Text(
+                        '不展示',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14.0.sp,
+                        ),
+                      ),
                       SizedBox(width: 4.0.w),
                       Switch(
-                        value: _isShowAge,
+                        value: isAllowSelect,
                         onChanged: (v) {
                           setState(() {
-                            _isShowAge = v;
+                            isAllowSelect = v;
                           });
                         },
                       ),
@@ -87,21 +95,22 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
                     widget.onConfirm(DateTime(year, month, day));
                     Navigator.pop(context);
                   },
-                  child: const Text('确定', style: TextStyle(color: Color.fromRGBO(254,49,89, 1))),
+                  child: const Text(
+                    '确定',
+                    style: TextStyle(color: Color.fromRGBO(254, 49, 89, 1)),
+                  ),
                 ),
               ],
             ),
           ),
 
-          Divider(height: 1.0.h,),
-
-
+          Divider(height: 1.0.h),
 
           Expanded(
             child: IgnorePointer(
-              ignoring: !_isShowAge, // 👈 关键
+              ignoring: !isAllowSelect, // 👈 关键
               child: Opacity(
-                opacity: _isShowAge ? 1.0 : 0.4, // 可选：禁用态视觉反馈
+                opacity: isAllowSelect ? 1.0 : 0.4, // 可选：禁用态视觉反馈
                 child: Row(
                   children: [
                     _buildPicker(
@@ -144,8 +153,9 @@ class _AgePickerSheetState extends State<AgePickerSheet> {
         onSelectedItemChanged: onSelected,
         children: items
             .map(
-              (e) =>
-                  Center(child: Text(e, style:  TextStyle(fontSize: 16.0.sp))),
+              (e) => Center(
+                child: Text(e, style: TextStyle(fontSize: 16.0.sp)),
+              ),
             )
             .toList(),
       ),

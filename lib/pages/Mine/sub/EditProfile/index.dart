@@ -1,7 +1,9 @@
-import 'package:bilbili_project/pages/Mine/comps/age_picker_sheet.dart';
+import 'package:bilbili_project/pages/Mine/sub/EditProfile/comps/age_picker_sheet_skeleton.dart';
+import 'package:bilbili_project/pages/Mine/sub/EditProfile/comps/sex_sheet_skeleton.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/sub/UpdateUserInfoField/params/params.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/mine_routes/select_country_route.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -43,135 +45,30 @@ class _EditProfilePageState extends State<EditProfilePage>
     _anim = Tween<double>(begin: 0.0, end: 0).animate(_animationController!);
   }
 
-  void _showAgePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) {
-        return AgePickerSheet(
-          onConfirm: (date) {
-            print(date); // 1998-06-12
-          },
-        );
-      },
-    );
+  DateTime? selectedBirthday; // 选中的出生日期
+  Future<void> _updateBirthday(DateTime date) async {
+    // 在此处发送请求更新数据
+    print('更新用户出生日期为：$date');
+    setState(() {
+      selectedBirthday = date;
+    });
   }
 
-  void _showGenderSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-      ),
-      builder: (BuildContext context) {
-        return ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(16.r)),
-          child: Container(
-            padding: EdgeInsets.only(bottom: 40.h),
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16.r),
-                  child: Container(
-                    color: Color.fromRGBO(198, 199, 199, 1),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ListTile(
-                          title: Center(
-                            child: Text(
-                              '男',
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                color: Colors.blueAccent,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            // setState(() => _selectedGender = '男');
-                            Navigator.pop(context);
-                          },
-                        ),
-                        Divider(
-                          height: 1.h,
-                          color: Color.fromRGBO(177, 177, 177, 1),
-                        ),
-                        ListTile(
-                          title: Center(
-                            child: Text(
-                              '女',
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                color: Colors.blueAccent,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            // setState(() => _selectedGender = '女');
-                            Navigator.pop(context);
-                          },
-                        ),
-                        Divider(
-                          height: 1.h,
-                          color: Color.fromRGBO(177, 177, 177, 1),
-                        ),
-                        ListTile(
-                          title: Center(
-                            child: Text(
-                              '不展示',
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                color: Colors.blueAccent,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            // setState(() => _selectedGender = '暂不选择');
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                Container(
-                  height: 60.h,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                    ),
-                    onPressed: () {
-                      // setState(() => _selectedGender = '暂不选择');
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      '取消',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        color: Colors.blueAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  Future<void> _showAgePickerSheet() async {
+    await SheetUtils(
+      AgePickerSheetSkeleton(onConfirm: _updateBirthday),
+    ).openAsyncSheet<bool>(context: context);
+  }
+
+  bool? selectedGender; // 选中的性别
+  Future<void> _openSexSheet() async {
+    final bool? isMale = await SheetUtils(
+      SexSheetSkeleton(),
+    ).openAsyncSheet<bool>(context: context);
+    print('选中的性别是：$isMale');
+    setState(() {
+      selectedGender = isMale;
+    });
   }
 
   void _updatePicHeight(double changed) {
@@ -375,7 +272,7 @@ class _EditProfilePageState extends State<EditProfilePage>
       onTap: () {
         fn();
       },
-      child: Container(
+      child: SizedBox(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -583,7 +480,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                         label: '性别',
                         content: '不展示',
                         fn: () {
-                          _showGenderSheet();
+                          _openSexSheet();
                         },
                       ),
                       SizedBox(height: 28.h),
@@ -591,7 +488,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                         label: '生日',
                         content: '不展示',
                         fn: () {
-                          _showAgePicker(context);
+                          _showAgePickerSheet();
                         },
                       ),
                       SizedBox(height: 28.h),
