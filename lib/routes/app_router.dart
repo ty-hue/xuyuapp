@@ -2,11 +2,14 @@ import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/AllFunction/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/DataAnalysis/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/EditProfile/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Preview/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Relationship/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
+import 'package:bilbili_project/pages/Mine/sub/WatchHistory/index.dart';
 import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/create_routes/create_route.dart';
@@ -23,15 +26,26 @@ import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.
 import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
 import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/routes/settings_routes/about_route.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
 import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';
+import 'package:bilbili_project/routes/settings_routes/cache_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_password_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_route.dart';
 import 'package:bilbili_project/routes/settings_routes/change_phone_second_route.dart';
+import 'package:bilbili_project/routes/settings_routes/declaration_route.dart';
 import 'package:bilbili_project/routes/settings_routes/delete_account_route.dart';
 import 'package:bilbili_project/routes/settings_routes/delete_account_second_route.dart';
+import 'package:bilbili_project/routes/settings_routes/general_route.dart';
+import 'package:bilbili_project/routes/settings_routes/notice_route.dart';
+import 'package:bilbili_project/routes/settings_routes/permission_description_route.dart';
+import 'package:bilbili_project/routes/settings_routes/permission_route.dart';
+import 'package:bilbili_project/routes/settings_routes/privacy_policy_route.dart';
 import 'package:bilbili_project/routes/settings_routes/privacy_route.dart';
 import 'package:bilbili_project/routes/settings_routes/recover_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/switch_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/theme_route.dart';
+import 'package:bilbili_project/routes/settings_routes/user_agreement_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -80,6 +94,17 @@ class LoginRoute extends GoRouteData {
     ),
     TypedGoRoute<PrivacyRoute>(path: 'privacy'),
     TypedGoRoute<ActionPageRoute>(path: 'action'),
+    TypedGoRoute<PermissionRoute>(path: 'permission'),
+    TypedGoRoute<NoticeRoute>(path: 'notice'),
+    TypedGoRoute<GeneralRoute>(path: 'general'),
+    TypedGoRoute<PermissionDescriptionRoute>(path: 'permission_description'),
+    TypedGoRoute<SwitchAccountRoute>(path: 'switch_account'),
+    TypedGoRoute<ThemeRoute>(path: 'theme'),
+    TypedGoRoute<PrivacyPolicyRoute>(path: 'privacy_policy'),
+    TypedGoRoute<DeclarationRoute>(path: 'declaration'),
+    TypedGoRoute<CacheRoute>(path: 'cache'),
+    TypedGoRoute<AboutRoute>(path: 'about'),
+    TypedGoRoute<UserAgreementRoute>(path: 'user_agreement'),
   ],
 )
 class SettingsPageRoute extends GoRouteData {
@@ -91,6 +116,37 @@ class SettingsPageRoute extends GoRouteData {
   }
 }
 
+// 观看历史
+@TypedGoRoute<WatchHistoryPageRoute>(path: '/watch_history')
+class WatchHistoryPageRoute extends GoRouteData {
+  const WatchHistoryPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return WatchHistoryPage();
+  }
+}
+
+// 数据分析
+@TypedGoRoute<DataAnalysisPageRoute>(path: '/data_analysis')
+class DataAnalysisPageRoute extends GoRouteData {
+  const DataAnalysisPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return DataAnalysisPage();
+  }
+}
+// 全部功能
+@TypedGoRoute<AllFunctionPageRoute>(path: '/all_function')
+class AllFunctionPageRoute extends GoRouteData {
+  const AllFunctionPageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return AllFunctionPage();
+  }
+}
 // 个人搜索页 路由
 @TypedGoRoute<SearchPageRoute>(path: '/search_myself')
 class SearchPageRoute extends GoRouteData {

@@ -12,20 +12,29 @@ class DrawerMenu extends StatefulWidget {
 }
 
 class _DrawerMenuState extends State<DrawerMenu> {
-  final List<MenuItem> _topMenuItems = [
-    MenuItem(title: '我的订单', icon: Icons.shopping_cart, cb: () {}),
-    MenuItem(title: '我的钱包', icon: Icons.wallet, cb: () {}),
-  ];
-  final List<MenuItem> _centerMenuItems = [
-    MenuItem(title: '我的二维码', icon: Icons.qr_code, cb: () {}),
-    MenuItem(title: '观看历史', icon: Icons.history, cb: () {}),
-    MenuItem(title: '离线模式', icon: Icons.offline_bolt, cb: () {}),
-    MenuItem(title: '稍后再看', icon: Icons.playlist_add_check, cb: () {}),
-    MenuItem(title: '絮语创作者中心', icon: Icons.article, cb: () {}),
-  ];
+  late List<MenuItem> _centerMenuItems = [];
+  @override
+  initState() {
+    super.initState();
+    _centerMenuItems = [
+      MenuItem(
+        title: '观看历史',
+        icon: Icons.history,
+        cb: () {
+          WatchHistoryPageRoute().push(widget.context);
+        },
+      ),
+      MenuItem(
+        title: '账号数据分析',
+        icon: Icons.analytics,
+        cb: () {
+          DataAnalysisPageRoute().push(widget.context);
+        },
+      ),
+    ];
+  }
+
   List<MenuItem> get _bottomMenuItems => [
-    MenuItem(title: '絮语公益', icon: Icons.volunteer_activism, cb: () {}),
-    MenuItem(title: '我的客服', icon: Icons.contact_support, cb: () {}),
     MenuItem(
       title: '设置',
       icon: Icons.settings,
@@ -49,7 +58,10 @@ class _DrawerMenuState extends State<DrawerMenu> {
           children: [
             Icon(item.icon, color: Colors.white),
             SizedBox(width: 12.0.w),
-            Text(item.title, style: TextStyle(color: Colors.white, fontSize: 14.0.sp)),
+            Text(
+              item.title,
+              style: TextStyle(color: Colors.white, fontSize: 14.0.sp),
+            ),
           ],
         ),
       ),
@@ -75,10 +87,6 @@ class _DrawerMenuState extends State<DrawerMenu> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildMenuGroup(_topMenuItems),
-              SizedBox(height: 12.0.h),
-              Divider(height: 0.5.h, color: Colors.grey),
-              SizedBox(height: 12.0.h),
               _buildMenuGroup(_centerMenuItems),
               SizedBox(height: 12.0.h),
               Divider(height: 0.5.h, color: Colors.grey),

@@ -384,99 +384,75 @@ class _MinePageState extends State<MinePage>
             border: Border.all(width: 0, color: Color.fromRGBO(22, 22, 22, 1)),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
+            spacing: 30.w,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 4.h,
-                children: [
-                  Icon(Icons.shop, color: Colors.white, size: 20.r),
-                  Text(
-                    '絮语商城',
-                    style: TextStyle(
+              GestureDetector(
+                onTap: () {
+                  WatchHistoryPageRoute().push(context);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 4.h,
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.history,
                       color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
+                      size: 20.r,
                     ),
-                  ),
-                ],
+                    Text(
+                      '观看历史',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 4.h,
-                children: [
-                  Icon(
-                    FontAwesomeIcons.history,
-                    color: Colors.white,
-                    size: 20.r,
-                  ),
-                  Text(
-                    '观看历史',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  DataAnalysisPageRoute().push(context);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 4.h,
+                  children: [
+                    Icon(Icons.analytics, color: Colors.white, size: 20.r),
+                    Text(
+                      '数据分析',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 4.h,
-                children: [
-                  Icon(
-                    FontAwesomeIcons.lightbulb,
-                    color: Colors.white,
-                    size: 20.r,
-                  ),
-                  Text(
-                    '创作者中心',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  AllFunctionPageRoute().push(context);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 4.h,
+                  children: [
+                    Icon(FontAwesomeIcons.th, color: Colors.white, size: 20.r),
+                    Text(
+                      '全部功能',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 4.h,
-                children: [
-                  Icon(
-                    FontAwesomeIcons.creditCard,
-                    color: Colors.white,
-                    size: 20.r,
-                  ),
-                  Text(
-                    '我的钱包',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 4.h,
-                children: [
-                  Icon(FontAwesomeIcons.th, color: Colors.white, size: 20.r),
-                  Text(
-                    '全部功能',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -485,11 +461,14 @@ class _MinePageState extends State<MinePage>
           top: 0,
           left: 0,
           right: 0,
-          child: SizedBox(
-            height: 80.h,
-            child: Opacity(
-              opacity: opacity,
-              child: Container(color: const Color.fromRGBO(22, 22, 22, 1)),
+          child: IgnorePointer(
+            ignoring: true,
+            child: SizedBox(
+              height: 80.h,
+              child: Opacity(
+                opacity: opacity,
+                child: Container(color: const Color.fromRGBO(22, 22, 22, 1)),
+              ),
             ),
           ),
         ),
@@ -611,8 +590,7 @@ class _MinePageState extends State<MinePage>
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     shape: const RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.zero,
+                                      borderRadius: BorderRadius.zero,
                                     ),
                                   ),
                                   onPressed: () => Navigator.pop(context),

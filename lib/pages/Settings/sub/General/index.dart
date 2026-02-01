@@ -1,0 +1,23 @@
+import 'package:bilbili_project/components/static_app_bar.dart';
+import 'package:bilbili_project/components/with_statusBar_color.dart';
+import 'package:flutter/material.dart';
+
+class GeneralPage extends StatefulWidget {
+  GeneralPage({Key? key}) : super(key: key);
+
+  @override
+  _GeneralPageState createState() => _GeneralPageState();
+}
+
+class _GeneralPageState extends State<GeneralPage> {
+  @override
+  Widget build(BuildContext context) {
+    return WithStatusbarColorView(statusBarColor: Color.fromRGBO(29, 31, 43, 1), child: Scaffold(
+      appBar: StaticAppBar(
+        statusBarHeight: MediaQuery.of(context).padding.top,
+        backgroundColor: Color.fromRGBO(29, 31, 43, 1),
+        title: '通用设置',
+      ),
+    ));
+  }
+}

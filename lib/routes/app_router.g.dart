@@ -9,6 +9,9 @@ part of 'app_router.dart';
 List<RouteBase> get $appRoutes => [
   $loginRoute,
   $settingsPageRoute,
+  $watchHistoryPageRoute,
+  $dataAnalysisPageRoute,
+  $allFunctionPageRoute,
   $searchPageRoute,
   $previewRoute,
   $addFriendRoute,
@@ -160,6 +163,49 @@ RouteBase get $settingsPageRoute => GoRouteData.$route(
       path: 'action',
 
       factory: $ActionPageRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'permission',
+
+      factory: $PermissionRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'notice',
+
+      factory: $NoticeRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'general',
+
+      factory: $GeneralRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'permission_description',
+
+      factory: $PermissionDescriptionRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'switch_account',
+
+      factory: $SwitchAccountRouteExtension._fromState,
+    ),
+    GoRouteData.$route(path: 'theme', factory: $ThemeRouteExtension._fromState),
+    GoRouteData.$route(
+      path: 'privacy_policy',
+
+      factory: $PrivacyPolicyRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'declaration',
+
+      factory: $DeclarationRouteExtension._fromState,
+    ),
+    GoRouteData.$route(path: 'cache', factory: $CacheRouteExtension._fromState),
+    GoRouteData.$route(path: 'about', factory: $AboutRouteExtension._fromState),
+    GoRouteData.$route(
+      path: 'user_agreement',
+
+      factory: $UserAgreementRouteExtension._fromState,
     ),
   ],
 );
@@ -318,6 +364,244 @@ extension $ActionPageRouteExtension on ActionPageRoute {
       const ActionPageRoute();
 
   String get location => GoRouteData.$location('/settings/action');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $PermissionRouteExtension on PermissionRoute {
+  static PermissionRoute _fromState(GoRouterState state) =>
+      const PermissionRoute();
+
+  String get location => GoRouteData.$location('/settings/permission');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $NoticeRouteExtension on NoticeRoute {
+  static NoticeRoute _fromState(GoRouterState state) => const NoticeRoute();
+
+  String get location => GoRouteData.$location('/settings/notice');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $GeneralRouteExtension on GeneralRoute {
+  static GeneralRoute _fromState(GoRouterState state) => const GeneralRoute();
+
+  String get location => GoRouteData.$location('/settings/general');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $PermissionDescriptionRouteExtension on PermissionDescriptionRoute {
+  static PermissionDescriptionRoute _fromState(GoRouterState state) =>
+      const PermissionDescriptionRoute();
+
+  String get location =>
+      GoRouteData.$location('/settings/permission_description');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $SwitchAccountRouteExtension on SwitchAccountRoute {
+  static SwitchAccountRoute _fromState(GoRouterState state) =>
+      const SwitchAccountRoute();
+
+  String get location => GoRouteData.$location('/settings/switch_account');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ThemeRouteExtension on ThemeRoute {
+  static ThemeRoute _fromState(GoRouterState state) => const ThemeRoute();
+
+  String get location => GoRouteData.$location('/settings/theme');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $PrivacyPolicyRouteExtension on PrivacyPolicyRoute {
+  static PrivacyPolicyRoute _fromState(GoRouterState state) =>
+      const PrivacyPolicyRoute();
+
+  String get location => GoRouteData.$location('/settings/privacy_policy');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $DeclarationRouteExtension on DeclarationRoute {
+  static DeclarationRoute _fromState(GoRouterState state) =>
+      const DeclarationRoute();
+
+  String get location => GoRouteData.$location('/settings/declaration');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $CacheRouteExtension on CacheRoute {
+  static CacheRoute _fromState(GoRouterState state) => const CacheRoute();
+
+  String get location => GoRouteData.$location('/settings/cache');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $AboutRouteExtension on AboutRoute {
+  static AboutRoute _fromState(GoRouterState state) => const AboutRoute();
+
+  String get location => GoRouteData.$location('/settings/about');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $UserAgreementRouteExtension on UserAgreementRoute {
+  static UserAgreementRoute _fromState(GoRouterState state) =>
+      const UserAgreementRoute();
+
+  String get location => GoRouteData.$location('/settings/user_agreement');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $watchHistoryPageRoute => GoRouteData.$route(
+  path: '/watch_history',
+
+  factory: $WatchHistoryPageRouteExtension._fromState,
+);
+
+extension $WatchHistoryPageRouteExtension on WatchHistoryPageRoute {
+  static WatchHistoryPageRoute _fromState(GoRouterState state) =>
+      const WatchHistoryPageRoute();
+
+  String get location => GoRouteData.$location('/watch_history');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $dataAnalysisPageRoute => GoRouteData.$route(
+  path: '/data_analysis',
+
+  factory: $DataAnalysisPageRouteExtension._fromState,
+);
+
+extension $DataAnalysisPageRouteExtension on DataAnalysisPageRoute {
+  static DataAnalysisPageRoute _fromState(GoRouterState state) =>
+      const DataAnalysisPageRoute();
+
+  String get location => GoRouteData.$location('/data_analysis');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $allFunctionPageRoute => GoRouteData.$route(
+  path: '/all_function',
+
+  factory: $AllFunctionPageRouteExtension._fromState,
+);
+
+extension $AllFunctionPageRouteExtension on AllFunctionPageRoute {
+  static AllFunctionPageRoute _fromState(GoRouterState state) =>
+      const AllFunctionPageRoute();
+
+  String get location => GoRouteData.$location('/all_function');
 
   void go(BuildContext context) => context.go(location);
 

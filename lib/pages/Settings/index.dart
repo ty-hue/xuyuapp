@@ -3,8 +3,19 @@ import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/settings_routes/about_route.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
+import 'package:bilbili_project/routes/settings_routes/cache_route.dart';
+import 'package:bilbili_project/routes/settings_routes/declaration_route.dart';
+import 'package:bilbili_project/routes/settings_routes/general_route.dart';
+import 'package:bilbili_project/routes/settings_routes/notice_route.dart';
+import 'package:bilbili_project/routes/settings_routes/permission_description_route.dart';
+import 'package:bilbili_project/routes/settings_routes/permission_route.dart';
+import 'package:bilbili_project/routes/settings_routes/privacy_policy_route.dart';
 import 'package:bilbili_project/routes/settings_routes/privacy_route.dart';
+import 'package:bilbili_project/routes/settings_routes/switch_account_route.dart';
+import 'package:bilbili_project/routes/settings_routes/theme_route.dart';
+import 'package:bilbili_project/routes/settings_routes/user_agreement_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -102,53 +113,38 @@ class _SettingsState extends State<SettingsPage> {
                           isFirst: true,
                           itemName: '通用设置',
                           icon: Icons.settings,
-                          cb: () {},
+                          cb: () {
+                            GeneralRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '通知设置',
                           icon: Icons.notifications,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '通知消息管理',
-                          icon: Icons.notifications_active,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '聊天与通话设置',
-                          icon: Icons.phone,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '播放设置',
-                          icon: Icons.play_arrow,
-                          cb: () {},
+                          cb: () {
+                            NoticeRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '背景设置',
                           icon: Icons.wallpaper,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '长辈模式',
-                          icon: Icons.people_alt,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '字体大小',
-                          icon: Icons.text_fields,
-                          cb: () {},
+                          cb: () {
+                            ThemeRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '清理缓存',
                           icon: Icons.cleaning_services,
-                          cb: () {},
+                          cb: () {
+                            CacheRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '系统权限',
                           icon: Icons.system_update_alt,
                           needUnderline: false,
-                          cb: () {},
+                          cb: () {
+                            PermissionRoute().push(context);
+                          },
                         ),
                       ],
                     ),
@@ -169,63 +165,37 @@ class _SettingsState extends State<SettingsPage> {
                           isFirst: true,
                           itemName: '关于絮语',
                           icon: Icons.info,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '了解与管理广告推送',
-                          icon: Icons.ad_units_sharp,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '反馈与帮助',
-                          icon: Icons.help,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '絮语规则中心',
-                          icon: Icons.rule,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '资质证照',
-                          icon: Icons.verified_user,
-                          cb: () {},
+                          cb: () {
+                            AboutRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '用户协议',
                           icon: Icons.description,
-                          cb: () {},
+                          cb: () {
+                            UserAgreementRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '隐私政策及简明版',
                           icon: Icons.privacy_tip,
-                          cb: () {},
+                          cb: () {
+                            PrivacyPolicyRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '应用权限',
                           icon: Icons.perm_identity,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '个人信息收集清单',
-                          icon: Icons.info,
-                          cb: () {},
-                        ),
-                        _buildGroupItem(
-                          itemName: '第三方信息共享清单',
-                          icon: Icons.info,
-                          cb: () {},
-                        ),
-
-                        _buildGroupItem(
-                          itemName: '个人信息管理',
-                          icon: Icons.info,
-                          cb: () {},
+                          cb: () {
+                            PermissionDescriptionRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '开源软件声明',
                           icon: Icons.code,
-                          cb: () {},
+                          cb: () {
+                            DeclarationRoute().push(context);
+                          },
                           needUnderline: false,
                         ),
                       ],
@@ -245,7 +215,9 @@ class _SettingsState extends State<SettingsPage> {
                           isFirst: true,
                           itemName: '切换账号',
                           icon: Icons.switch_account,
-                          cb: () {},
+                          cb: () {
+                            SwitchAccountRoute().push(context);
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '退出登录',
