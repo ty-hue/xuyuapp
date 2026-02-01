@@ -10,7 +10,12 @@ class SelectSheetSkeleton extends StatefulWidget {
   final Color? backgroundColor;
   final Color? closeIconColor;
   final List<Map<String, String>> items;
-
+  final EdgeInsetsGeometry? outBoxPadding;
+  final Radius? borderRadius;
+  final double? itemHeight;
+  final Color? innerBoxColor;
+  final Color? itemIconColor;
+  final Color? itemTitleColor;
   SelectSheetSkeleton({
     Key? key,
     required this.label,
@@ -20,6 +25,12 @@ class SelectSheetSkeleton extends StatefulWidget {
     this.backgroundColor,
     this.closeIconColor,
     required this.items,
+    this.outBoxPadding,
+    this.borderRadius,
+    this.itemHeight,
+    this.innerBoxColor,
+    this.itemIconColor,
+    this.itemTitleColor,
   }) : super(key: key);
 
   @override
@@ -36,7 +47,7 @@ class _SelectSheetSkeletonState extends State<SelectSheetSkeleton> {
 
   Widget _buildItem({
     required Map<String, String> item,
-     bool isNeedUnderline = true,
+    bool isNeedUnderline = true,
   }) {
     return GestureDetector(
       onTap: () {
@@ -52,56 +63,60 @@ class _SelectSheetSkeletonState extends State<SelectSheetSkeleton> {
           });
         }
       },
-      child: Container(
-        alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(horizontal: 12.w),
-        height: 68.h,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.r),
-          // 底部边框
-          border: Border(
-            bottom: isNeedUnderline
-                ? BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.w)
-                : BorderSide.none,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8.r),
+        child: Container(
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          height: widget.itemHeight ?? 68.h,
+          decoration: BoxDecoration(
+            // 底部边框
+            border: Border(
+              bottom: isNeedUnderline
+                  ? BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.w)
+                  : BorderSide.none,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              spacing: item['subTitle'] != '' ? 4.h : 0,
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['title'] ?? '',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                spacing: item['subTitle'] != '' ? 4.h : 0,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['title'] ?? '',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: widget.itemTitleColor ?? Colors.black,
+                    ),
                   ),
-                ),
-                item['subTitle'] != ''
-                    ? Text(
-                        item['subTitle'] ?? '',
-                        style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                  item['subTitle'] != ''
+                      ? Text(
+                          item['subTitle'] ?? '',
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                        )
+                      : SizedBox.shrink(),
+                ],
+              ),
+              SizedBox(
+                width: 24.sp,
+                height: 24.sp,
+                child: value == item['value']
+                    ? Icon(
+                        Icons.check,
+                        size: 24.sp,
+                        color:
+                            widget.itemIconColor ??
+                            const Color.fromRGBO(212, 93, 130, 1),
                       )
-                    : SizedBox.shrink(),
-              ],
-            ),
-            SizedBox(
-              width: 24.sp,
-              height: 24.sp,
-              child: value == item['value']
-                  ? Icon(
-                      Icons.check,
-                      size: 24.sp,
-                      color: const Color.fromRGBO(212, 93, 130, 1),
-                    )
-                  : const SizedBox(),
-            ),
-          ],
+                    : const SizedBox(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -110,9 +125,13 @@ class _SelectSheetSkeletonState extends State<SelectSheetSkeleton> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.all(Radius.circular(16.r)),
+      borderRadius: BorderRadius.all(
+        widget.borderRadius ?? Radius.circular(16.r),
+      ),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+        padding:
+            widget.outBoxPadding ??
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
         color: widget.backgroundColor ?? Color.fromRGBO(243, 243, 245, 1),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -130,7 +149,7 @@ class _SelectSheetSkeletonState extends State<SelectSheetSkeleton> {
             SizedBox(height: 8.h),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: widget.innerBoxColor ?? Colors.white,
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Column(
@@ -143,9 +162,7 @@ class _SelectSheetSkeletonState extends State<SelectSheetSkeleton> {
                         isNeedUnderline: false,
                       );
                     }
-                    return _buildItem(
-                      item: widget.items[index],
-                    );
+                    return _buildItem(item: widget.items[index]);
                   }),
                 ],
               ),

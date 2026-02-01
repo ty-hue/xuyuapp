@@ -4,13 +4,20 @@ import 'package:bilbili_project/components/switch_sheet_skeleton.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
+import 'package:bilbili_project/pages/Settings/sub/Privacy/comps/block_list_action.dart';
+import 'package:bilbili_project/pages/Settings/sub/Privacy/comps/collect_manager_action.dart';
+import 'package:bilbili_project/pages/Settings/sub/Privacy/comps/like_manager_action.dart';
+import 'package:bilbili_project/pages/Settings/sub/Privacy/comps/music_manager_action.dart';
+import 'package:bilbili_project/pages/Settings/sub/Privacy/comps/private_message_action.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';
 
 import 'package:bilbili_project/utils/SheetUtils.dart';
+import 'package:bilbili_project/viewmodels/Settings/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class PrivacyPage extends StatefulWidget {
   PrivacyPage({Key? key}) : super(key: key);
@@ -289,7 +296,13 @@ class _PrivacyState extends State<PrivacyPage> {
                             ),
                           ),
                           cb: () {
-                            ActionPageRoute().push(context);
+                            context.push(
+                              ActionPageRoute().location,
+                              extra: ActionPageParams(
+                                title: '黑名单管理',
+                                child: BlockListAction(),
+                              ),
+                            );
                           },
                         ),
                         _buildGroupItem(
@@ -452,23 +465,55 @@ class _PrivacyState extends State<PrivacyPage> {
                         _buildGroupItem(
                           itemName: '私信',
                           isNeedIcon: false,
-                          cb: () {},
+                          cb: () {
+                            context.push(
+                              ActionPageRoute().location,
+                              extra: ActionPageParams(
+                                title: '谁可以私信我',
+                                child: PrivateMessageAction(),
+                              ),
+                            );
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '点赞',
                           isNeedIcon: false,
-                          cb: () {},
+                          cb: () {
+                            context.push(
+                              ActionPageRoute().location,
+                              extra: ActionPageParams(
+                                title: '喜欢',
+                                child: LikeManagerAction(),
+                              ),
+                            );
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '收藏',
                           isNeedIcon: false,
-                          cb: () {},
+                          cb: () {
+                            context.push(
+                              ActionPageRoute().location,
+                              extra: ActionPageParams(
+                                title: '收藏',
+                                child: CollectManagerAction(),
+                              ),
+                            );
+                          },
                         ),
                         _buildGroupItem(
                           itemName: '音乐',
                           isNeedIcon: false,
                           needUnderline: false,
-                          cb: () {},
+                          cb: () {
+                            context.push(
+                              ActionPageRoute().location,
+                              extra: ActionPageParams(
+                                title: '音乐',
+                                child: MusicManagerAction(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

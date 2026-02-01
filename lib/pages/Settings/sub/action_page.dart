@@ -1,22 +1,33 @@
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ActionPage extends StatefulWidget {
-  ActionPage({Key? key}) : super(key: key);
+  final String title;
+  final Widget child;
+  ActionPage({Key? key, required this.title, required this.child}) : super(key: key);
 
   @override
-  _ActionPageState createState() => _ActionPageState();
+  State<ActionPage> createState() => _ActionPageState();
 }
 
 class _ActionPageState extends State<ActionPage> {
   @override
   Widget build(BuildContext context) {
-    return WithStatusbarColorView(statusBarColor: Colors.white, child: Scaffold(
+    return WithStatusbarColorView(statusBarColor: Color.fromRGBO(22,24,36, 1), child: Scaffold(
       appBar: StaticAppBar(
+        backgroundColor: Color.fromRGBO(22,24,36, 1),
         statusBarHeight: MediaQuery.of(context).padding.top,
-        title: '操作',
+        title: widget.title,
       ),
+      body: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Color.fromRGBO(22,24,36, 1),
+        ),
+        child: widget.child,
+      )
     ));
   }
 }
