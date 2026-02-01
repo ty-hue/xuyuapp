@@ -10,6 +10,7 @@ class WithSwitchListItem extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final TextStyle? titleStyle;
   final bool isNeedUnderline;
+  final String? subTitle;
   WithSwitchListItem({
     Key? key,
     required this.title,
@@ -20,6 +21,7 @@ class WithSwitchListItem extends StatefulWidget {
     this.padding,
     this.titleStyle,
     this.isNeedUnderline = true,
+    this.subTitle,
   }) : super(key: key);
 
   @override
@@ -44,21 +46,30 @@ class _WithSwitchListItemState extends State<WithSwitchListItem> {
               )
             : null,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.title,
-            style: widget.titleStyle ?? TextStyle(color: Colors.white),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.title,
+                style: widget.titleStyle ?? TextStyle(color: Colors.white),
+              ),
+              Switch(
+                value: widget.value,
+                onChanged: (value) {
+                  setState(() {
+                    widget.onChanged(value);
+                  });
+                },
+              ),
+            ],
           ),
-          Switch(
-            value: widget.value,
-            onChanged: (value) {
-              setState(() {
-                widget.onChanged(value);
-              });
-            },
-          ),
+          widget.subTitle != null
+              ? Text(widget.subTitle!, style: TextStyle(color: Color.fromRGBO(90,93,102, 1),fontSize: 13.sp,),textAlign: TextAlign.left,)
+              : SizedBox.shrink(),
         ],
       ),
     );
