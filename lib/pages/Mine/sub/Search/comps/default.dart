@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/default_dialg_skeleton.dart';
 import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:bilbili_project/utils/mineSearchHistoryManager.dart';
 import 'package:flutter/material.dart';
@@ -170,111 +171,32 @@ class _DefaultViewState extends State<DefaultView> {
       return GestureDetector(
         onTap: () {
           // 弹出dialog
-          DialogUtils.showCustomDialog(
-            context,
-            Builder(
-              builder: (context) {
-                return Container(
-                  width: 200.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        alignment: Alignment.center,
-                        height: 100.h,
-                        child: Text(
-                          '历史记录清除后无法恢复，是否清除全部记录',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color.fromRGBO(34, 35, 46, 1),
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      ),
-
-                      Container(
-                        width: double.infinity,
-                        height: 50.h,
-                        decoration: BoxDecoration(
-                          // 上边框
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.grey.withOpacity(0.3),
-                              width: 1.w,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: TextButton(
-                                // 矩形按钮 无圆角
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.zero,
-                                  ),
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  "取消",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 15.sp,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 1.w,
-                              height: 30.h,
-                              color: Colors.grey.withOpacity(0.3),
-                            ),
-                            Expanded(
-                              child: TextButton(
-                                // 矩形按钮 无圆角
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.zero,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    widget.updateSearchHistory(
-                                      editType: EditSearchHistory.clear,
-                                    );
-                                    widget.toggleExpanded(false);
-                                    mineSearchHistoryManager
-                                        .removeSearchHistory();
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: Text(
-                                  "清除",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+          DialogUtils(
+            DefaultDialgSkeleton(
+              rightBtnText: "清除",
+              onRightBtnTap: () {
+                setState(() {
+                  widget.updateSearchHistory(editType: EditSearchHistory.clear);
+                  widget.toggleExpanded(false);
+                  mineSearchHistoryManager.removeSearchHistory();
+                });
+                Navigator.pop(context);
               },
+              child: Container(
+                width: 250.w,
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 20.h),
+                child: Text(
+                  '历史记录清除后无法恢复，是否清除全部记录',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color.fromRGBO(34, 35, 46, 1),
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
             ),
-          );
+          ).showCustomDialog(context);
         },
         child: Text(
           '清除全部搜索历史',

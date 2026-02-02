@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/default_dialg_skeleton.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
@@ -16,6 +17,7 @@ import 'package:bilbili_project/routes/settings_routes/privacy_route.dart';
 import 'package:bilbili_project/routes/settings_routes/switch_account_route.dart';
 import 'package:bilbili_project/routes/settings_routes/theme_route.dart';
 import 'package:bilbili_project/routes/settings_routes/user_agreement_route.dart';
+import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -27,6 +29,51 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsState extends State<SettingsPage> {
+  // 打开退出登录dialog
+  void _showLogoutDialog() {
+    DialogUtils(
+      DefaultDialgSkeleton(
+        onRightBtnTap: () {
+          // 退出登录
+        },
+        leftTextStyle: TextStyle(
+          color: Color.fromRGBO(93, 141, 206, 1),
+          fontWeight: FontWeight.bold,
+          fontSize: 15.sp,
+        ),
+        rightTextStyle: TextStyle(
+          color: Color.fromRGBO(93, 141, 206, 1),
+          fontSize: 15.sp,
+        ),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 20.h),
+          width: 200.w,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '退出?',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '@llg',
+                style: TextStyle(color: Colors.black, fontSize: 15.sp),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).showCustomDialog(context);
+  }
+
   Widget _buildGroupName(String groupName) {
     return GroupTitleView(title: groupName);
   }
@@ -224,7 +271,7 @@ class _SettingsState extends State<SettingsPage> {
                           icon: Icons.exit_to_app,
                           needUnderline: false,
                           needTrailingIcon: false,
-                          cb: () {},
+                          cb: () => _showLogoutDialog(),
                         ),
                       ],
                     ),

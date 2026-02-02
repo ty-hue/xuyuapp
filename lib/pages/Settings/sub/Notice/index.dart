@@ -4,7 +4,6 @@ import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_title.dart';
 import 'package:bilbili_project/pages/Settings/sub/General/comps/watch_history_action.dart';
-import 'package:bilbili_project/pages/Settings/sub/General/comps/work_show_action.dart';
 import 'package:bilbili_project/pages/Settings/sub/Notice/comps/privacy_msg_action.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';

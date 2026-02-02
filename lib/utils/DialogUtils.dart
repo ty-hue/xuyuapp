@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class DialogUtils {
-  static showCustomDialog(BuildContext context,Widget child) {
+  final Widget child;
+  DialogUtils(this.child);
+   showCustomDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: true,
