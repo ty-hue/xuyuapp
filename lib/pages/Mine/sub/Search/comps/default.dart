@@ -1,4 +1,4 @@
-import 'package:bilbili_project/components/default_dialg_skeleton.dart';
+import 'package:bilbili_project/components/default_dialog_skeleton.dart';
 import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:bilbili_project/utils/mineSearchHistoryManager.dart';
 import 'package:flutter/material.dart';

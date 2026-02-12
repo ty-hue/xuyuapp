@@ -1,4 +1,4 @@
-import 'package:bilbili_project/components/default_dialg_skeleton.dart';
+import 'package:bilbili_project/components/default_dialog_skeleton.dart';
 import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/DialogUtils.dart';
@@ -766,7 +766,7 @@ class _MinePageState extends State<MinePage>
                     right: 0,
                     child: GestureDetector(
                       onTap: () {
-                        context.go('/create');
+                        CreateRoute().push(context);
                       },
                       child: Container(
                         alignment: Alignment.center,

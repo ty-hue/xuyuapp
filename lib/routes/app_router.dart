@@ -1,5 +1,6 @@
 import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
+import 'package:bilbili_project/pages/Create/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AllFunction/index.dart';
@@ -12,7 +13,6 @@ import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/WatchHistory/index.dart';
 import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
-import 'package:bilbili_project/routes/create_routes/create_route.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
 import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
 import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
@@ -46,6 +46,7 @@ import 'package:bilbili_project/routes/settings_routes/recover_account_route.dar
 import 'package:bilbili_project/routes/settings_routes/switch_account_route.dart';
 import 'package:bilbili_project/routes/settings_routes/theme_route.dart';
 import 'package:bilbili_project/routes/settings_routes/user_agreement_route.dart';
+import 'package:bilbili_project/routes/watch_history_routes/history_search_route.dart';
 import 'package:bilbili_project/viewmodels/EditProfile/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -117,7 +118,10 @@ class SettingsPageRoute extends GoRouteData {
 }
 
 // 观看历史
-@TypedGoRoute<WatchHistoryPageRoute>(path: '/watch_history')
+@TypedGoRoute<WatchHistoryPageRoute>(
+  path: '/watch_history',
+  routes: [TypedGoRoute<HistorySearchRoute>(path: 'search')],
+)
 class WatchHistoryPageRoute extends GoRouteData {
   const WatchHistoryPageRoute();
 
@@ -137,6 +141,7 @@ class DataAnalysisPageRoute extends GoRouteData {
     return DataAnalysisPage();
   }
 }
+
 // 全部功能
 @TypedGoRoute<AllFunctionPageRoute>(path: '/all_function')
 class AllFunctionPageRoute extends GoRouteData {
@@ -147,6 +152,7 @@ class AllFunctionPageRoute extends GoRouteData {
     return AllFunctionPage();
   }
 }
+
 // 个人搜索页 路由
 @TypedGoRoute<SearchPageRoute>(path: '/search_myself')
 class SearchPageRoute extends GoRouteData {
@@ -318,6 +324,19 @@ class EditProfileRoute extends GoRouteData {
   }
 }
 
+@TypedGoRoute<CreateRoute>(path: '/create:fromUrl')
+class CreateRoute extends GoRouteData {
+  final String? fromUrl;
+  const CreateRoute({this.fromUrl});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return CreatePage(
+      fromUrl: fromUrl,
+    );
+  }
+}
+
 // 五个分支
 @TypedStatefulShellRoute<ShellRouteData>(
   branches: [
@@ -326,9 +345,6 @@ class EditProfileRoute extends GoRouteData {
     ),
     TypedStatefulShellBranch<FriendBranchData>(
       routes: [TypedGoRoute<FriendRoute>(path: '/friend')],
-    ),
-    TypedStatefulShellBranch<CreateBranchData>(
-      routes: [TypedGoRoute<CreateRoute>(path: '/create')],
     ),
     TypedStatefulShellBranch<MessageBranchData>(
       routes: [TypedGoRoute<MessageRoute>(path: '/message')],
@@ -365,8 +381,4 @@ class MessageBranchData extends StatefulShellBranchData {
 
 class FriendBranchData extends StatefulShellBranchData {
   const FriendBranchData();
-}
-
-class CreateBranchData extends StatefulShellBranchData {
-  const CreateBranchData();
 }

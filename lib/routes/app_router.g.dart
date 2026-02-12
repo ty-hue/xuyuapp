@@ -20,6 +20,7 @@ List<RouteBase> get $appRoutes => [
   $visitorPageRoute,
   $allPhotoRoute,
   $editProfileRoute,
+  $createRoute,
   $shellRouteData,
 ];
 
@@ -551,6 +552,13 @@ RouteBase get $watchHistoryPageRoute => GoRouteData.$route(
   path: '/watch_history',
 
   factory: $WatchHistoryPageRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'search',
+
+      factory: $HistorySearchRouteExtension._fromState,
+    ),
+  ],
 );
 
 extension $WatchHistoryPageRouteExtension on WatchHistoryPageRoute {
@@ -558,6 +566,22 @@ extension $WatchHistoryPageRouteExtension on WatchHistoryPageRoute {
       const WatchHistoryPageRoute();
 
   String get location => GoRouteData.$location('/watch_history');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $HistorySearchRouteExtension on HistorySearchRoute {
+  static HistorySearchRoute _fromState(GoRouterState state) =>
+      const HistorySearchRoute();
+
+  String get location => GoRouteData.$location('/watch_history/search');
 
   void go(BuildContext context) => context.go(location);
 
@@ -1038,6 +1062,27 @@ extension $SelectCityRouteExtension on SelectCityRoute {
   void replace(BuildContext context) => context.replace(location);
 }
 
+RouteBase get $createRoute => GoRouteData.$route(
+  path: '/create',
+
+  factory: $CreateRouteExtension._fromState,
+);
+
+extension $CreateRouteExtension on CreateRoute {
+  static CreateRoute _fromState(GoRouterState state) => const CreateRoute();
+
+  String get location => GoRouteData.$location('/create');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
 RouteBase get $shellRouteData => StatefulShellRouteData.$route(
   factory: $ShellRouteDataExtension._fromState,
   branches: [
@@ -1052,15 +1097,6 @@ RouteBase get $shellRouteData => StatefulShellRouteData.$route(
           path: '/friend',
 
           factory: $FriendRouteExtension._fromState,
-        ),
-      ],
-    ),
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/create',
-
-          factory: $CreateRouteExtension._fromState,
         ),
       ],
     ),
@@ -1109,21 +1145,6 @@ extension $FriendRouteExtension on FriendRoute {
   static FriendRoute _fromState(GoRouterState state) => const FriendRoute();
 
   String get location => GoRouteData.$location('/friend');
-
-  void go(BuildContext context) => context.go(location);
-
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  void replace(BuildContext context) => context.replace(location);
-}
-
-extension $CreateRouteExtension on CreateRoute {
-  static CreateRoute _fromState(GoRouterState state) => const CreateRoute();
-
-  String get location => GoRouteData.$location('/create');
 
   void go(BuildContext context) => context.go(location);
 

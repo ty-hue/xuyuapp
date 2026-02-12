@@ -1,4 +1,4 @@
-import 'package:bilbili_project/components/default_dialg_skeleton.dart';
+import 'package:bilbili_project/components/default_dialog_skeleton.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Settings/comps/group_item.dart';
