@@ -1,3 +1,4 @@
+import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -269,12 +270,15 @@ class _ToolBarState extends State<ToolBar> {
                     switch (widget.recordDuration) {
                       case RecordDuration.s15:
                         widget.onRecordDurationChanged(RecordDuration.s60);
+                        ToastUtils.showToastReplace(context, msg: '最大拍摄时长60秒');
                         break;
                       case RecordDuration.s60:
                         widget.onRecordDurationChanged(RecordDuration.s180);
+                        ToastUtils.showToastReplace(context, msg: '最大拍摄时长3分钟');
                         break;
                       case RecordDuration.s180:
                         widget.onRecordDurationChanged(RecordDuration.s15);
+                        ToastUtils.showToastReplace(context, msg: '最大拍摄时长15秒');
                         break;
                     }
                   },
