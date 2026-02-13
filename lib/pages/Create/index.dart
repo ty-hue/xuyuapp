@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Create/comps/countdown_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -32,11 +33,18 @@ class _CreatePageState extends State<CreatePage> {
       settingSheetType = type;
     });
   }
-
+  CountDownType countdownType = CountDownType(countdownDuration: '3秒', mode: '照片'); 
   void openSettingSheet() {
     SheetUtils(SettingSheetSekeleton(settingSheetType: settingSheetType, onSettingChanged: onChangeSettingSheetParams)).openAsyncSheet(context: context);
   }
-
+  void onCountDownChanged(CountDownType type) {
+    setState(() {
+      countdownType = type;
+    });
+  }
+ void openCountDownSheet() {
+    SheetUtils(CountDownSheetSekeleton(countDownType: countdownType, onCountDownChanged: onCountDownChanged)).openAsyncSheet(context: context);
+  }
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
@@ -130,7 +138,7 @@ class _CreatePageState extends State<CreatePage> {
                       });
                     },
                     onCountDownChanged: () {
-                      print('倒计时');
+                      openCountDownSheet();
                     },
                     onSettingChanged: openSettingSheet,
                     onBeautyChanged: () {

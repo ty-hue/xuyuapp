@@ -7,6 +7,10 @@ class SelectDots extends StatefulWidget {
   double height;
   List<String> labels;
   ValueChanged<int> onChanged;
+  Color labelColor; // 默认文字颜色
+  Color selectedColor; // 选中文字颜色
+  Color? selectedBgColor; // 选中点颜色
+  Color? bgColor; // 背景颜色
   SelectDots({
     Key? key,
     required this.width,
@@ -14,6 +18,10 @@ class SelectDots extends StatefulWidget {
     required this.labels,
     required this.selectedIndex,
     required this.onChanged,
+     this.labelColor = const Color.fromRGBO(157, 157, 159, 1),
+     this.selectedColor = Colors.white,
+     this.selectedBgColor,
+     this.bgColor,
   }) : super(key: key);
 
   @override
@@ -37,7 +45,7 @@ class _SelectDotsState extends State<SelectDots> {
           Container(
             width: widget.width,
             height: widget.height,
-            decoration: BoxDecoration(color: Color.fromRGBO(70, 70, 72, 1)),
+            decoration: BoxDecoration(color: widget.bgColor ?? Color.fromRGBO(70, 70, 72, 1)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -58,8 +66,8 @@ class _SelectDotsState extends State<SelectDots> {
                           widget.labels[index],
                           style: TextStyle(
                             color: selectedIndex == index
-                                ? Colors.white
-                                : Color.fromRGBO(157, 157, 159, 1),
+                                ? widget.selectedColor
+                                : widget.labelColor,
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
                           ),
@@ -76,13 +84,15 @@ class _SelectDotsState extends State<SelectDots> {
             curve: Curves.easeInOut, // 动画曲线（很关键）
             left: selectedIndex * (widget.width / widget.labels.length),
             top: 0,
-            child: Container(
+            child: IgnorePointer(
+              child:Container(
               width: widget.width / widget.labels.length,
               height: widget.height,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: widget.selectedBgColor ?? Colors.white.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(20.r),
               ),
+            )
             ),
           ),
         ],

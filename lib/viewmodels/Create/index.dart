@@ -33,3 +33,13 @@ class SettingSheetType {
     required this.grid,
   });
 }
+
+// 倒计时sheet参数类型
+class CountDownType {
+  String countdownDuration;
+  String mode; // 拍摄比例
+  CountDownType({
+    required this.countdownDuration,
+    required this.mode,
+  });
+}
