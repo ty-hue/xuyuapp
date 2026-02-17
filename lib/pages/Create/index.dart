@@ -1,5 +1,6 @@
 import 'package:bilbili_project/pages/Create/comps/countdown_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
@@ -33,18 +34,43 @@ class _CreatePageState extends State<CreatePage> {
       settingSheetType = type;
     });
   }
-  CountDownType countdownType = CountDownType(countdownDuration: '3秒', mode: '照片'); 
+
+  CountDownType countdownType = CountDownType(
+    countdownDuration: '3秒',
+    mode: '照片',
+  );
   void openSettingSheet() {
-    SheetUtils(SettingSheetSekeleton(settingSheetType: settingSheetType, onSettingChanged: onChangeSettingSheetParams)).openAsyncSheet(context: context);
+    SheetUtils(
+      SettingSheetSekeleton(
+        settingSheetType: settingSheetType,
+        onSettingChanged: onChangeSettingSheetParams,
+      ),
+    ).openAsyncSheet(context: context);
   }
+
   void onCountDownChanged(CountDownType type) {
     setState(() {
       countdownType = type;
     });
   }
- void openCountDownSheet() {
-    SheetUtils(CountDownSheetSekeleton(countDownType: countdownType, onCountDownChanged: onCountDownChanged)).openAsyncSheet(context: context);
+
+  void openCountDownSheet() {
+    SheetUtils(
+      CountDownSheetSekeleton(
+        countDownType: countdownType,
+        onCountDownChanged: onCountDownChanged,
+      ),
+    ).openAsyncSheet(context: context);
   }
+
+  List<String> options = ['文字', '相机', '创作灵感'];
+  int outSelectedIndex = 0;
+  void onOptionSelected(int index) {
+    setState(() {
+      outSelectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
@@ -174,7 +200,32 @@ class _CreatePageState extends State<CreatePage> {
             ),
           ),
         ),
-        Container(height: 100.0.h, color: Color.fromRGBO(1, 1, 1, 1)),
+        Container(
+          height: 100.0.h,
+          color: Color.fromRGBO(1, 1, 1, 1),
+          child: AutoCenterScrollTabBar(
+            itemSpacing: 16.0.w,
+            highlightHeight: 26.0.h,
+            highlightColor: Colors.transparent,
+            itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
+            activeStyle: TextStyle(
+              fontSize: 14.0.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              decoration: TextDecoration.none,
+            ),
+            inactiveStyle: TextStyle(
+              fontSize: 14.0.sp,
+              color: Colors.grey,
+              decoration: TextDecoration.none,
+            ),
+            initialIndex: outSelectedIndex,
+            tabs: options,
+            onChanged: (index) {
+              print("选中：$index");
+            },
+          ),
+        ),
       ],
     );
   }
