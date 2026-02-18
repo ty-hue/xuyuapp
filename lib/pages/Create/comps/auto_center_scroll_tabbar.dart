@@ -10,8 +10,8 @@ class AutoCenterScrollTabBar extends StatefulWidget {
   final double itemSpacing;
   final Duration animationDuration;
   final Curve animationCurve;
-final double highlightHeight;
-final Color highlightColor;
+  final double highlightHeight;
+  final Color highlightColor;
 
   const AutoCenterScrollTabBar({
     super.key,
@@ -65,8 +65,11 @@ class _AutoCenterScrollTabBarState extends State<AutoCenterScrollTabBar> {
   }
 
   double _getItemCenterX(int index) {
-    final scrollBox = _controller.position.context.storageContext.findRenderObject() as RenderBox;
-    final itemBox = _itemKeys[index].currentContext!.findRenderObject() as RenderBox;
+    final scrollBox =
+        _controller.position.context.storageContext.findRenderObject()
+            as RenderBox;
+    final itemBox =
+        _itemKeys[index].currentContext!.findRenderObject() as RenderBox;
 
     final scrollGlobal = scrollBox.localToGlobal(Offset.zero);
     final itemGlobal = itemBox.localToGlobal(Offset.zero);
@@ -75,7 +78,9 @@ class _AutoCenterScrollTabBarState extends State<AutoCenterScrollTabBar> {
   }
 
   void _updateHighlightWidth() {
-    final box = _itemKeys[_currentIndex].currentContext!.findRenderObject() as RenderBox;
+    final box =
+        _itemKeys[_currentIndex].currentContext!.findRenderObject()
+            as RenderBox;
     _highlightWidth = box.size.width + 24;
   }
 
@@ -135,68 +140,75 @@ class _AutoCenterScrollTabBarState extends State<AutoCenterScrollTabBar> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      _viewportWidth = constraints.maxWidth;
+    return SizedBox(
+      height: widget.highlightHeight,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          _viewportWidth = constraints.maxWidth;
 
-      return GestureDetector(
-        onHorizontalDragStart: (details) {
-          _dragStart = details.globalPosition;
-        },
-        onHorizontalDragEnd: _onDragEnd,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // 高亮容器
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              width: _highlightWidth,
-              height: widget.highlightHeight,
-              decoration: BoxDecoration(
-                color: widget.highlightColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            SingleChildScrollView(
-              controller: _controller,
-              scrollDirection: Axis.horizontal,
-              physics: const NeverScrollableScrollPhysics(), // 手势自己处理
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(width: _viewportWidth / 2),
-                  ...List.generate(widget.tabs.length, (index) {
-                    final isActive = index == _currentIndex;
-                    return Padding(
-                      padding: EdgeInsets.only(right: widget.itemSpacing),
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_currentIndex != index) {
-                            setState(() => _currentIndex = index);
-                            widget.onChanged(index);
-                            _updateHighlightWidth();
-                            _scrollToIndex(index);
-                          }
-                        },
-                        child: Container(
-                          key: _itemKeys[index],
-                          padding: widget.itemPadding,
-                          alignment: Alignment.center,
-                          child: Text(
-                            widget.tabs[index],
-                            style: isActive ? widget.activeStyle : widget.inactiveStyle,
+          return GestureDetector(
+            onHorizontalDragStart: (details) {
+              _dragStart = details.globalPosition;
+            },
+            onHorizontalDragEnd: _onDragEnd,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 高亮容器
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                  width: _highlightWidth,
+                  height: widget.highlightHeight,
+                  decoration: BoxDecoration(
+                    color: widget.highlightColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                SingleChildScrollView(
+                  controller: _controller,
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(), // 手势自己处理
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(width: _viewportWidth / 2),
+                      ...List.generate(widget.tabs.length, (index) {
+                        final isActive = index == _currentIndex;
+                        return Padding(
+                          padding: EdgeInsets.only(right: widget.itemSpacing),
+                          child: GestureDetector(
+                            onTap: () {
+                              if (_currentIndex != index) {
+                                setState(() => _currentIndex = index);
+                                widget.onChanged(index);
+                                _updateHighlightWidth();
+                                _scrollToIndex(index);
+                              }
+                            },
+                            child: Container(
+                              key: _itemKeys[index],
+                              padding: widget.itemPadding,
+                              alignment: Alignment.center,
+                              child: Text(
+                                widget.tabs[index],
+                                style: isActive
+                                    ? widget.activeStyle
+                                    : widget.inactiveStyle,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
-                  SizedBox(width: _viewportWidth / 2),
-                ],
-              ),
+                        );
+                      }),
+                      SizedBox(width: _viewportWidth / 2),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    });
+          );
+        },
+      ),
+    );
   }
 }

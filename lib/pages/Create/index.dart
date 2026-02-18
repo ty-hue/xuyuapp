@@ -203,9 +203,11 @@ class _CreatePageState extends State<CreatePage> {
         Container(
           height: 100.0.h,
           color: Color.fromRGBO(1, 1, 1, 1),
-          child: AutoCenterScrollTabBar(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: AutoCenterScrollTabBar(
             itemSpacing: 16.0.w,
-            highlightHeight: 26.0.h,
+            highlightHeight: 50.0.h,
             highlightColor: Colors.transparent,
             itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
             activeStyle: TextStyle(
@@ -225,6 +227,7 @@ class _CreatePageState extends State<CreatePage> {
               print("选中：$index");
             },
           ),
+          )
         ),
       ],
     );
