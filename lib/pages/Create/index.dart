@@ -1,12 +1,13 @@
+import 'package:bilbili_project/pages/Create/comps/camera_view.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/inspiration_view.dart';
 import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
-import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
+import 'package:bilbili_project/pages/Create/comps/text_view.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 
 class CreatePage extends StatefulWidget {
   final String? fromUrl;
@@ -64,141 +65,90 @@ class _CreatePageState extends State<CreatePage> {
   }
 
   List<String> options = ['文字', '相机', '创作灵感'];
-  int outSelectedIndex = 0;
+  int outSelectedIndex = 1;
   void onOptionSelected(int index) {
     setState(() {
       outSelectedIndex = index;
     });
   }
 
+  // 动图
+  void onGifStatusChanged(GifStatus status) {
+    setState(() {
+      gifStatus = status;
+    });
+  }
+
+  // 麦克风
+  void onMicrophoneStatusChanged(MicrophoneStatus status) {
+    setState(() {
+      microphoneStatus = status;
+    });
+  }
+
+  // 速度
+  void onSpeedModeChanged(bool mode) {
+    setState(() {
+      speedMode = mode;
+    });
+  }
+
+  // 闪光灯
+  void onFlashStatusChanged(FlashStatus status) {
+    setState(() {
+      flashStatus = status;
+    });
+  }
+
+  // 时长
+  void onRecordDurationChanged(RecordDuration duration) {
+    setState(() {
+      recordDuration = duration;
+    });
+  }
+
+  // outSelectedIndex 改变
+  void onOutSelectedIndexChanged(int index) {
+    setState(() {
+      outSelectedIndex = index;
+    });
+  }
+  List<String> cameraOptions = ['分段拍', '照片', '视频'];
+  int cameraSelectedIndex = 0;
+  void onInSelectedIndexChanged(int index) {
+    setState(() {
+      cameraSelectedIndex = index;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
     return Column(
       children: [
         Expanded(
-          child: Container(
-            color: Colors.pink,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 20.0.w,
-                  top: topVal,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 10.0.h),
-                    child: GestureDetector(
-                      onTap: () {
-                        if (widget.fromUrl != null) {
-                          context.pop(widget.fromUrl);
-                        } else {
-                          context.pop();
-                        }
-                      },
-                      child: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 26.0.sp,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: topVal,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          print('选择音乐');
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10.0.h,
-                            horizontal: 12.0.w,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0.r),
-                            color: Colors.black.withOpacity(0.4),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            spacing: 2.0.w,
-                            children: [
-                              Icon(
-                                Icons.music_note,
-                                color: Colors.white,
-                                size: 20.0.sp,
-                              ),
-                              Text(
-                                '选择音乐',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  right: 0.w,
-                  top: topVal + 10.h,
-                  child: ToolBar(
-                    gifStatus: gifStatus,
-                    onGifStatusChanged: (status) {
-                      setState(() {
-                        gifStatus = status;
-                      });
-                    },
-                    microphoneStatus: microphoneStatus,
-                    onMicrophoneStatusChanged: (status) {
-                      setState(() {
-                        microphoneStatus = status;
-                      });
-                    },
-                    onCountDownChanged: () {
-                      openCountDownSheet();
-                    },
-                    onSettingChanged: openSettingSheet,
-                    onBeautyChanged: () {
-                      print('美颜');
-                    },
-                    onFilterChanged: () {
-                      print('滤镜');
-                    },
-                    onRotateChanged: () {
-                      print('旋转');
-                    },
-                    speedMode: speedMode,
-                    onSpeedModeChanged: (mode) {
-                      setState(() {
-                        speedMode = mode;
-                      });
-                    },
-                    flashStatus: flashStatus,
-                    recordDuration: recordDuration,
-                    onFlashStatusChanged: (status) {
-                      setState(() {
-                        flashStatus = status;
-                      });
-                    },
-                    onRecordDurationChanged: (duration) {
-                      setState(() {
-                        recordDuration = duration;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: outSelectedIndex == 0
+              ? TextView()
+              : outSelectedIndex == 1
+              ? CameraView(
+                  topVal: topVal,
+                  fromUrl: widget.fromUrl,
+                  gifStatus: gifStatus,
+                  onGifStatusChanged: onGifStatusChanged,
+                  microphoneStatus: microphoneStatus,
+                  onMicrophoneStatusChanged: onMicrophoneStatusChanged,
+                  openCountDownSheet: openCountDownSheet,
+                  openSettingSheet: openSettingSheet,
+                  speedMode: speedMode,
+                  onSpeedModeChanged: onSpeedModeChanged,
+                  flashStatus: flashStatus,
+                  onFlashStatusChanged: onFlashStatusChanged,
+                  recordDuration: recordDuration,
+                  onRecordDurationChanged: onRecordDurationChanged,
+                  cameraSelectedIndex: cameraSelectedIndex,
+                  onInSelectedIndexChanged: onInSelectedIndexChanged,
+                  cameraOptions: cameraOptions,
+                )
+              : InspirationView(),
         ),
         Container(
           height: 100.0.h,
@@ -206,28 +156,26 @@ class _CreatePageState extends State<CreatePage> {
           child: Align(
             alignment: Alignment.topCenter,
             child: AutoCenterScrollTabBar(
-            itemSpacing: 16.0.w,
-            highlightHeight: 50.0.h,
-            highlightColor: Colors.transparent,
-            itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
-            activeStyle: TextStyle(
-              fontSize: 14.0.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              decoration: TextDecoration.none,
+              itemSpacing: 16.0.w,
+              highlightHeight: 50.0.h,
+              highlightColor: Colors.transparent,
+              itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
+              activeStyle: TextStyle(
+                fontSize: 14.0.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                decoration: TextDecoration.none,
+              ),
+              inactiveStyle: TextStyle(
+                fontSize: 14.0.sp,
+                color: Colors.grey,
+                decoration: TextDecoration.none,
+              ),
+              initialIndex: outSelectedIndex,
+              tabs: options,
+              onChanged: onOutSelectedIndexChanged,
             ),
-            inactiveStyle: TextStyle(
-              fontSize: 14.0.sp,
-              color: Colors.grey,
-              decoration: TextDecoration.none,
-            ),
-            initialIndex: outSelectedIndex,
-            tabs: options,
-            onChanged: (index) {
-              print("选中：$index");
-            },
           ),
-          )
         ),
       ],
     );
