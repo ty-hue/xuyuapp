@@ -121,6 +121,7 @@ class _CameraViewState extends State<CameraView> {
             right: 0.w,
             top: widget.topVal + 10.h,
             child: ToolBar(
+              cameraSelectedIndex: widget.cameraSelectedIndex,
               gifStatus: widget.gifStatus,
               onGifStatusChanged: (status) {
                 widget.onGifStatusChanged(status);
