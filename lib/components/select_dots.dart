@@ -11,6 +11,7 @@ class SelectDots extends StatefulWidget {
   Color selectedColor; // 选中文字颜色
   Color? selectedBgColor; // 选中点颜色
   Color? bgColor; // 背景颜色
+  double? borderRadius; // 圆角
   SelectDots({
     Key? key,
     required this.width,
@@ -22,6 +23,7 @@ class SelectDots extends StatefulWidget {
      this.selectedColor = Colors.white,
      this.selectedBgColor,
      this.bgColor,
+     this.borderRadius,
   }) : super(key: key);
 
   @override
@@ -39,7 +41,7 @@ class _SelectDotsState extends State<SelectDots> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(widget.borderRadius ?? 20.r),
       child: Stack(
         children: [
           Container(
@@ -54,6 +56,7 @@ class _SelectDotsState extends State<SelectDots> {
                   widget.labels.length,
                   (index) => Expanded(
                     child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
                       onTap: () {
                         setState(() {
                           selectedIndex = index;
@@ -70,6 +73,7 @@ class _SelectDotsState extends State<SelectDots> {
                                 : widget.labelColor,
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
                           ),
                         ),
                       ),
@@ -90,7 +94,7 @@ class _SelectDotsState extends State<SelectDots> {
               height: widget.height,
               decoration: BoxDecoration(
                 color: widget.selectedBgColor ?? Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(20.r),
+                borderRadius: BorderRadius.circular(widget.borderRadius ?? 20.r),
               ),
             )
             ),

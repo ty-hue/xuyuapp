@@ -1,3 +1,4 @@
+import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
@@ -23,6 +24,9 @@ class CameraView extends StatefulWidget {
   final int cameraSelectedIndex;
   final ValueChanged<int> onInSelectedIndexChanged;
   final List<String> cameraOptions;
+  final List<String> speedOptions;
+  final int speedSelectedIndex;
+  final ValueChanged<int> onSpeedSelectedIndexChanged;
   CameraView({
     Key? key,
     required this.topVal,
@@ -42,6 +46,9 @@ class CameraView extends StatefulWidget {
     required this.cameraSelectedIndex,
     required this.onInSelectedIndexChanged,
     required this.cameraOptions,
+    required this.speedOptions,
+    required this.speedSelectedIndex,
+    required this.onSpeedSelectedIndexChanged,
   }) : super(key: key);
 
   @override
@@ -166,6 +173,26 @@ class _CameraViewState extends State<CameraView> {
                 spacing: 24.0.h,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  widget.speedMode
+                      ? Container(
+                          alignment: Alignment.center,
+                          height: 40.h,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SelectDots(
+                                width: MediaQuery.of(context).size.width * 0.7,
+                                height: 40.h,
+                                bgColor: Colors.black.withOpacity(0.3),
+                                labels: widget.speedOptions,
+                                selectedIndex: widget.speedSelectedIndex,
+                                onChanged: widget.onSpeedSelectedIndexChanged,
+                                borderRadius: 4.0.r,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(),
                   AutoCenterScrollTabBar(
                     itemSpacing: 20.0.w,
                     highlightHeight: 22.0.h,
@@ -187,38 +214,38 @@ class _CameraViewState extends State<CameraView> {
                     onChanged: widget.onInSelectedIndexChanged,
                   ),
                   Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 4.0.h,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0.r),
-                              child: Image.asset(
-                                'lib/assets/app_logo.png',
-                                width: 50.0.w,
-                                height: 50.0.h,
-                              ),
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 4.0.h,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0.r),
+                            child: Image.asset(
+                              'lib/assets/app_logo.png',
+                              width: 50.0.w,
+                              height: 50.0.h,
                             ),
-                            Text(
-                              '特效',
-                              style: TextStyle(
-                                fontSize: 14.0.sp,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
+                          ),
+                          Text(
+                            '特效',
+                            style: TextStyle(
+                              fontSize: 14.0.sp,
+                              color: Colors.white,
+                              decoration: TextDecoration.none,
                             ),
-                          ],
-                        ),
-                        Container(
-                          alignment: Alignment.topCenter,
-                          child: GestureDetector(
-                            onTap:(){
-                               print('开始录制');
-                            },
-                            child: Container(
+                          ),
+                        ],
+                      ),
+                      Container(
+                        alignment: Alignment.topCenter,
+                        child: GestureDetector(
+                          onTap: () {
+                            print('开始录制');
+                          },
+                          child: Container(
                             alignment: Alignment.center,
                             width: 64.0.w,
                             height: 64.0.h,
@@ -239,33 +266,32 @@ class _CameraViewState extends State<CameraView> {
                               ),
                             ),
                           ),
-                          )
                         ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 4.0.h,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0.r),
-                              child: Image.asset(
-                                'lib/assets/app_logo.png',
-                                width: 50.0.w,
-                                height: 50.0.h,
-                              ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 4.0.h,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0.r),
+                            child: Image.asset(
+                              'lib/assets/app_logo.png',
+                              width: 50.0.w,
+                              height: 50.0.h,
                             ),
-                            Text(
-                              '相册',
-                              style: TextStyle(
-                                fontSize: 14.0.sp,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
+                          ),
+                          Text(
+                            '相册',
+                            style: TextStyle(
+                              fontSize: 14.0.sp,
+                              color: Colors.white,
+                              decoration: TextDecoration.none,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

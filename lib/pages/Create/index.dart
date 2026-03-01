@@ -40,6 +40,18 @@ class _CreatePageState extends State<CreatePage> {
     countdownDuration: '3秒',
     mode: '照片',
   );
+
+  List<String> speedOptions = ['极慢', '慢', '标准', '快', '极快']; // 快慢速选项
+
+  int speedSelectedIndex = 2; // 快慢速默认标准
+
+  // 快慢速改变
+  void onSpeedSelectedIndexChanged(int index) {
+    setState(() {
+      speedSelectedIndex = index;
+    });
+  }
+
   void openSettingSheet() {
     SheetUtils(
       SettingSheetSekeleton(
@@ -113,6 +125,7 @@ class _CreatePageState extends State<CreatePage> {
       outSelectedIndex = index;
     });
   }
+
   List<String> cameraOptions = ['分段拍', '照片', '视频'];
   int cameraSelectedIndex = 0;
   void onInSelectedIndexChanged(int index) {
@@ -120,6 +133,7 @@ class _CreatePageState extends State<CreatePage> {
       cameraSelectedIndex = index;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
@@ -147,6 +161,9 @@ class _CreatePageState extends State<CreatePage> {
                   cameraSelectedIndex: cameraSelectedIndex,
                   onInSelectedIndexChanged: onInSelectedIndexChanged,
                   cameraOptions: cameraOptions,
+                  speedOptions: speedOptions,
+                  speedSelectedIndex: speedSelectedIndex,
+                  onSpeedSelectedIndexChanged: onSpeedSelectedIndexChanged,
                 )
               : InspirationView(),
         ),
