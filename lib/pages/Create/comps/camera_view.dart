@@ -1,10 +1,14 @@
+import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
+import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CameraView extends StatefulWidget {
   final double topVal;
@@ -56,29 +60,101 @@ class CameraView extends StatefulWidget {
 }
 
 class _CameraViewState extends State<CameraView> {
+  // 图片读写权限
+  bool _isPhotoPermissionGranted = false;
+  // 相机权限 默认为永久拒绝
+  PermissionStatus _cameraPermissionStatus = PermissionStatus.permanentlyDenied;
+  // 麦克风权限 默认为永久拒绝
+  PermissionStatus _microphonePermissionStatus =
+      PermissionStatus.permanentlyDenied;
+  CameraController? _cameraController; // 相机控制器
+  late List<CameraDescription> _cameras; // 相机列表
+  bool _isInitialized = false; // 相机是否初始化完成
+  // 初始化相机
+  Future<void> _initializeCamera() async {
+    // 获取设备上的所有相机
+    _cameras = await availableCameras();
+    if (_cameras.isNotEmpty) {
+      // 选择后置相机
+      _cameraController = CameraController(
+        _cameras[0], // 选择第一个相机，通常是后置相机
+        ResolutionPreset.veryHigh, // 设置分辨率 1080p
+        fps: 30, // 设置帧率为 30fps
+        enableAudio: true, // 开启音频
+      );
+
+      // 初始化相机
+      await _cameraController?.initialize();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    () async {
+      // 检查相册读写权限
+      PermissionStatus photoValue =
+          await Permissionutils.checkPhotoPermission();
+      setState(() {
+        _isPhotoPermissionGranted = photoValue == PermissionStatus.granted;
+      });
+      // 检查相机权限
+      PermissionStatus cameraValue =
+          await Permissionutils.checkCameraPermission();
+      // 如果不是永久拒绝状态，那么就需要询问用户是否允许相机权限
+      if (cameraValue != PermissionStatus.permanentlyDenied) {
+        PermissionStatus _cameraValue =
+            await Permissionutils.requestCameraPermission();
+        setState(() {
+          _cameraPermissionStatus = _cameraValue;
+        });
+      }
+      // 检查麦克风权限
+      PermissionStatus microphoneValue =
+          await Permissionutils.checkMicrophonePermission();
+      // 如果不是永久拒绝状态，那么就需要询问用户是否允许麦克风权限
+      if (microphoneValue != PermissionStatus.permanentlyDenied) {
+        PermissionStatus _microphoneValue =
+            await Permissionutils.requestMicrophonePermission();
+        setState(() {
+          _microphonePermissionStatus = _microphoneValue;
+        });
+      }
+      // 初始化相机
+      if(isCompleteAllow){
+        await _initializeCamera();
+      }
+    }();
+  }
+
+  // 是否完全允许相机和麦克风
+  bool get isCompleteAllow {
+    if (_cameraPermissionStatus == PermissionStatus.granted &&
+        _microphonePermissionStatus == PermissionStatus.granted) {
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.pink,
       child: Stack(
         children: [
-          Positioned(
-            left: 20.0.w,
-            top: widget.topVal,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 10.0.h),
-              child: GestureDetector(
-                onTap: () {
-                  if (widget.fromUrl != null) {
-                    context.pop(widget.fromUrl);
-                  } else {
-                    context.pop();
-                  }
-                },
-                child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
-              ),
-            ),
+          // 视频流预览
+          Positioned.fill(
+            child: _isInitialized && isCompleteAllow
+                ? CameraPreview(_cameraController!)
+                : Container(),
           ),
+
+          // 选择音乐
           Positioned(
             top: widget.topVal,
             left: 0,
@@ -124,6 +200,7 @@ class _CameraViewState extends State<CameraView> {
               ],
             ),
           ),
+          // 侧边操作栏
           Positioned(
             right: 0.w,
             top: widget.topVal + 10.h,
@@ -164,6 +241,7 @@ class _CameraViewState extends State<CameraView> {
               },
             ),
           ),
+          // 底部操作栏
           Positioned(
             bottom: 20.0.h,
             left: 0,
@@ -217,27 +295,32 @@ class _CameraViewState extends State<CameraView> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: 4.0.h,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0.r),
-                            child: Image.asset(
-                              'lib/assets/app_logo.png',
-                              width: 50.0.w,
-                              height: 50.0.h,
+                      GestureDetector(
+                        onTap: () {
+                          print('选择特效');
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 4.0.h,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0.r),
+                              child: Image.asset(
+                                'lib/assets/app_logo.png',
+                                width: 50.0.w,
+                                height: 50.0.h,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '特效',
-                            style: TextStyle(
-                              fontSize: 14.0.sp,
-                              color: Colors.white,
-                              decoration: TextDecoration.none,
+                            Text(
+                              '特效',
+                              style: TextStyle(
+                                fontSize: 14.0.sp,
+                                color: Colors.white,
+                                decoration: TextDecoration.none,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       Container(
                         alignment: Alignment.topCenter,
@@ -268,31 +351,205 @@ class _CameraViewState extends State<CameraView> {
                           ),
                         ),
                       ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: 4.0.h,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0.r),
-                            child: Image.asset(
-                              'lib/assets/app_logo.png',
-                              width: 50.0.w,
-                              height: 50.0.h,
+                      GestureDetector(
+                        onTap: () {
+                          if (_isPhotoPermissionGranted) {
+                            // 打开相册
+                            print('打开相册');
+                          } else {
+                            openAppSettings();
+                          }
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 4.0.h,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0.r),
+                              child: _isPhotoPermissionGranted
+                                  ? Image.asset(
+                                      'lib/assets/app_logo.png',
+                                      width: 50.0.w,
+                                      height: 50.0.h,
+                                    )
+                                  : Icon(
+                                      Icons.photo_library,
+                                      size: 50.0.w,
+                                      color: Colors.white,
+                                    ),
                             ),
-                          ),
-                          Text(
-                            '相册',
-                            style: TextStyle(
-                              fontSize: 14.0.sp,
-                              color: Colors.white,
-                              decoration: TextDecoration.none,
+                            Text(
+                              '相册',
+                              style: TextStyle(
+                                fontSize: 14.0.sp,
+                                color: Colors.white,
+                                decoration: TextDecoration.none,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ],
+              ),
+            ),
+          ),
+          !isCompleteAllow
+              ? Positioned.fill(
+                  child: Container(
+                    alignment: Alignment.center,
+                    color: Colors.black.withOpacity(0.9),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '在絮语APP拍摄',
+                          style: TextStyle(
+                            fontSize: 22.0.sp,
+                            color: Colors.white,
+                            decoration: TextDecoration.none,
+                            letterSpacing: 2.0.w,
+                          ),
+                        ),
+                        SizedBox(height: 6.0.h),
+                        Text(
+                          '开启以下权限即可进入拍摄',
+                          style: TextStyle(
+                            fontSize: 13.0.sp,
+                            color: Colors.grey,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        SizedBox(height: 20.0.h),
+                        Column(
+                          spacing: 20.0.h,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _cameraPermissionStatus != PermissionStatus.granted
+                                ? SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.6,
+                                    height: 50.0.h,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color.fromRGBO(
+                                          41,
+                                          41,
+                                          41,
+                                          1,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.0.r,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        openAppSettings();
+                                      },
+                                      child: Row(
+                                        spacing: 8.0.w,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.camera_alt,
+                                            color: Colors.white,
+                                            size: 24.0.sp,
+                                          ),
+                                          SizedBox(width: 8.0.w),
+                                          Text(
+                                            '开启相机',
+                                            style: TextStyle(
+                                              fontSize: 14.0.sp,
+                                              color: Colors.white,
+                                              decoration: TextDecoration.none,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Container(),
+                            _microphonePermissionStatus !=
+                                    PermissionStatus.granted
+                                ? SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.6,
+                                    height: 50.0.h,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color.fromRGBO(
+                                          41,
+                                          41,
+                                          41,
+                                          1,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.0.r,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        openAppSettings();
+                                      },
+                                      child: Row(
+                                        spacing: 8.0.w,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.mic,
+                                            color: Colors.white,
+                                            size: 24.0.sp,
+                                          ),
+                                          SizedBox(width: 8.0.w),
+                                          Text(
+                                            '开启麦克风',
+                                            style: TextStyle(
+                                              fontSize: 14.0.sp,
+                                              color: Colors.white,
+                                              decoration: TextDecoration.none,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Container(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Container(),
+          Positioned.fill(
+            child: !_isInitialized && isCompleteAllow
+                ? Container(
+                    color: Colors.black.withOpacity(0.9),
+                    child: FetchLoadingView(),
+                  )
+                : Container(),
+          ),
+          // 返回按钮
+          Positioned(
+            left: 20.0.w,
+            top: widget.topVal,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 10.0.h),
+              child: GestureDetector(
+                onTap: () {
+                  if (widget.fromUrl != null) {
+                    context.pop(widget.fromUrl);
+                  } else {
+                    context.pop();
+                  }
+                },
+                child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
               ),
             ),
           ),

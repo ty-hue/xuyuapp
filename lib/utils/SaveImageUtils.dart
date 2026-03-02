@@ -5,7 +5,7 @@ import 'package:photo_manager/photo_manager.dart';
 class SaveImageUtils {
   // 保存内存中的图片到相册
   Future<void> saveImageToGallery(Uint8List bytes) async {
-    final hasPermission = await _requestPermission();
+    final hasPermission = await requestPermission();
     if (!hasPermission) return;
     await PhotoManager.editor.saveImage(
       bytes,
@@ -13,7 +13,7 @@ class SaveImageUtils {
     );
   }
 
-  Future<bool> _requestPermission() async {
+  Future<bool> requestPermission() async {
     final result = await PhotoManager.requestPermissionExtend();
     if (!result.hasAccess) {
       PhotoManager.openSetting(); // 引导用户去设置
