@@ -1,8 +1,11 @@
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/components/select_dots.dart';
+import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
+import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -127,7 +130,7 @@ class _CameraViewState extends State<CameraView> {
         });
       }
       // 初始化相机
-      if(isCompleteAllow){
+      if (isCompleteAllow) {
         await _initializeCamera();
       }
     }();
@@ -140,6 +143,106 @@ class _CameraViewState extends State<CameraView> {
       return true;
     }
     return false;
+  }
+
+  // 滤镜数据
+  List<BeautyItem> filterOptions = createFilterList();
+
+  // 美颜数据
+  List<BeautyItem> beautyOptions = createBeautyList();
+  // 修改美颜数据
+  void setBeautyOptions(BeautyItem item, double value, bool flag) {
+    if (item.type != null) {
+      int index = -1;
+      if (flag) {
+        index = beautyOptions.indexWhere(
+          (element) => element.type == item.type,
+        );
+      } else {
+        index = filterOptions.indexWhere(
+          (element) => element.filterType == item.filterType,
+        );
+      }
+      if (index != -1) {
+        beautyOptions[index].value = value;
+      }
+      setState(() {});
+    } else {
+      // 将所有value设置为0
+      setState(() {
+        if (flag) {
+          for (var element in beautyOptions) {
+            element.value = 0.0;
+          }
+        } else {
+          for (var element in filterOptions) {
+            element.value = 0.0;
+          }
+        }
+      });
+    }
+  }
+
+  // 重置美颜数据
+  void resetBeautyOptions(bool flag) {
+    setState(() {
+      final originalData = flag ? createBeautyList() : createFilterList();
+      if (flag) {
+        beautyOptions.forEach((element) {
+          element.value = originalData
+              .firstWhere((item) => item.type == element.type)
+              .value;
+        });
+      } else {
+        filterOptions.forEach((element) {
+          element.value = originalData
+              .firstWhere((item) => item.filterType == element.filterType)
+              .value;
+        });
+      }
+    });
+  }
+
+  int selectedBeautyIndex = -1;
+  void onBeautySelectedIndexChanged(int index) {
+    setState(() {
+      selectedBeautyIndex = index;
+    });
+  }
+  // 打开美颜sheet
+  void openBeautyfiterSheet() {
+    SheetUtils(
+      BeautyfiterSheetSekeleton(
+        title: '美颜',
+        beautyItems: beautyOptions,
+        setBeautyOptions: setBeautyOptions,
+        resetBeautyOptions: resetBeautyOptions,
+        flag: true,
+        initSelectedIndex: selectedBeautyIndex,
+        onSelectedIndexChanged: onBeautySelectedIndexChanged,
+      ),
+    ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
+  }
+
+  int selectedFilterIndex = -1;
+  void onFilterSelectedIndexChanged(int index) {
+    setState(() {
+      selectedFilterIndex = index;
+    });
+  }
+  // 打开滤镜sheet
+  void openFiterSheet() {
+    SheetUtils(
+      BeautyfiterSheetSekeleton(
+        title: '滤镜',
+        beautyItems: filterOptions,
+        setBeautyOptions: setBeautyOptions,
+        resetBeautyOptions: resetBeautyOptions,
+        flag: false,
+        initSelectedIndex: selectedFilterIndex,
+        onSelectedIndexChanged: onFilterSelectedIndexChanged,
+      ),
+    ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
   @override
@@ -218,12 +321,8 @@ class _CameraViewState extends State<CameraView> {
                 widget.openCountDownSheet();
               },
               onSettingChanged: widget.openSettingSheet,
-              onBeautyChanged: () {
-                print('美颜');
-              },
-              onFilterChanged: () {
-                print('滤镜');
-              },
+              onBeautyChanged: openBeautyfiterSheet,
+              onFilterChanged: openFiterSheet,
               onRotateChanged: () {
                 print('旋转');
               },
@@ -271,6 +370,7 @@ class _CameraViewState extends State<CameraView> {
                           ),
                         )
                       : Container(),
+
                   AutoCenterScrollTabBar(
                     itemSpacing: 20.0.w,
                     highlightHeight: 22.0.h,

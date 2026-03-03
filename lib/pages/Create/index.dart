@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/camera_view.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/inspiration_view.dart';
@@ -8,6 +9,7 @@ import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pixelfree/pixelfree_platform_interface.dart';
 
 class CreatePage extends StatefulWidget {
   final String? fromUrl;
@@ -52,6 +54,7 @@ class _CreatePageState extends State<CreatePage> {
     });
   }
 
+  // 打开设置sheet
   void openSettingSheet() {
     SheetUtils(
       SettingSheetSekeleton(
@@ -61,6 +64,10 @@ class _CreatePageState extends State<CreatePage> {
     ).openAsyncSheet(context: context);
   }
 
+
+
+
+  // 打开倒计时sheet
   void onCountDownChanged(CountDownType type) {
     setState(() {
       countdownType = type;

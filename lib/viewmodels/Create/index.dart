@@ -1,4 +1,6 @@
 // 枚举闪光灯状态
+import 'package:pixelfree/pixelfree_platform_interface.dart';
+
 enum FlashStatus { on, off, auto }
 
 // 枚举拍摄时长
@@ -41,5 +43,21 @@ class CountDownType {
   CountDownType({
     required this.countdownDuration,
     required this.mode,
+  });
+}
+
+// 美颜选项类型
+class  BeautyItem {
+  String title;
+  String icon;
+  PFBeautyFiterType? type;
+  double value;
+  String? filterType;
+  BeautyItem({
+    required this.title,
+    required this.icon,
+    this.type,
+    this.filterType,
+    required this.value,
   });
 }
