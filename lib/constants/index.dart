@@ -256,3 +256,359 @@ List<BeautyItem> createFilterList() {
     ),
   ];
 }
+
+// 获取一份新的贴纸数据
+List<StickerItem> createStickerList() {
+  return [
+    StickerItem(
+      name: '白小猫',
+      bundleName: 'baixiaomao.bundle',
+      icon: 'assets/icons/baixiaomao.png',
+    ),
+    StickerItem(
+      name: '白小猫胡须',
+      bundleName: 'baixiaomaohuxu.bundle',
+      icon: 'assets/icons/baixiaomaohuxu.png',
+    ),
+    StickerItem(
+      name: '熊头',
+      bundleName: 'bear_headgear.bundle',
+      icon: 'assets/icons/bear_headgear.png',
+    ),
+    StickerItem(
+      name: '大眼镜',
+      bundleName: 'big_eyes.bundle',
+      icon: 'assets/icons/big_eyes.png',
+    ),
+    StickerItem(
+      name: '生日',
+      bundleName: 'birthday.bundle',
+      icon: 'assets/icons/birthday.png',
+    ),
+    StickerItem(
+      name: '小猫咪',
+      bundleName: 'buliaoxiaomao.bundle',
+      icon: 'assets/icons/buliaoxiaomao.png',
+    ),
+    StickerItem(
+      name: 'Candy',
+      bundleName: 'candy.bundle',
+      icon: 'assets/icons/candy.jpg',
+    ),
+    StickerItem(
+      name: '猫爪',
+      bundleName: 'cat_claw.bundle',
+      icon: 'assets/icons/cat_claw.png',
+    ),
+    StickerItem(
+      name: '呆呆猫',
+      bundleName: 'cat_fa_qia.bundle',
+      icon: 'assets/icons/cat_fa_qia.png',
+    ),
+    StickerItem(
+      name: '小黑猫',
+      bundleName: 'cat_on_the_head.bundle',
+      icon: 'assets/icons/cat_on_the_head.png',
+    ),
+    StickerItem(
+      name: '带刺帽子',
+      bundleName: 'cidinmaozi.bundle',
+      icon: 'assets/icons/cidinmaozi.png',
+    ),
+    StickerItem(
+      name: '蛋糕',
+      bundleName: 'cream_cake.bundle',
+      icon: 'assets/icons/cream_cake.png',
+    ),
+    StickerItem(
+      name: '理发',
+      bundleName: 'cut_hair.bundle',
+      icon: 'assets/icons/cut_hair.png',
+    ),
+    StickerItem(
+      name: '可爱猫',
+      bundleName: 'cute_cat.bundle',
+      icon: 'assets/icons/cute_cat.png',
+    ),
+    StickerItem(
+      name: '蝴蝶结',
+      bundleName: 'dahudiejie.bundle',
+      icon: 'assets/icons/dahudiejie.png',
+    ),
+    StickerItem(
+      name: '酷酷眼镜',
+      bundleName: 'damengyanjing.bundle',
+      icon: 'assets/icons/damengyanjing.png',
+    ),
+    StickerItem(
+      name: '大圆耳朵',
+      bundleName: 'dayuanerduo.bundle',
+      icon: 'assets/icons/dayuanerduo.png',
+    ),
+    StickerItem(
+      name: '狗狗',
+      bundleName: 'dog_tongue.bundle',
+      icon: 'assets/icons/dog_tongue.png',
+    ),
+    StickerItem(
+      name: '老虎机',
+      bundleName: 'duboji.bundle',
+      icon: 'assets/icons/duboji.png',
+    ),
+    StickerItem(
+      name: '烦恼',
+      bundleName: 'fannao.bundle',
+      icon: 'assets/icons/fannao.png',
+    ),
+    StickerItem(
+      name: '时尚Lady',
+      bundleName: 'fashion_laddy.bundle',
+      icon: 'assets/icons/fashion_laddy.png',
+    ),
+    StickerItem(
+      name: '飞碟',
+      bundleName: 'feidie.bundle',
+      icon: 'assets/icons/feidie.png',
+    ),
+    StickerItem(
+      name: '封印',
+      bundleName: 'fengying.bundle',
+      icon: 'assets/icons/fengying.png',
+    ),
+    StickerItem(
+      name: '鲜花',
+      bundleName: 'flower.bundle',
+      icon: 'assets/icons/flower.png',
+    ),
+    StickerItem(
+      name: '花丛',
+      bundleName: 'flowers.bundle',
+      icon: 'assets/icons/flowers.jpg',
+    ),
+    StickerItem(
+      name: '绅士帽',
+      bundleName: 'gentleman_hat.bundle',
+      icon: 'assets/icons/gentleman_hat.png',
+    ),
+    StickerItem(
+      name: '书呆子眼镜',
+      bundleName: 'glasses_space.bundle',
+      icon: 'assets/icons/glasses_space.png',
+    ),
+    StickerItem(
+      name: '害羞',
+      bundleName: 'goux.bundle',
+      icon: 'assets/icons/goux.png',
+    ),
+    StickerItem(
+      name: '兔子耳朵',
+      bundleName: 'hdj.bundle',
+      icon: 'assets/icons/hdj.png',
+    ),
+    StickerItem(
+      name: '爱心桃',
+      bundleName: 'heart_explode.bundle',
+      icon: 'assets/icons/heart_explode.png',
+    ),
+    StickerItem(
+      name: '打招呼',
+      bundleName: 'hello_baby.bundle',
+      icon: 'assets/icons/hello_baby.png',
+    ),
+    StickerItem(
+      name: '你好眼镜',
+      bundleName: 'hello_glasses.bundle',
+      icon: 'assets/icons/hello_glasses.png',
+    ),
+    StickerItem(
+      name: '红眼睛',
+      bundleName: 'hongtoushi.bundle',
+      icon: 'assets/icons/hongtoushi.png',
+    ),
+    StickerItem(
+      name: '爱心蒸汽',
+      bundleName: 'huangm.bundle',
+      icon: 'assets/icons/huangm.png',
+    ),
+    StickerItem(
+      name: '小黑猫拳拳',
+      bundleName: 'jianbixiaoheimao.bundle',
+      icon: 'assets/icons/jianbixiaoheimao.png',
+    ),
+    StickerItem(
+      name: '简单小猫',
+      bundleName: 'jiandanxiaomaomi.bundle',
+      icon: 'assets/icons/jiandanxiaomaomi.png',
+    ),
+    StickerItem(
+      name: '简单猫',
+      bundleName: 'jiandanzhuangshi.bundle',
+      icon: 'assets/icons/jiandanzhuangshi.png',
+    ),
+    StickerItem(
+      name: 'kitty眼镜',
+      bundleName: 'kitty.bundle',
+      icon: 'assets/icons/kitty.png',
+    ),
+    StickerItem(
+      name: 'laser',
+      bundleName: 'laser.bundle',
+      icon: 'assets/icons/laser.png',
+    ),
+    StickerItem(
+      name: '战斗眼',
+      bundleName: 'laugh.bundle',
+      icon: 'assets/icons/laugh.png',
+    ),
+    StickerItem(
+      name: '虐心',
+      bundleName: 'lecher.bundle',
+      icon: 'assets/icons/lecher.png',
+    ),
+    StickerItem(
+      name: '蓝色爱心',
+      bundleName: 'liangshanaixinmao.bundle',
+      icon: 'assets/icons/liangshanaixinmao.png',
+    ),
+    StickerItem(
+      name: '小浴缸',
+      bundleName: 'little_bear.bundle',
+      icon: 'assets/icons/little_bear.png',
+    ),
+    StickerItem(
+      name: '小狼狗',
+      bundleName: 'long_ear_dog.bundle',
+      icon: 'assets/icons/long_ear_dog.png',
+    ),
+    StickerItem(
+      name: '可爱兔子耳朵',
+      bundleName: 'long_ear_rabbit.bundle',
+      icon: 'assets/icons/long_ear_rabbit.png',
+    ),
+    StickerItem(
+      name: '透明爱心',
+      bundleName: 'love_bubbles.bundle',
+      icon: 'assets/icons/love_bubbles.png',
+    ),
+    StickerItem(
+      name: '比心',
+      bundleName: 'love_gestures.bundle',
+      icon: 'assets/icons/love_gestures.png',
+    ),
+    StickerItem(
+      name: '猫和狗',
+      bundleName: 'maogou.bundle',
+      icon: 'assets/icons/maogou.png',
+    ),
+    StickerItem(
+      name: '毛球',
+      bundleName: 'maorong.bundle',
+      icon: 'assets/icons/maorong.jpg',
+    ),
+    StickerItem(
+      name: '皇冠',
+      bundleName: 'myqueen.bundle',
+      icon: 'assets/icons/myqueen.png',
+    ),
+    StickerItem(
+      name: '面条',
+      bundleName: 'noodles.bundle',
+      icon: 'assets/icons/noodles.png',
+    ),
+    StickerItem(
+      name: '卡拉ok',
+      bundleName: 'pop_glasses.bundle',
+      icon: 'assets/icons/pop_glasses.png',
+    ),
+    StickerItem(
+      name: '囚禁',
+      bundleName: 'prison.bundle',
+      icon: 'assets/icons/prison.png',
+    ),
+    StickerItem(
+      name: '晕阙',
+      bundleName: 'qifei.bundle',
+      icon: 'assets/icons/qifei.png',
+    ),
+    StickerItem(
+      name: '兔子皇冠',
+      bundleName: 'rabbit_blush.bundle',
+      icon: 'assets/icons/rabbit_blush.png',
+    ),
+    StickerItem(
+      name: '兔子脸红',
+      bundleName: 'rabbit_holding_face.bundle',
+      icon: 'assets/icons/rabbit_holding_face.png',
+    ),
+    StickerItem(
+      name: '哈巴狗',
+      bundleName: 'red_glasses.bundle',
+      icon: 'assets/icons/red_glasses.png',
+    ),
+    StickerItem(
+      name: '羊咩咩',
+      bundleName: 'sheep.bundle',
+      icon: 'assets/icons/sheep.png',
+    ),
+    StickerItem(
+      name: '狮子头',
+      bundleName: 'shizitou.bundle',
+      icon: 'assets/icons/shizitou.png',
+    ),
+    StickerItem(
+      name: '太阳镜',
+      bundleName: 'sunflower_glasses.bundle',
+      icon: 'assets/icons/sunflower_glasses.png',
+    ),
+    StickerItem(
+      name: '可怜的眼泪',
+      bundleName: 'tears.bundle',
+      icon: 'assets/icons/tears.png',
+    ),
+    StickerItem(
+      name: '小窝',
+      bundleName: 'touhua.bundle',
+      icon: 'assets/icons/touhua.png',
+    ),
+    StickerItem(
+      name: '可怜的小狗',
+      bundleName: 'toy_dog.bundle',
+      icon: 'assets/icons/toy_dog.png',
+    ),
+    StickerItem(
+      name: '毛茸茸兔耳朵',
+      bundleName: 'toy_rabbit_ear_tie.bundle',
+      icon: 'assets/icons/toy_rabbit_ear_tie.png',
+    ),
+    StickerItem(
+      name: '潜水',
+      bundleName: 'under_water_glasses.bundle',
+      icon: 'assets/icons/under_water_glasses.png',
+    ),
+    StickerItem(
+      name: '红领巾',
+      bundleName: 'uniform2.bundle',
+      icon: 'assets/icons/uniform2.png',
+    ),
+    StickerItem(
+      name: '小熊猫',
+      bundleName: 'xiantiaoxiongmao.bundle',
+      icon: 'assets/icons/xiantiaoxiongmao.jpg',
+    ),
+    StickerItem(
+      name: '仙子',
+      bundleName: 'xianzi.bundle',
+      icon: 'assets/icons/xianzi.png',
+    ),
+    StickerItem(
+      name: '星星',
+      bundleName: 'xingxing.bundle',
+      icon: 'assets/icons/xingxing.png',
+    ),
+    StickerItem(
+      name: '熊耳朵',
+      bundleName: 'xiongerduo.bundle',
+      icon: 'assets/icons/xiongerduo.jpg',
+    ),
+  ];
+}

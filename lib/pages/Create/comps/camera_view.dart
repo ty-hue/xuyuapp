@@ -3,6 +3,7 @@ import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/sticker_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -10,6 +11,7 @@ import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -209,6 +211,7 @@ class _CameraViewState extends State<CameraView> {
       selectedBeautyIndex = index;
     });
   }
+
   // 打开美颜sheet
   void openBeautyfiterSheet() {
     SheetUtils(
@@ -230,6 +233,7 @@ class _CameraViewState extends State<CameraView> {
       selectedFilterIndex = index;
     });
   }
+
   // 打开滤镜sheet
   void openFiterSheet() {
     SheetUtils(
@@ -241,6 +245,37 @@ class _CameraViewState extends State<CameraView> {
         flag: false,
         initSelectedIndex: selectedFilterIndex,
         onSelectedIndexChanged: onFilterSelectedIndexChanged,
+      ),
+    ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
+  }
+
+  // 贴纸数据
+  List<StickerItem> stickerOptions = createStickerList();
+  int selectedStickerIndex = -1;
+  Future<void> onStickerSelectedIndexChanged(int index) async {
+    setState(() {
+      selectedStickerIndex = index;
+    });
+    // 后续，这里做真实的特效加载逻辑 （是异步的）
+    await Future.delayed(Duration(seconds: 1));
+  }
+
+  // 重置特效索引
+  void resetStickerIndex() {
+    setState(() {
+      selectedStickerIndex = -1;
+    });
+  }
+
+  // 打开贴纸sheet
+  void openStickerSheet() {
+    SheetUtils(
+      StickerSheetSekeleton(
+        resetStickerIndex: resetStickerIndex,
+        title: '特效',
+        stickerItems: stickerOptions,
+        onSelectedIndexChanged: onStickerSelectedIndexChanged,
+        initSelectedIndex: selectedStickerIndex,
       ),
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
@@ -397,7 +432,7 @@ class _CameraViewState extends State<CameraView> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          print('选择特效');
+                          openStickerSheet();
                         },
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -405,11 +440,12 @@ class _CameraViewState extends State<CameraView> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8.0.r),
-                              child: Image.asset(
-                                'lib/assets/app_logo.png',
+                              child: selectedStickerIndex != -1 ? Image.asset(
+                                stickerOptions[selectedStickerIndex].icon,
+                                fit: BoxFit.cover,
                                 width: 50.0.w,
                                 height: 50.0.h,
-                              ),
+                              ) : Icon(FontAwesomeIcons.pagelines, color: Colors.white,size: 50.0.w,),
                             ),
                             Text(
                               '特效',

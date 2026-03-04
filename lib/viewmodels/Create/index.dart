@@ -21,7 +21,6 @@ enum MicrophoneStatus { on, off }
 // 动图
 enum GifStatus { on, off }
 
-
 // 设置sheet参数类型
 class SettingSheetType {
   String maxRecordDuration; // 最大拍摄时长
@@ -40,14 +39,11 @@ class SettingSheetType {
 class CountDownType {
   String countdownDuration;
   String mode; // 拍摄比例
-  CountDownType({
-    required this.countdownDuration,
-    required this.mode,
-  });
+  CountDownType({required this.countdownDuration, required this.mode});
 }
 
-// 美颜选项类型
-class  BeautyItem {
+// 美颜和滤镜选项类型
+class BeautyItem {
   String title;
   String icon;
   PFBeautyFiterType? type;
@@ -59,5 +55,20 @@ class  BeautyItem {
     this.type,
     this.filterType,
     required this.value,
+  });
+}
+
+// 贴纸选项类型
+class StickerItem {
+  final String name; // 显示名称
+  final String bundleName; // bundle文件名
+  final String icon; // 本地icon路径
+  final int type; // 固定3
+
+  StickerItem({
+    required this.name,
+    required this.bundleName,
+    required this.icon,
+    this.type = 3,
   });
 }
