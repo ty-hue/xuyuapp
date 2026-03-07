@@ -1,4 +1,3 @@
-import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/camera_view.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/inspiration_view.dart';
@@ -9,7 +8,6 @@ import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pixelfree/pixelfree_platform_interface.dart';
 
 class CreatePage extends StatefulWidget {
   final String? fromUrl;
@@ -63,9 +61,6 @@ class _CreatePageState extends State<CreatePage> {
       ),
     ).openAsyncSheet(context: context);
   }
-
-
-
 
   // 打开倒计时sheet
   void onCountDownChanged(CountDownType type) {
@@ -133,12 +128,67 @@ class _CreatePageState extends State<CreatePage> {
     });
   }
 
-  List<String> cameraOptions = ['分段拍', '照片', '视频'];
+  List<String> cameraOptions = ['照片', '视频'];
   int cameraSelectedIndex = 0;
   void onInSelectedIndexChanged(int index) {
     setState(() {
       cameraSelectedIndex = index;
     });
+  }
+
+  // 控制底部AutoCenterScrollTabBar显示隐藏
+  RecordStatus recordStatus = RecordStatus.normal;
+
+  // 录制状态改变
+  void onRecordStatusChanged(RecordStatus status) {
+    setState(() {
+      recordStatus = status;
+    });
+  }
+
+  Widget get bottomUI {
+    switch (recordStatus) {
+      case RecordStatus.normal:
+        return AutoCenterScrollTabBar(
+          itemSpacing: 16.0.w,
+          highlightHeight: 50.0.h,
+          highlightColor: Colors.transparent,
+          itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
+          activeStyle: TextStyle(
+            fontSize: 14.0.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            decoration: TextDecoration.none,
+          ),
+          inactiveStyle: TextStyle(
+            fontSize: 14.0.sp,
+            color: Colors.grey,
+            decoration: TextDecoration.none,
+          ),
+          initialIndex: outSelectedIndex,
+          tabs: options,
+          onChanged: onOutSelectedIndexChanged,
+        );
+      case RecordStatus.recording:
+        return Container();
+      case RecordStatus.end:
+        return SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: 50.0.h,
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(
+              '下一步',
+              style: TextStyle(
+                fontSize: 16.0.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+    }
   }
 
   @override
@@ -151,6 +201,7 @@ class _CreatePageState extends State<CreatePage> {
               ? TextView()
               : outSelectedIndex == 1
               ? CameraView(
+                  onRecordStatusChanged: onRecordStatusChanged,
                   topVal: topVal,
                   fromUrl: widget.fromUrl,
                   gifStatus: gifStatus,
@@ -175,31 +226,10 @@ class _CreatePageState extends State<CreatePage> {
               : InspirationView(),
         ),
         Container(
+          padding: EdgeInsets.only(top: 10.0.h),
           height: 100.0.h,
           color: Color.fromRGBO(1, 1, 1, 1),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: AutoCenterScrollTabBar(
-              itemSpacing: 16.0.w,
-              highlightHeight: 50.0.h,
-              highlightColor: Colors.transparent,
-              itemPadding: EdgeInsets.symmetric(horizontal: 6.0.w),
-              activeStyle: TextStyle(
-                fontSize: 14.0.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                decoration: TextDecoration.none,
-              ),
-              inactiveStyle: TextStyle(
-                fontSize: 14.0.sp,
-                color: Colors.grey,
-                decoration: TextDecoration.none,
-              ),
-              initialIndex: outSelectedIndex,
-              tabs: options,
-              onChanged: onOutSelectedIndexChanged,
-            ),
-          ),
+          child: Align(alignment: Alignment.topCenter, child: bottomUI),
         ),
       ],
     );

@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/record_video_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/sticker_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/take_photo_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -14,6 +18,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:popover/popover.dart';
 
 class CameraView extends StatefulWidget {
   final double topVal;
@@ -36,6 +42,7 @@ class CameraView extends StatefulWidget {
   final List<String> speedOptions;
   final int speedSelectedIndex;
   final ValueChanged<int> onSpeedSelectedIndexChanged;
+  final ValueChanged<RecordStatus> onRecordStatusChanged;
   CameraView({
     Key? key,
     required this.topVal,
@@ -58,6 +65,7 @@ class CameraView extends StatefulWidget {
     required this.speedOptions,
     required this.speedSelectedIndex,
     required this.onSpeedSelectedIndexChanged,
+    required this.onRecordStatusChanged,
   }) : super(key: key);
 
   @override
@@ -99,6 +107,32 @@ class _CameraViewState extends State<CameraView> {
     }
   }
 
+  File? latestImage; // 最近拍摄的最新的照片
+
+  // 获取相册中最近拍摄的一张照片
+  Future<File?> getLatestImage() async {
+    // 1 获取“全部照片”相册
+    final albums = await PhotoManager.getAssetPathList(
+      type: RequestType.image,
+      onlyAll: true,
+    );
+
+    if (albums.isEmpty) return null;
+
+    // 3 获取最近照片相册
+    final recentAlbum = albums.first;
+
+    // 4 获取最新的一张
+    final assets = await recentAlbum.getAssetListPaged(page: 0, size: 1);
+
+    if (assets.isEmpty) return null;
+
+    // 5 获取原图
+    final file = await assets.first.originFile;
+
+    return file;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -106,6 +140,13 @@ class _CameraViewState extends State<CameraView> {
       // 检查相册读写权限
       PermissionStatus photoValue =
           await Permissionutils.checkPhotoPermission();
+          // 如果有权限，获取最近拍摄的照片
+      if (photoValue == PermissionStatus.granted) {
+        latestImage = await getLatestImage();
+        if (latestImage != null) {
+          setState(() {});
+        }
+      }
       setState(() {
         _isPhotoPermissionGranted = photoValue == PermissionStatus.granted;
       });
@@ -280,6 +321,179 @@ class _CameraViewState extends State<CameraView> {
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
+  // 按钮状态
+  RecordStatus recordStatus = RecordStatus.normal;
+  // 录制状态改变
+  void onRecordStatusChanged(RecordStatus status) {
+    setState(() {
+      recordStatus = status;
+    });
+  }
+
+  // 变动ui函数
+  void changeUI(RecordStatus status) {
+    widget.onRecordStatusChanged(status);
+    setState(() {
+      recordStatus = status;
+    });
+  }
+
+  // 开始录制
+  void startRecording() {
+    changeUI(RecordStatus.recording);
+  }
+
+  // 停止录制
+  void stopRecording() {
+    changeUI(RecordStatus.end);
+  }
+
+  // 拍照
+  void takePhoto() {
+    changeUI(RecordStatus.end);
+  }
+
+  Widget backUI(BuildContext contextBtn) {
+    switch (recordStatus) {
+      case RecordStatus.normal:
+        return GestureDetector(
+          onTap: () {
+            if (widget.fromUrl != null) {
+              context.pop(widget.fromUrl);
+            } else {
+              context.pop();
+            }
+          },
+          child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
+        );
+      case RecordStatus.recording:
+        return Container();
+      case RecordStatus.end:
+        return GestureDetector(
+          onTap: () {
+            showPopover(
+              context: contextBtn,
+              bodyBuilder: (context) => Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          changeUI(RecordStatus.normal);
+                          context.pop();
+                        },
+                        splashColor: Color.fromRGBO(207, 72, 53, 0.2),
+                        highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            spacing: 4.0.w,
+                            children: [
+                              Icon(
+                                Icons.arrow_back_ios,
+                                size: 26.0.sp,
+                                color: Color.fromRGBO(207, 72, 53, 1),
+                              ),
+                              Text(
+                                '不保存返回',
+                                style: TextStyle(
+                                  color: Color.fromRGBO(207, 72, 53, 1),
+                                  fontSize: 16.0.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1.0.h),
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          changeUI(RecordStatus.normal);
+                          context.pop();
+                        },
+                        splashColor: Color.fromRGBO(207, 72, 53, 0.2),
+                        highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
+                        child: Padding(
+                          padding: EdgeInsetsGeometry.symmetric(
+                            horizontal: 20.w,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            spacing: 4.0.w,
+                            children: [
+                              Icon(
+                                Icons.save,
+                                size: 26.0.sp,
+                                color: Color.fromRGBO(31, 30, 37, 1),
+                              ),
+                              Text(
+                                '存草稿',
+                                style: TextStyle(
+                                  color: Color.fromRGBO(31, 30, 37, 1),
+                                  fontSize: 16.0.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onPop: () => print('Popover was popped!'),
+              direction: PopoverDirection.bottom,
+              backgroundColor: Colors.white,
+              width: 180.w,
+              height: 100.h,
+              arrowHeight: 15.h,
+              arrowWidth: 30.w,
+              allowClicksOnBackground: false,
+              barrierColor: Colors.transparent,
+            );
+          },
+          child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 26.0.sp),
+        );
+    }
+  }
+
+  Widget get ButtonUI {
+    switch (widget.cameraSelectedIndex) {
+      case 0:
+        return recordStatus != RecordStatus.end
+            ? Align(
+                alignment: Alignment.center,
+                child: TakePhotoButton(
+                  takePhoto: takePhoto,
+                  recordStatus: recordStatus,
+                ),
+              )
+            : Container();
+      default:
+        return recordStatus != RecordStatus.end
+            ? Align(
+                alignment: Alignment.center,
+                child: RecordVideoButton(
+                  startRecording: startRecording,
+                  stopRecording: stopRecording,
+                  recordStatus: recordStatus,
+                ),
+              )
+            : Container();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -293,88 +507,93 @@ class _CameraViewState extends State<CameraView> {
           ),
 
           // 选择音乐
-          Positioned(
-            top: widget.topVal,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    print('选择音乐');
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10.0.h,
-                      horizontal: 12.0.w,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0.r),
-                      color: Colors.black.withOpacity(0.4),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 2.0.w,
-                      children: [
-                        Icon(
-                          Icons.music_note,
-                          color: Colors.white,
-                          size: 20.0.sp,
-                        ),
-                        Text(
-                          '选择音乐',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0.sp,
-                            decoration: TextDecoration.none, // ⭐关键
-                            fontWeight: FontWeight.w600,
+          recordStatus != RecordStatus.recording
+              ? Positioned(
+                  top: widget.topVal,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          print('选择音乐');
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10.0.h,
+                            horizontal: 12.0.w,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0.r),
+                            color: Colors.black.withOpacity(0.4),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 2.0.w,
+                            children: [
+                              Icon(
+                                Icons.music_note,
+                                color: Colors.white,
+                                size: 20.0.sp,
+                              ),
+                              Text(
+                                '选择音乐',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14.0.sp,
+                                  decoration: TextDecoration.none, // ⭐关键
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
+                )
+              : Container(),
           // 侧边操作栏
-          Positioned(
-            right: 0.w,
-            top: widget.topVal + 10.h,
-            child: ToolBar(
-              cameraSelectedIndex: widget.cameraSelectedIndex,
-              gifStatus: widget.gifStatus,
-              onGifStatusChanged: (status) {
-                widget.onGifStatusChanged(status);
-              },
-              microphoneStatus: widget.microphoneStatus,
-              onMicrophoneStatusChanged: (status) {
-                widget.onMicrophoneStatusChanged(status);
-              },
-              onCountDownChanged: () {
-                widget.openCountDownSheet();
-              },
-              onSettingChanged: widget.openSettingSheet,
-              onBeautyChanged: openBeautyfiterSheet,
-              onFilterChanged: openFiterSheet,
-              onRotateChanged: () {
-                print('旋转');
-              },
-              speedMode: widget.speedMode,
-              onSpeedModeChanged: (mode) {
-                widget.onSpeedModeChanged(mode);
-              },
-              flashStatus: widget.flashStatus,
-              recordDuration: widget.recordDuration,
-              onFlashStatusChanged: (status) {
-                widget.onFlashStatusChanged(status);
-              },
-              onRecordDurationChanged: (duration) {
-                widget.onRecordDurationChanged(duration);
-              },
-            ),
-          ),
+          recordStatus != RecordStatus.end
+              ? Positioned(
+                  right: 0.w,
+                  top: widget.topVal + 10.h,
+                  child: ToolBar(
+                    recordStatus: recordStatus,
+                    cameraSelectedIndex: widget.cameraSelectedIndex,
+                    gifStatus: widget.gifStatus,
+                    onGifStatusChanged: (status) {
+                      widget.onGifStatusChanged(status);
+                    },
+                    microphoneStatus: widget.microphoneStatus,
+                    onMicrophoneStatusChanged: (status) {
+                      widget.onMicrophoneStatusChanged(status);
+                    },
+                    onCountDownChanged: () {
+                      widget.openCountDownSheet();
+                    },
+                    onSettingChanged: widget.openSettingSheet,
+                    onBeautyChanged: openBeautyfiterSheet,
+                    onFilterChanged: openFiterSheet,
+                    onRotateChanged: () {
+                      print('旋转');
+                    },
+                    speedMode: widget.speedMode,
+                    onSpeedModeChanged: (mode) {
+                      widget.onSpeedModeChanged(mode);
+                    },
+                    flashStatus: widget.flashStatus,
+                    recordDuration: widget.recordDuration,
+                    onFlashStatusChanged: (status) {
+                      widget.onFlashStatusChanged(status);
+                    },
+                    onRecordDurationChanged: (duration) {
+                      widget.onRecordDurationChanged(duration);
+                    },
+                  ),
+                )
+              : Container(),
           // 底部操作栏
           Positioned(
             bottom: 20.0.h,
@@ -406,126 +625,123 @@ class _CameraViewState extends State<CameraView> {
                         )
                       : Container(),
 
-                  AutoCenterScrollTabBar(
-                    itemSpacing: 20.0.w,
-                    highlightHeight: 22.0.h,
-                    highlightColor: Colors.white,
-                    itemPadding: EdgeInsets.symmetric(horizontal: 2.0.w),
-                    activeStyle: TextStyle(
-                      fontSize: 14.0.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      decoration: TextDecoration.none,
-                    ),
-                    inactiveStyle: TextStyle(
-                      fontSize: 14.0.sp,
-                      color: Colors.white,
-                      decoration: TextDecoration.none,
-                    ),
-                    initialIndex: widget.cameraSelectedIndex,
-                    tabs: widget.cameraOptions,
-                    onChanged: widget.onInSelectedIndexChanged,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          openStickerSheet();
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 4.0.h,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0.r),
-                              child: selectedStickerIndex != -1 ? Image.asset(
-                                stickerOptions[selectedStickerIndex].icon,
-                                fit: BoxFit.cover,
-                                width: 50.0.w,
-                                height: 50.0.h,
-                              ) : Icon(FontAwesomeIcons.pagelines, color: Colors.white,size: 50.0.w,),
-                            ),
-                            Text(
-                              '特效',
-                              style: TextStyle(
-                                fontSize: 14.0.sp,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        alignment: Alignment.topCenter,
-                        child: GestureDetector(
-                          onTap: () {
-                            print('开始录制');
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: 64.0.w,
-                            height: 64.0.h,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 3.0.w,
-                              ),
-                            ),
-                            child: Container(
-                              width: 48.0.w,
-                              height: 48.0.h,
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                  recordStatus == RecordStatus.normal
+                      ? AutoCenterScrollTabBar(
+                          itemSpacing: 20.0.w,
+                          highlightHeight: 22.0.h,
+                          highlightColor: Colors.white,
+                          itemPadding: EdgeInsets.symmetric(horizontal: 2.0.w),
+                          activeStyle: TextStyle(
+                            fontSize: 14.0.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,
                           ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          if (_isPhotoPermissionGranted) {
-                            // 打开相册
-                            print('打开相册');
-                          } else {
-                            openAppSettings();
-                          }
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 4.0.h,
+                          inactiveStyle: TextStyle(
+                            fontSize: 14.0.sp,
+                            color: Colors.white,
+                            decoration: TextDecoration.none,
+                          ),
+                          initialIndex: widget.cameraSelectedIndex,
+                          tabs: widget.cameraOptions,
+                          onChanged: widget.onInSelectedIndexChanged,
+                        )
+                      : Container(),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 40.0.w),
+                    child: Stack(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0.r),
-                              child: _isPhotoPermissionGranted
-                                  ? Image.asset(
-                                      'lib/assets/app_logo.png',
-                                      width: 50.0.w,
-                                      height: 50.0.h,
-                                    )
-                                  : Icon(
-                                      Icons.photo_library,
-                                      size: 50.0.w,
-                                      color: Colors.white,
+                            recordStatus == RecordStatus.normal
+                                ? GestureDetector(
+                                    onTap: () {
+                                      openStickerSheet();
+                                    },
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 4.0.h,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8.0.r,
+                                          ),
+                                          child: selectedStickerIndex != -1
+                                              ? Image.asset(
+                                                  stickerOptions[selectedStickerIndex]
+                                                      .icon,
+                                                  fit: BoxFit.cover,
+                                                  width: 50.0.w,
+                                                  height: 50.0.h,
+                                                )
+                                              : Icon(
+                                                  FontAwesomeIcons.pagelines,
+                                                  color: Colors.white,
+                                                  size: 50.0.w,
+                                                ),
+                                        ),
+                                        Text(
+                                          '特效',
+                                          style: TextStyle(
+                                            fontSize: 14.0.sp,
+                                            color: Colors.white,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                            ),
-                            Text(
-                              '相册',
-                              style: TextStyle(
-                                fontSize: 14.0.sp,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
+                                  )
+                                : Container(),
+
+                            recordStatus == RecordStatus.normal
+                                ? GestureDetector(
+                                    onTap: () {
+                                      if (_isPhotoPermissionGranted) {
+                                        // 打开相册
+                                        print('打开相册');
+                                      } else {
+                                        openAppSettings();
+                                      }
+                                    },
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 4.0.h,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8.0.r,
+                                          ),
+                                          child: _isPhotoPermissionGranted
+                                              ? Image.file(
+                                                  latestImage!,
+                                                  width: 50.0.w,
+                                                  height: 50.0.h,
+                                                )
+                                              : Icon(
+                                                  Icons.photo_library,
+                                                  size: 50.0.w,
+                                                  color: Colors.white,
+                                                ),
+                                        ),
+                                        Text(
+                                          '相册',
+                                          style: TextStyle(
+                                            fontSize: 14.0.sp,
+                                            color: Colors.white,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Container(),
                           ],
                         ),
-                      ),
-                    ],
+                        ButtonUI,
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -675,18 +891,13 @@ class _CameraViewState extends State<CameraView> {
           Positioned(
             left: 20.0.w,
             top: widget.topVal,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 10.0.h),
-              child: GestureDetector(
-                onTap: () {
-                  if (widget.fromUrl != null) {
-                    context.pop(widget.fromUrl);
-                  } else {
-                    context.pop();
-                  }
-                },
-                child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
-              ),
+            child: Builder(
+              builder: (btnContext) {
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 10.0.h),
+                  child: backUI(btnContext), // ⭐ 这里传按钮自己的 context
+                );
+              },
             ),
           ),
         ],

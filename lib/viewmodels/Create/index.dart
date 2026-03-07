@@ -72,3 +72,6 @@ class StickerItem {
     this.type = 3,
   });
 }
+
+// 录制状态
+enum RecordStatus { normal, recording, end }

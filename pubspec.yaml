@@ -54,6 +54,7 @@ dependencies:
   path_provider: ^2.1.2
   image_picker: ^1.0.7
   text_scroll: ^0.2.1
+  popover: ^0.4.0
 
 dev_dependencies:
   flutter_test:
