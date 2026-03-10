@@ -1063,15 +1063,17 @@ extension $SelectCityRouteExtension on SelectCityRoute {
 }
 
 RouteBase get $createRoute => GoRouteData.$route(
-  path: '/create',
+  path: '/create:fromUrl',
 
   factory: $CreateRouteExtension._fromState,
 );
 
 extension $CreateRouteExtension on CreateRoute {
-  static CreateRoute _fromState(GoRouterState state) => const CreateRoute();
+  static CreateRoute _fromState(GoRouterState state) =>
+      CreateRoute(fromUrl: state.pathParameters['fromUrl']);
 
-  String get location => GoRouteData.$location('/create');
+  String get location =>
+      GoRouteData.$location('/create${Uri.encodeComponent(fromUrl ?? '')}');
 
   void go(BuildContext context) => context.go(location);
 

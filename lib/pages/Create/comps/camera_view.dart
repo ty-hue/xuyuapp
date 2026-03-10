@@ -1,14 +1,18 @@
 import 'dart:io';
 
 import 'package:bilbili_project/components/loading.dart';
+import 'package:bilbili_project/components/my_asset_picker_text_delegate.dart';
 import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/beautyfiter_sheet_sekeleton.dart';
+import 'package:bilbili_project/pages/Create/comps/photo_preview.dart';
 import 'package:bilbili_project/pages/Create/comps/record_video_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/sticker_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/take_photo_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
+import 'package:bilbili_project/pages/Create/comps/video_preview.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
@@ -19,7 +23,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:popover/popover.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class CameraView extends StatefulWidget {
   final double topVal;
@@ -73,13 +79,10 @@ class CameraView extends StatefulWidget {
 }
 
 class _CameraViewState extends State<CameraView> {
-  // 图片读写权限
-  bool _isPhotoPermissionGranted = false;
   // 相机权限 默认为永久拒绝
-  PermissionStatus _cameraPermissionStatus = PermissionStatus.permanentlyDenied;
+  PermissionStatus _cameraPermissionStatus = PermissionStatus.granted;
   // 麦克风权限 默认为永久拒绝
-  PermissionStatus _microphonePermissionStatus =
-      PermissionStatus.permanentlyDenied;
+  PermissionStatus _microphonePermissionStatus = PermissionStatus.granted;
   CameraController? _cameraController; // 相机控制器
   late List<CameraDescription> _cameras; // 相机列表
   bool _isInitialized = false; // 相机是否初始化完成
@@ -133,23 +136,37 @@ class _CameraViewState extends State<CameraView> {
     return file;
   }
 
+  // 图片读写权限
+  bool _photoPermissionGranted = false;
+  // 请求相册权限
+  Future<bool> requestPermission() async {
+    final result = await PhotoManager.requestPermissionExtend();
+    if (!result.hasAccess) {
+      return false;
+    }
+    return true;
+  }
+
+  // 获取最新的照片
+  Future<void> getLatestPhoto() async {
+    _photoPermissionGranted = await requestPermission();
+    if (!mounted) return;
+    if (_photoPermissionGranted) {
+      latestImage = await getLatestImage();
+      if (latestImage != null) {
+        if (!mounted) return;
+      }
+    }
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     () async {
-      // 检查相册读写权限
-      PermissionStatus photoValue =
-          await Permissionutils.checkPhotoPermission();
-          // 如果有权限，获取最近拍摄的照片
-      if (photoValue == PermissionStatus.granted) {
-        latestImage = await getLatestImage();
-        if (latestImage != null) {
-          setState(() {});
-        }
-      }
-      setState(() {
-        _isPhotoPermissionGranted = photoValue == PermissionStatus.granted;
-      });
+      // 获取最新的照片
+      await getLatestPhoto();
+
       // 检查相机权限
       PermissionStatus cameraValue =
           await Permissionutils.checkCameraPermission();
@@ -383,6 +400,8 @@ class _CameraViewState extends State<CameraView> {
                       child: InkWell(
                         onTap: () {
                           changeUI(RecordStatus.normal);
+                          imagePreviewAssets.clear();
+                          videoPreviewAssets.clear();
                           context.pop();
                         },
                         splashColor: Color.fromRGBO(207, 72, 53, 0.2),
@@ -493,7 +512,21 @@ class _CameraViewState extends State<CameraView> {
             : Container();
     }
   }
-
+  // 用户选择的图片资产
+  List<AssetEntity> imagePreviewAssets = [];
+  // 用户选择的视频资产
+  List<AssetEntity> videoPreviewAssets = [];
+  // 控制是否显示预览视图
+  bool get isShowPreview => imagePreviewAssets.isNotEmpty || videoPreviewAssets.isNotEmpty;
+  Widget get perviewUI{
+    if(videoPreviewAssets.isNotEmpty){
+      return VideoPreview(videoData: videoPreviewAssets.first);
+    }
+    if(imagePreviewAssets.isNotEmpty){
+      return PhotoPreview();
+    }
+    return Container();
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -501,11 +534,13 @@ class _CameraViewState extends State<CameraView> {
         children: [
           // 视频流预览
           Positioned.fill(
-            child: _isInitialized && isCompleteAllow
+            child: _isInitialized && isCompleteAllow && !isShowPreview
                 ? CameraPreview(_cameraController!)
                 : Container(),
           ),
-
+          Positioned.fill(
+            child: perviewUI,
+          ),
           // 选择音乐
           recordStatus != RecordStatus.recording
               ? Positioned(
@@ -697,12 +732,44 @@ class _CameraViewState extends State<CameraView> {
 
                             recordStatus == RecordStatus.normal
                                 ? GestureDetector(
-                                    onTap: () {
-                                      if (_isPhotoPermissionGranted) {
-                                        // 打开相册
-                                        print('打开相册');
+                                    onTap: () async {
+                                      if (_photoPermissionGranted) {
+                                        if (widget.cameraSelectedIndex == 0) {
+                                          // 打开图片选择器
+                                             final List<AssetEntity>? assets = await AssetPicker.pickAssets(context,
+                                            pickerConfig: AssetPickerConfig(
+                                              requestType: RequestType.image,
+                                              maxAssets: 20,
+                                              textDelegate: MyAssetPickerTextDelegate(),
+                                            ),
+                                          );
+                                          if (assets != null) {
+                                            // 处理选中的图片资产
+                                            setState(() {
+                                              imagePreviewAssets = assets;
+                                            });
+                                            changeUI(RecordStatus.end);
+                                          }
+                                        }
+                                        if (widget.cameraSelectedIndex == 1) {
+                                          // 打开视频选择器
+                                          final List<AssetEntity>? assets = await AssetPicker.pickAssets(context,
+                                            pickerConfig: AssetPickerConfig(
+                                              requestType: RequestType.video,
+                                              maxAssets: 1,
+                                              textDelegate: MyAssetPickerTextDelegate(),
+                                            ),
+                                          );
+                                          if (assets != null) {
+                                            // 处理选中的视频资产
+                                            setState(() {
+                                              videoPreviewAssets = assets;
+                                            });
+                                            changeUI(RecordStatus.end);
+                                          }
+                                        }
                                       } else {
-                                        openAppSettings();
+                                        await getLatestPhoto();
                                       }
                                     },
                                     child: Column(
@@ -713,7 +780,7 @@ class _CameraViewState extends State<CameraView> {
                                           borderRadius: BorderRadius.circular(
                                             8.0.r,
                                           ),
-                                          child: _isPhotoPermissionGranted
+                                          child: _photoPermissionGranted
                                               ? Image.file(
                                                   latestImage!,
                                                   width: 50.0.w,

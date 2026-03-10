@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/routes/app_router.dart';
-import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/routes/all_photo_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/viewmodels/AllPhoto/index.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';

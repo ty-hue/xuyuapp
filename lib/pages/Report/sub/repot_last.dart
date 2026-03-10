@@ -1,8 +1,7 @@
-import 'package:bilbili_project/components/appBar_back_icon_btn.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/routes/app_router.dart';
-import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/routes/all_photo_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

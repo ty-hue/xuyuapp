@@ -25,7 +25,7 @@ import 'package:bilbili_project/routes/mine_routes/select_province_route.dart';
 import 'package:bilbili_project/routes/mine_routes/update_user_info_field_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_last_route.dart';
 import 'package:bilbili_project/routes/report_routes/report_second_route.dart';
-import 'package:bilbili_project/routes/report_routes/single_image_preview_route.dart';
+import 'package:bilbili_project/routes/all_photo_routes/single_image_preview_route.dart';
 import 'package:bilbili_project/routes/settings_routes/about_route.dart';
 import 'package:bilbili_project/routes/settings_routes/account_safe_route.dart';
 import 'package:bilbili_project/routes/settings_routes/action_page_route.dart';
@@ -291,6 +291,7 @@ class AllPhotoRoute extends GoRouteData {
     );
   }
 }
+
 
 // 这两个路由本身是在mine路由下的子路由，但是由于它们不能显示底部导航栏，所以把它们提示为顶级路由
 @TypedGoRoute<EditProfileRoute>(
