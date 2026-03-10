@@ -59,6 +59,7 @@ dependencies:
   video_compress: ^3.1.4
   wechat_assets_picker: ^10.1.1
   chewie: ^1.13.0
+  carousel_slider: ^5.1.2
 
 dev_dependencies:
   flutter_test:

@@ -523,7 +523,7 @@ class _CameraViewState extends State<CameraView> {
       return VideoPreview(videoData: videoPreviewAssets.first);
     }
     if(imagePreviewAssets.isNotEmpty){
-      return PhotoPreview();
+      return PhotoPreview(assets: imagePreviewAssets);
     }
     return Container();
   }
