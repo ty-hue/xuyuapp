@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bilbili_project/components/loading.dart';
+import 'package:bilbili_project/pages/Create/comps/mini_music_sheet_skeleton.dart';
 import 'package:bilbili_project/components/my_asset_picker_text_delegate.dart';
 import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/constants/index.dart';
@@ -527,6 +528,12 @@ class _CameraViewState extends State<CameraView> {
     }
     return Container();
   }
+  // 打开音乐选择mini sheet
+  void openMiniMusicSheet(){
+    SheetUtils(
+      MiniMusicSheetSkeleton(),
+    ).openAsyncSheet(context: context);
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -552,7 +559,7 @@ class _CameraViewState extends State<CameraView> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          print('选择音乐');
+                          openMiniMusicSheet();
                         },
                         child: Container(
                           padding: EdgeInsets.symmetric(
