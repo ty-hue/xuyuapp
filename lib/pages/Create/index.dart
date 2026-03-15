@@ -119,7 +119,9 @@ class _CreatePageState extends State<CreatePage> {
   void onRecordDurationChanged(RecordDuration duration) {
     setState(() {
       recordDuration = duration;
+      settingSheetType.maxRecordDuration = duration.seconds.toString();
     });
+
   }
 
   // outSelectedIndex 改变
