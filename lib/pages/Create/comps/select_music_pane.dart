@@ -1,4 +1,6 @@
 import 'package:bilbili_project/pages/Create/comps/music_tab_view.dart';
+import 'package:bilbili_project/pages/Create/comps/search_music_sheet_skeleton.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -19,6 +21,13 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
     _tabController = TabController(vsync: this, length: 4);
   }
 
+  // 打开选择音乐sheet
+  void openSelectMusicSheet() {
+    SheetUtils(
+      SearchMusicSheetSkeleton(),
+    ).openAsyncSheet(context: context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -28,7 +37,7 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
         // 搜索框
         GestureDetector(
           onTap: () {
-            print('点击了搜索框');
+            openSelectMusicSheet();
           },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),

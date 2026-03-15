@@ -1,5 +1,4 @@
 import 'package:bilbili_project/components/default_dialog_skeleton.dart';
-import 'package:bilbili_project/constants/index.dart';
 import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:bilbili_project/utils/mineSearchHistoryManager.dart';
 import 'package:flutter/material.dart';
@@ -8,47 +7,31 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 enum EditSearchHistory { add, remove, clear }
 
-class DefaultView extends StatefulWidget {
-  final double statusBarHeight;
-  final String searchCategory;
+class HistoryTrash extends StatefulWidget {
   final List<String> searchHistory;
   final bool isExpanded;
   final Function(bool) toggleExpanded; // 切换是否展开搜索历史
-  final Function(String) changeCategory; // 切换搜索范围
   final Function({String history, required EditSearchHistory editType})
   updateSearchHistory; // 用于操作搜索历史List
   final TextEditingController searchController; // 搜索框控制器
   final Future<void> Function() searchData; // 搜索数据方法
-
-  DefaultView({
+  final MineSearchHistoryManager musicSearchHistoryManager;
+  HistoryTrash({
     Key? key,
-    required this.statusBarHeight,
-    required this.searchCategory,
     required this.searchHistory,
     required this.isExpanded,
     required this.toggleExpanded,
-    required this.changeCategory,
     required this.updateSearchHistory,
     required this.searchController, // 搜索框控制器
     required this.searchData, // 搜索数据方法
+    required this.musicSearchHistoryManager,
   }) : super(key: key);
 
   @override
-  State<DefaultView> createState() => _DefaultViewState();
+  State<HistoryTrash> createState() => _HistoryTrashState();
 }
 
-class _DefaultViewState extends State<DefaultView> {
-  late MineSearchHistoryManager mineSearchHistoryManager;
-  @override
-  void initState() {
-    super.initState();
-    // 初始化搜索历史
-    mineSearchHistoryManager = MineSearchHistoryManager(
-      searchKey: GlobalConstants.MINE_SEARCH_HISTORY_KEY,
-    );
-    mineSearchHistoryManager.init();
-  }
-
+class _HistoryTrashState extends State<HistoryTrash> {
   // get 搜索历史
   List<Widget> get _currentSearchHistory {
     if (widget.searchHistory.length <= 2) {
@@ -64,54 +47,6 @@ class _DefaultViewState extends State<DefaultView> {
     return List.generate(
       widget.searchHistory.length,
       (index) => _buildSearchHistoryItem(widget.searchHistory[index]),
-    );
-  }
-
-  // 搜索范围item
-  Widget _buildSearchScopeItem({
-    required String scope,
-    required IconData icon,
-    required String category,
-    required Function() onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: category == widget.searchCategory
-                ? Color.fromRGBO(253, 211, 63, 1)
-                : Color.fromRGBO(64, 66, 75, 1),
-            width: 1.w,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 爱心图标
-            Icon(
-              icon,
-              size: 15.0.w,
-              color: category == widget.searchCategory
-                  ? Color.fromRGBO(253, 211, 63, 1)
-                  : Colors.white,
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              scope,
-              style: TextStyle(
-                fontSize: 14.0.sp,
-                color: category == widget.searchCategory
-                    ? Color.fromRGBO(253, 211, 63, 1)
-                    : Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -131,7 +66,7 @@ class _DefaultViewState extends State<DefaultView> {
                   history: history,
                   editType: EditSearchHistory.add,
                 );
-                mineSearchHistoryManager.setSearchHistory(widget.searchHistory);
+                widget.musicSearchHistoryManager.setSearchHistory(widget.searchHistory);
                 widget.searchController.text = history; // 赋值给搜索框控制器
                 // 失去焦点
                 FocusScope.of(context).unfocus();
@@ -149,7 +84,7 @@ class _DefaultViewState extends State<DefaultView> {
                   SizedBox(width: 10.w),
                   Text(
                     history,
-                    style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
+                    style: TextStyle(fontSize: 16.0.sp, color: Colors.grey),
                   ),
                 ],
               ),
@@ -163,7 +98,7 @@ class _DefaultViewState extends State<DefaultView> {
                   history: history,
                   editType: EditSearchHistory.remove,
                 );
-                mineSearchHistoryManager.setSearchHistory(widget.searchHistory);
+                widget.musicSearchHistoryManager.setSearchHistory(widget.searchHistory);
               });
             },
             child: Icon(
@@ -190,7 +125,7 @@ class _DefaultViewState extends State<DefaultView> {
                 setState(() {
                   widget.updateSearchHistory(editType: EditSearchHistory.clear);
                   widget.toggleExpanded(false);
-                  mineSearchHistoryManager.removeSearchHistory();
+                  widget.musicSearchHistoryManager.removeSearchHistory();
                 });
                 Navigator.pop(context);
               },
@@ -237,14 +172,6 @@ class _DefaultViewState extends State<DefaultView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: double.infinity,
-      color: Color.fromRGBO(22, 24, 35, 1),
-      padding: EdgeInsets.only(
-        left: 26.w,
-        right: 26.w,
-        bottom: 0.h,
-        top: widget.statusBarHeight + 46.h + 20.h,
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,82 +189,10 @@ class _DefaultViewState extends State<DefaultView> {
                     _showClearAll,
 
                     SizedBox(height: 20.h),
-                    Divider(height: 1.h, color: Colors.white.withOpacity(0.2)),
+                    Divider(height: 1.h, color: Colors.grey.withOpacity(0.4)),
                     SizedBox(height: 28.h),
                   ]
                 : [],
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                '选择搜索范围',
-                style: TextStyle(fontSize: 16.0.sp, color: Colors.white),
-              ),
-              SizedBox(height: 20.h),
-              GridView.count(
-                padding: EdgeInsets.zero,
-                mainAxisSpacing: 20.w,
-                crossAxisSpacing: 20.h,
-                childAspectRatio: 3.0,
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-                  _buildSearchScopeItem(
-                    category: '0',
-                    scope: '喜欢',
-                    icon: FontAwesomeIcons.heart,
-                    onTap: () {
-                      setState(() {
-                        widget.changeCategory('0');
-                      });
-                    },
-                  ),
-                  _buildSearchScopeItem(
-                    category: '1',
-                    scope: '收藏',
-                    icon: FontAwesomeIcons.bookmark,
-                    onTap: () {
-                      setState(() {
-                        widget.changeCategory('1');
-                      });
-                    },
-                  ),
-                  _buildSearchScopeItem(
-                    category: '2',
-                    scope: '作品',
-                    icon: FontAwesomeIcons.video,
-                    onTap: () {
-                      setState(() {
-                        widget.changeCategory('2');
-                      });
-                    },
-                  ),
-                  _buildSearchScopeItem(
-                    category: '3',
-                    scope: '私密',
-                    icon: FontAwesomeIcons.lock,
-                    onTap: () {
-                      setState(() {
-                        widget.changeCategory('3');
-                      });
-                    },
-                  ),
-                  _buildSearchScopeItem(
-                    category: '4',
-                    scope: '观看历史',
-                    icon: FontAwesomeIcons.history,
-                    onTap: () {
-                      setState(() {
-                        widget.changeCategory('4');
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ],
           ),
         ],
       ),

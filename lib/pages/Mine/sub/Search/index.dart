@@ -17,12 +17,19 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  late MineSearchHistoryManager mineSearchHistoryManager;
   @override
   void initState() {
     super.initState();
     // 初始化搜索历史
-    mineSearchHistoryManager.init();
-    searchHistory = mineSearchHistoryManager.getSearchHistory();
+    mineSearchHistoryManager = MineSearchHistoryManager(
+      searchKey: GlobalConstants.MINE_SEARCH_HISTORY_KEY,
+    );
+    mineSearchHistoryManager.init().then((value) {
+      setState(() {
+        searchHistory = mineSearchHistoryManager.getSearchHistory();
+      });
+    });
   }
 
   List<String> searchHistory = [];

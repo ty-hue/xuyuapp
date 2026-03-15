@@ -15,6 +15,7 @@ class ChangePasswordPage extends StatefulWidget {
 }
 
 class _ChangePasswordState extends State<ChangePasswordPage> {
+  final TextEditingController _pwdController = TextEditingController(); // 密码控制器
   // 校验密码
   bool _validatePwd() {
     // 密码需要8-20位，至少包含字母、数字、符号的任意两种
@@ -71,6 +72,7 @@ class _ChangePasswordState extends State<ChangePasswordPage> {
                   Form(
                     key: _formKey,
                     child: CustomInputView(
+                      controller: _pwdController, // 控制器
                       hintText: '请输入密码',
                       obscureText: true,
                       keyboardType: TextInputType.visiblePassword,

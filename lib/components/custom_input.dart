@@ -16,7 +16,11 @@ class CustomInputView extends StatefulWidget {
   final BoxConstraints? constraints; // 尾部清空按钮大小限制
   final TextInputType keyboardType; // 键盘类型
   final ValueChanged<String> onChanged;
+  final Widget? prefixIcon; // 前缀图标
+  final ValueChanged<String>? onFieldSubmitted; // 提交回调
+  final TextEditingController controller; // 控制器
   CustomInputView({
+    this.prefixIcon, // 前缀图标
     Key? key,
     this.cursorColor = const Color.fromRGBO(209, 176, 40, 1), // 光标颜色
     this.cursorWidth = 2, // 光标宽度
@@ -35,6 +39,8 @@ class CustomInputView extends StatefulWidget {
     this.constraints, // 尾部清空按钮大小限制
     this.keyboardType = TextInputType.text, // 键盘类型
     required this.onChanged,
+    this.onFieldSubmitted, // 提交回调
+    required this.controller, // 控制器
   }) : super(key: key);
 
   @override
@@ -42,14 +48,13 @@ class CustomInputView extends StatefulWidget {
 }
 
 class _PasswordInputViewState extends State<CustomInputView> {
-  final TextEditingController _inputController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       keyboardType: widget.keyboardType,
       obscureText: widget.obscureText,
-      controller: _inputController,
-      onFieldSubmitted: (value) {},
+      controller: widget.controller,
+      onFieldSubmitted: widget.onFieldSubmitted ?? (value) {},
       validator: (value) => null,
       onChanged: (value) {
         widget.onChanged(value);
@@ -75,12 +80,12 @@ class _PasswordInputViewState extends State<CustomInputView> {
         contentPadding:
             widget.contentPadding ??
             EdgeInsets.only(left: 20.w, top: 14.h, bottom: 14.h),
-        suffixIcon: _inputController.text.isNotEmpty
+        suffixIcon: widget.controller.text.isNotEmpty
             ? Padding(
                 padding: EdgeInsets.only(right: 20.w),
                 child: GestureDetector(
                   onTap: () {
-                    _inputController.clear();
+                    widget.controller.clear();
                     widget.onChanged('');
                   },
                   child: Container(
@@ -100,6 +105,12 @@ class _PasswordInputViewState extends State<CustomInputView> {
         suffixIconConstraints:
             widget.constraints ??
             BoxConstraints(minWidth: 40.0.w, minHeight: 40.0.h),
+        prefixIcon: widget.prefixIcon ?? Icon(
+            Icons.search, // 搜索图标
+            size: 20.0.sp, // 设置图标大小
+            color: Colors.grey, // 设置图标颜色
+          ),
+        
       ),
     );
   }

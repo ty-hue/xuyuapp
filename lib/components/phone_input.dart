@@ -61,6 +61,7 @@ class PhoneInputView extends StatefulWidget {
 }
 
 class _PhoneInputViewState extends State<PhoneInputView> {
+  final TextEditingController _phoneNumberController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -110,6 +111,7 @@ class _PhoneInputViewState extends State<PhoneInputView> {
               Container(width: 1.w, height: 20.h, color: Colors.grey),
           Expanded(
             child: CustomInputView(
+              controller: _phoneNumberController, // 控制器
               cursorColor: widget.cursorColor, // 光标颜色
               cursorWidth: widget.cursorWidth, // 光标宽度
               cursorRadius: widget.cursorRadius, // 光标圆角

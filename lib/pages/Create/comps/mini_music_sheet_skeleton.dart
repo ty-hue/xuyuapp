@@ -24,7 +24,7 @@ class _MiniMusicSheetSkeletonState extends State<MiniMusicSheetSkeleton> {
     return ClipRRect(
       borderRadius: BorderRadius.all(Radius.circular(16.r)),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.65,
+        height: MediaQuery.of(context).size.height * 0.5,
         padding: EdgeInsets.only(
           left: 16.w,
           right: 16.w,

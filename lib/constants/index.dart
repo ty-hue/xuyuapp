@@ -9,6 +9,8 @@ class GlobalConstants {
   static const String TOKEN_KEY = 'csclyf_xuyuapp_token'; // 本地存储的token的key
   static const String MINE_SEARCH_HISTORY_KEY =
       'csclyf_xuyuapp_mine_search_history'; // 本地存储的搜索历史的key
+   static const String MUSIC_SEARCH_HISTORY_KEY =
+      'csclyf_xuyuapp_music_search_history'; // 本地存储的搜索历史的key
 }
 
 // 请求地址接口的的常量

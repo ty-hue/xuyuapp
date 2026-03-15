@@ -1,7 +1,8 @@
-import 'package:bilbili_project/constants/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MineSearchHistoryManager {
+  final String searchKey;
+  MineSearchHistoryManager({required this.searchKey});
   List<String> _searchHistory = [];
   // 实例化SharedPreferences对象
   Future<SharedPreferences> _getInstance() async {
@@ -10,12 +11,12 @@ class MineSearchHistoryManager {
   // 初始化搜索历史
  Future<void> init() async{
     final prefs = await _getInstance();
-    _searchHistory = prefs.getStringList(GlobalConstants.MINE_SEARCH_HISTORY_KEY) ?? [];
+    _searchHistory = prefs.getStringList(searchKey) ?? [];
   }
   // 添加搜索记录
   Future<void> setSearchHistory(List<String> val) async {
     final prefs = await _getInstance();
-    prefs.setStringList(GlobalConstants.MINE_SEARCH_HISTORY_KEY, val);
+    prefs.setStringList(searchKey, val);
     _searchHistory = val;
   }
   // 获取搜索历史
@@ -25,10 +26,9 @@ class MineSearchHistoryManager {
   // 删除搜索历史
   Future<void> removeSearchHistory() async{
     final prefs = await _getInstance();
-    prefs.remove(GlobalConstants.MINE_SEARCH_HISTORY_KEY);
+    prefs.remove(searchKey);
     _searchHistory = [];
   }
 }
 
-final mineSearchHistoryManager = MineSearchHistoryManager();
 

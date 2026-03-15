@@ -17,6 +17,7 @@ class RecoverAccountPage extends StatefulWidget {
 }
 
 class _RecoverAccountState extends State<RecoverAccountPage> {
+  final TextEditingController _phoneNumberController = TextEditingController(); // 手机号控制器
   String prefix = '+86';
   String phoneNumber = '';
   int selectedMethod = -1;
@@ -223,6 +224,7 @@ class _RecoverAccountState extends State<RecoverAccountPage> {
                         ),
                       ),
                       child: CustomInputView(
+                        controller: _phoneNumberController, // 控制器
                         hintText: '请输入絮语号',
                         filled: false,
                         textStyle: TextStyle(

@@ -75,3 +75,6 @@ class StickerItem {
 
 // 录制状态
 enum RecordStatus { normal, recording, end }
+
+// 播放状态
+enum PlayStatus { normal, loading, pause }
