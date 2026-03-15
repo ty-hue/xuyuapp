@@ -25,7 +25,7 @@ class _CreatePageState extends State<CreatePage> {
   MicrophoneStatus microphoneStatus = MicrophoneStatus.off; // 麦克风状态 默认关闭
   GifStatus gifStatus = GifStatus.off; // 动图状态 默认关闭
   SettingSheetType settingSheetType = SettingSheetType(
-    maxRecordDuration: '16',
+    maxRecordDuration: '15',
     aspectRatio: '9:16',
     useVolumeKeys: false,
     grid: false,
