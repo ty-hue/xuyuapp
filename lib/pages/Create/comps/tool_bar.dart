@@ -100,29 +100,15 @@ class _ToolBarState extends State<ToolBar> {
 
   double get toolBarHeight {
     if (isExpandToolsBar) {
-      if (widget.cameraSelectedIndex != 2) {
-        if (widget.cameraSelectedIndex == 1) {
-          return 8 * 60.0.h;
-        }
+      if (widget.cameraSelectedIndex == 1) {
         return 9 * 60.0.h;
-      } else {
-        if (widget.cameraSelectedIndex == 1) {
-          return 7 * 60.0.h;
-        }
-        return 8 * 60.0.h;
       }
+      return 8 * 60.0.h;
     } else {
-      if (widget.cameraSelectedIndex != 2) {
-        if (widget.cameraSelectedIndex == 1) {
-          return 7 * 60.0.h;
-        }
+      if (widget.cameraSelectedIndex == 1) {
         return 8 * 60.0.h;
-      } else {
-        if (widget.cameraSelectedIndex == 1) {
-          return 6 * 60.0.h;
-        }
-        return 7 * 60.0.h;
       }
+      return 7 * 60.0.h;
     }
   }
 
@@ -178,42 +164,48 @@ class _ToolBarState extends State<ToolBar> {
                     ),
                   ),
                 ),
-               widget.recordStatus == RecordStatus.normal ?        GestureDetector(
-                  onTap: () {
-                    switch (widget.flashStatus) {
-                      case FlashStatus.off:
-                        widget.onFlashStatusChanged(FlashStatus.on);
-                        break;
-                      case FlashStatus.on:
-                        widget.onFlashStatusChanged(FlashStatus.auto);
-                        break;
-                      case FlashStatus.auto:
-                        widget.onFlashStatusChanged(FlashStatus.off);
-                        break;
-                    }
-                  },
-                  child: Container(
-                    height: 60.h,
-                    alignment: Alignment.center,
-                    child: Column(
-                      spacing: 2.0.h,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(flashIcon, color: Colors.white, size: 22.0.sp),
-                        Text(
-                          '闪光灯',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.0.sp,
-                            decoration: TextDecoration.none, // ⭐关键
-                            fontWeight: FontWeight.w600,
+                widget.recordStatus == RecordStatus.normal
+                    ? GestureDetector(
+                        onTap: () {
+                          switch (widget.flashStatus) {
+                            case FlashStatus.off:
+                              widget.onFlashStatusChanged(FlashStatus.on);
+                              break;
+                            case FlashStatus.on:
+                              widget.onFlashStatusChanged(FlashStatus.auto);
+                              break;
+                            case FlashStatus.auto:
+                              widget.onFlashStatusChanged(FlashStatus.off);
+                              break;
+                          }
+                        },
+                        child: Container(
+                          height: 60.h,
+                          alignment: Alignment.center,
+                          child: Column(
+                            spacing: 2.0.h,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                flashIcon,
+                                color: Colors.white,
+                                size: 22.0.sp,
+                              ),
+                              Text(
+                                '闪光灯',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.0.sp,
+                                  decoration: TextDecoration.none, // ⭐关键
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ): Container(),
+                      )
+                    : Container(),
                 widget.recordStatus == RecordStatus.normal
                     ? GestureDetector(
                         onTap: () {
@@ -246,7 +238,7 @@ class _ToolBarState extends State<ToolBar> {
                         ),
                       )
                     : Container(),
-                widget.cameraSelectedIndex != 1 &&
+                widget.cameraSelectedIndex == 1 &&
                         widget.recordStatus == RecordStatus.normal
                     ? GestureDetector(
                         onTap: () {
@@ -291,105 +283,107 @@ class _ToolBarState extends State<ToolBar> {
                     ? Container()
                     : AnimatedSwitcher(
                         duration: Duration(milliseconds: 300),
-                        child: widget.recordStatus == RecordStatus.normal ?  widget.cameraSelectedIndex == 0
-                            ? GestureDetector(
-                                key: ValueKey(1), // 每个widget都需要唯一的key
-                                onTap: () {
-                                  switch (widget.recordDuration) {
-                                    case RecordDuration.s15:
-                                      widget.onRecordDurationChanged(
-                                        RecordDuration.s60,
-                                      );
-                                      ToastUtils.showToastReplace(
-                                        context,
-                                        msg: '最大拍摄时长60秒',
-                                      );
-                                      break;
-                                    case RecordDuration.s60:
-                                      widget.onRecordDurationChanged(
-                                        RecordDuration.s180,
-                                      );
-                                      ToastUtils.showToastReplace(
-                                        context,
-                                        msg: '最大拍摄时长3分钟',
-                                      );
-                                      break;
-                                    case RecordDuration.s180:
-                                      widget.onRecordDurationChanged(
-                                        RecordDuration.s15,
-                                      );
-                                      ToastUtils.showToastReplace(
-                                        context,
-                                        msg: '最大拍摄时长15秒',
-                                      );
-                                      break;
-                                  }
-                                },
-                                child: Container(
-                                  height: 60.h,
-                                  alignment: Alignment.center,
-                                  child: Column(
-                                    spacing: 2.0.h,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        recordDurationIcon,
-                                        color: Colors.white,
-                                        size: 22.0.sp,
-                                      ),
-                                      Text(
-                                        '时长',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 13.0.sp,
-                                          decoration:
-                                              TextDecoration.none, // ⭐关键
-                                          fontWeight: FontWeight.w600,
+                        child: widget.recordStatus == RecordStatus.normal
+                            ? widget.cameraSelectedIndex == 1
+                                  ? GestureDetector(
+                                      key: ValueKey(1), // 每个widget都需要唯一的key
+                                      onTap: () {
+                                        switch (widget.recordDuration) {
+                                          case RecordDuration.s15:
+                                            widget.onRecordDurationChanged(
+                                              RecordDuration.s60,
+                                            );
+                                            ToastUtils.showToastReplace(
+                                              context,
+                                              msg: '最大拍摄时长60秒',
+                                            );
+                                            break;
+                                          case RecordDuration.s60:
+                                            widget.onRecordDurationChanged(
+                                              RecordDuration.s180,
+                                            );
+                                            ToastUtils.showToastReplace(
+                                              context,
+                                              msg: '最大拍摄时长3分钟',
+                                            );
+                                            break;
+                                          case RecordDuration.s180:
+                                            widget.onRecordDurationChanged(
+                                              RecordDuration.s15,
+                                            );
+                                            ToastUtils.showToastReplace(
+                                              context,
+                                              msg: '最大拍摄时长15秒',
+                                            );
+                                            break;
+                                        }
+                                      },
+                                      child: Container(
+                                        height: 60.h,
+                                        alignment: Alignment.center,
+                                        child: Column(
+                                          spacing: 2.0.h,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              recordDurationIcon,
+                                              color: Colors.white,
+                                              size: 22.0.sp,
+                                            ),
+                                            Text(
+                                              '时长',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13.0.sp,
+                                                decoration:
+                                                    TextDecoration.none, // ⭐关键
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : GestureDetector(
-                                key: ValueKey(2), // 每个widget都需要唯一的key
-                                onTap: () {
-                                  widget.onGifStatusChanged(
-                                    widget.gifStatus == GifStatus.off
-                                        ? GifStatus.on
-                                        : GifStatus.off,
-                                  );
-                                },
-                                child: Container(
-                                  height: 60.h,
-                                  alignment: Alignment.center,
-                                  child: Column(
-                                    spacing: 2.0.h,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        gifIcon,
-                                        color: Colors.white,
-                                        size: 22.0.sp,
-                                      ),
-                                      Text(
-                                        '动图',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 13.0.sp,
-                                          decoration:
-                                              TextDecoration.none, // ⭐关键
-                                          fontWeight: FontWeight.w600,
+                                    )
+                                  : GestureDetector(
+                                      key: ValueKey(2), // 每个widget都需要唯一的key
+                                      onTap: () {
+                                        widget.onGifStatusChanged(
+                                          widget.gifStatus == GifStatus.off
+                                              ? GifStatus.on
+                                              : GifStatus.off,
+                                        );
+                                      },
+                                      child: Container(
+                                        height: 60.h,
+                                        alignment: Alignment.center,
+                                        child: Column(
+                                          spacing: 2.0.h,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              gifIcon,
+                                              color: Colors.white,
+                                              size: 22.0.sp,
+                                            ),
+                                            Text(
+                                              '动图',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13.0.sp,
+                                                decoration:
+                                                    TextDecoration.none, // ⭐关键
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ): Container(),
+                                    )
+                            : Container(),
                       ),
 
                 widget.recordStatus == RecordStatus.normal
