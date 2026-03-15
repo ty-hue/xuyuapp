@@ -27,6 +27,8 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
   void initState() {
     super.initState();
     params = widget.settingSheetType;
+    maxRecordDurationSelectedIndex = maxRecordDurationLabels.indexOf(params.maxRecordDuration.toString());
+    aspectRatioSelectedIndex = aspectRatioLabels.indexOf(params.aspectRatio.toString());
   }
 
   Widget _buildSettingSheetItem({
@@ -110,6 +112,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
                   params.aspectRatio = aspectRatioLabels[val];
                 });
                 widget.onSettingChanged(params);
+                
               },
             ),
             SizedBox(height: 20.0.h),

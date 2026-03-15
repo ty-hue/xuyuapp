@@ -6,11 +6,13 @@ class RecordVideoButton extends StatefulWidget {
   final VoidCallback startRecording;
   final VoidCallback stopRecording;
   final RecordStatus recordStatus;
+  final RecordDuration recordDuration;
   RecordVideoButton({
     Key? key,
     required this.startRecording,
     required this.stopRecording,
     required this.recordStatus,
+    required this.recordDuration,
   });
 
   @override
@@ -28,7 +30,7 @@ class _RecordVideoButtonState extends State<RecordVideoButton>
     _stopwatch = Stopwatch();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 60), // 假设录制时间为60秒
+      duration: Duration(seconds: widget.recordDuration.seconds), // 假设录制时间为60秒
     );
     _controller.addListener(() {
       if (mounted) {

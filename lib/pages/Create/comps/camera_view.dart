@@ -11,9 +11,9 @@ import 'package:bilbili_project/pages/Create/comps/photo_preview.dart';
 import 'package:bilbili_project/pages/Create/comps/record_video_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/sticker_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/take_photo_btn.dart';
+import 'package:bilbili_project/pages/Create/comps/timekeeping.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/pages/Create/comps/video_preview.dart';
-import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
@@ -23,8 +23,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_view/photo_view.dart';
 import 'package:popover/popover.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
@@ -504,36 +502,53 @@ class _CameraViewState extends State<CameraView> {
         return recordStatus != RecordStatus.end
             ? Align(
                 alignment: Alignment.center,
-                child: RecordVideoButton(
-                  startRecording: startRecording,
-                  stopRecording: stopRecording,
-                  recordStatus: recordStatus,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: recordStatus == RecordStatus.recording
+                      ? 12.0.h
+                      : 0.0.h,
+                  children: [
+                    recordStatus == RecordStatus.recording
+                        ? Timekeeping(
+                            recordDuration: widget.recordDuration,
+                            stopRecording: stopRecording,
+                          )
+                        : Container(),
+                    RecordVideoButton(
+                      recordDuration: widget.recordDuration,
+                      startRecording: startRecording,
+                      stopRecording: stopRecording,
+                      recordStatus: recordStatus,
+                    ),
+                  ],
                 ),
               )
             : Container();
     }
   }
+
   // 用户选择的图片资产
   List<AssetEntity> imagePreviewAssets = [];
   // 用户选择的视频资产
   List<AssetEntity> videoPreviewAssets = [];
   // 控制是否显示预览视图
-  bool get isShowPreview => imagePreviewAssets.isNotEmpty || videoPreviewAssets.isNotEmpty;
-  Widget get perviewUI{
-    if(videoPreviewAssets.isNotEmpty){
+  bool get isShowPreview =>
+      imagePreviewAssets.isNotEmpty || videoPreviewAssets.isNotEmpty;
+  Widget get perviewUI {
+    if (videoPreviewAssets.isNotEmpty) {
       return VideoPreview(videoData: videoPreviewAssets.first);
     }
-    if(imagePreviewAssets.isNotEmpty){
+    if (imagePreviewAssets.isNotEmpty) {
       return PhotoPreview(assets: imagePreviewAssets);
     }
     return Container();
   }
+
   // 打开音乐选择mini sheet
-  void openMiniMusicSheet(){
-    SheetUtils(
-      MiniMusicSheetSkeleton(),
-    ).openAsyncSheet(context: context);
+  void openMiniMusicSheet() {
+    SheetUtils(MiniMusicSheetSkeleton()).openAsyncSheet(context: context);
   }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -545,9 +560,7 @@ class _CameraViewState extends State<CameraView> {
                 ? CameraPreview(_cameraController!)
                 : Container(),
           ),
-          Positioned.fill(
-            child: perviewUI,
-          ),
+          Positioned.fill(child: perviewUI),
           // 选择音乐
           recordStatus != RecordStatus.recording
               ? Positioned(
@@ -743,11 +756,14 @@ class _CameraViewState extends State<CameraView> {
                                       if (_photoPermissionGranted) {
                                         if (widget.cameraSelectedIndex == 0) {
                                           // 打开图片选择器
-                                             final List<AssetEntity>? assets = await AssetPicker.pickAssets(context,
+                                          final List<AssetEntity>?
+                                          assets = await AssetPicker.pickAssets(
+                                            context,
                                             pickerConfig: AssetPickerConfig(
                                               requestType: RequestType.image,
                                               maxAssets: 20,
-                                              textDelegate: MyAssetPickerTextDelegate(),
+                                              textDelegate:
+                                                  MyAssetPickerTextDelegate(),
                                             ),
                                           );
                                           if (assets != null) {
@@ -760,11 +776,14 @@ class _CameraViewState extends State<CameraView> {
                                         }
                                         if (widget.cameraSelectedIndex == 1) {
                                           // 打开视频选择器
-                                          final List<AssetEntity>? assets = await AssetPicker.pickAssets(context,
+                                          final List<AssetEntity>?
+                                          assets = await AssetPicker.pickAssets(
+                                            context,
                                             pickerConfig: AssetPickerConfig(
                                               requestType: RequestType.video,
                                               maxAssets: 1,
-                                              textDelegate: MyAssetPickerTextDelegate(),
+                                              textDelegate:
+                                                  MyAssetPickerTextDelegate(),
                                             ),
                                           );
                                           if (assets != null) {

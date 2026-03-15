@@ -33,6 +33,7 @@ class _CreatePageState extends State<CreatePage> {
   void onChangeSettingSheetParams(SettingSheetType type) {
     setState(() {
       settingSheetType = type;
+      recordDuration = RecordDuration.values.firstWhere((element) => element.seconds.toString() == type.maxRecordDuration);
     });
   }
 
