@@ -60,6 +60,7 @@ dependencies:
   wechat_assets_picker: ^10.1.1
   chewie: ^1.13.0
   carousel_slider: ^5.1.2
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -94,7 +95,7 @@ flutter:
     - assets/icons/
     - assets/bundle/
     - lib/assets/
-
+    - assets/sounds/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

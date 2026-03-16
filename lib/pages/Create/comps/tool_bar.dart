@@ -27,6 +27,7 @@ class ToolBar extends StatefulWidget {
   final GifStatus gifStatus;
   final ValueChanged<GifStatus> onGifStatusChanged;
   final int cameraSelectedIndex;
+  final bool isStartCountDown;
 
   ToolBar({
     Key? key,
@@ -47,6 +48,7 @@ class ToolBar extends StatefulWidget {
     required this.gifStatus,
     required this.onGifStatusChanged,
     required this.cameraSelectedIndex,
+    required this.isStartCountDown,
   }) : super(key: key);
 
   @override
@@ -134,36 +136,38 @@ class _ToolBarState extends State<ToolBar> {
               physics: const NeverScrollableScrollPhysics(),
               padding: EdgeInsets.zero,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    widget.onRotateChanged();
-                  },
-                  child: Container(
-                    height: 50.h,
-                    alignment: Alignment.center,
-                    child: Column(
-                      spacing: 2.0.h,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          FontAwesomeIcons.refresh,
-                          color: Colors.white,
-                          size: 22.0.sp,
-                        ),
-                        Text(
-                          '翻转',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.0.sp,
-                            decoration: TextDecoration.none, // ⭐关键
-                            fontWeight: FontWeight.w600,
+                widget.isStartCountDown 
+                    ? Container()
+                    : GestureDetector(
+                        onTap: () {
+                          widget.onRotateChanged();
+                        },
+                        child: Container(
+                          height: 50.h,
+                          alignment: Alignment.center,
+                          child: Column(
+                            spacing: 2.0.h,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.refresh,
+                                color: Colors.white,
+                                size: 22.0.sp,
+                              ),
+                              Text(
+                                '翻转',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.0.sp,
+                                  decoration: TextDecoration.none, // ⭐关键
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
                 widget.recordStatus == RecordStatus.normal
                     ? GestureDetector(
                         onTap: () {

@@ -6,11 +6,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class CountDownSheetSekeleton extends StatefulWidget {
   final CountDownType countDownType;
   final ValueChanged<CountDownType> onCountDownChanged;
+  final ValueChanged<bool> onIsStartCountDownChanged;
 
   CountDownSheetSekeleton({
     Key? key,
     required this.countDownType,
     required this.onCountDownChanged,
+    required this.onIsStartCountDownChanged,
   }) : super(key: key);
 
   @override
@@ -21,13 +23,14 @@ class CountDownSheetSekeleton extends StatefulWidget {
 class _CountDownSheetSekeletonState extends State<CountDownSheetSekeleton> {
   late CountDownType params;
   List<String> countdownDurationLabels = ['3秒', '10秒'];
-  List<String> modeLabels = ['照片', '视频'];
   int countdownDurationSelectedIndex = 0;
-  int modeSelectedIndex = 0;
   @override
   void initState() {
     super.initState();
     params = widget.countDownType;
+    countdownDurationSelectedIndex = countdownDurationLabels.indexOf(
+      params.countdownDuration,
+    );
   }
 
   Widget _buildSettingSheetItem({
@@ -90,25 +93,11 @@ class _CountDownSheetSekeletonState extends State<CountDownSheetSekeleton> {
               },
             ),
             SizedBox(height: 20.0.h),
-            _buildSettingSheetItem(
-              title: '拍摄模式',
-              width: 110.w,
-              labels: modeLabels,
-              selectedIndex: modeSelectedIndex,
-              onSelectChanged: (val) {
-                setState(() {
-                  modeSelectedIndex = val;
-                  params.mode = modeLabels[val];
-                });
-                widget.onCountDownChanged(params);
-              },
-            ),
-            SizedBox(height: 20.0.h),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromRGBO(229,40,77, 1),
+                  backgroundColor: Color.fromRGBO(229, 40, 77, 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0.r),
                   ),
@@ -121,9 +110,10 @@ class _CountDownSheetSekeletonState extends State<CountDownSheetSekeleton> {
                     color: Colors.white,
                   ),
                 ),
-                
+
                 onPressed: () {
-                  print('开始拍摄');
+                  widget.onIsStartCountDownChanged(true);
+                  Navigator.pop(context);
                 },
               ),
             ),

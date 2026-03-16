@@ -33,14 +33,13 @@ class _CreatePageState extends State<CreatePage> {
   void onChangeSettingSheetParams(SettingSheetType type) {
     setState(() {
       settingSheetType = type;
-      recordDuration = RecordDuration.values.firstWhere((element) => element.seconds.toString() == type.maxRecordDuration);
+      recordDuration = RecordDuration.values.firstWhere(
+        (element) => element.seconds.toString() == type.maxRecordDuration,
+      );
     });
   }
 
-  CountDownType countdownType = CountDownType(
-    countdownDuration: '3秒',
-    mode: '照片',
-  );
+  CountDownType countdownType = CountDownType(countdownDuration: '3秒');
 
   List<String> speedOptions = ['极慢', '慢', '标准', '快', '极快']; // 快慢速选项
 
@@ -70,11 +69,36 @@ class _CreatePageState extends State<CreatePage> {
     });
   }
 
+  // 是否开始倒计时
+  bool isStartCountDown = false;
+  final GlobalKey<CameraViewState> cameraKey = GlobalKey();
+
+  // 修改是否开始倒计时
+  void onIsStartCountDownChanged(bool isStart) {
+    setState(() {
+      isStartCountDown = isStart;
+    });
+    cameraKey.currentState?.changeUI(RecordStatus.recording);
+  }
+  // 倒计时结束后
+  void onCountdownFinished() {
+    setState(() {
+      isStartCountDown = false;
+    });
+    // 倒计时结束后，开始录制
+    if(cameraSelectedIndex == 0){
+      cameraKey.currentState?.takePhoto();
+      return;
+    }else{
+      cameraKey.currentState?.startRecording();
+    }
+  }
   void openCountDownSheet() {
     SheetUtils(
       CountDownSheetSekeleton(
         countDownType: countdownType,
         onCountDownChanged: onCountDownChanged,
+        onIsStartCountDownChanged: onIsStartCountDownChanged,
       ),
     ).openAsyncSheet(context: context);
   }
@@ -121,7 +145,6 @@ class _CreatePageState extends State<CreatePage> {
       recordDuration = duration;
       settingSheetType.maxRecordDuration = duration.seconds.toString();
     });
-
   }
 
   // outSelectedIndex 改变
@@ -204,6 +227,7 @@ class _CreatePageState extends State<CreatePage> {
               ? TextView()
               : outSelectedIndex == 1
               ? CameraView(
+                  key: cameraKey,
                   onRecordStatusChanged: onRecordStatusChanged,
                   topVal: topVal,
                   fromUrl: widget.fromUrl,
@@ -225,6 +249,13 @@ class _CreatePageState extends State<CreatePage> {
                   speedOptions: speedOptions,
                   speedSelectedIndex: speedSelectedIndex,
                   onSpeedSelectedIndexChanged: onSpeedSelectedIndexChanged,
+                  // countdownType.countdownDuration值为‘3秒’，需要去掉‘秒’
+                  countdown: int.parse(
+                    countdownType.countdownDuration.replaceAll('秒', ''),
+                  ),
+                  isStartCountDown: isStartCountDown,
+                  onIsStartCountDownChanged: onIsStartCountDownChanged,
+                  onCountdownFinished: onCountdownFinished,
                 )
               : InspirationView(),
         ),

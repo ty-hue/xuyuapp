@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bilbili_project/components/loading.dart';
+import 'package:bilbili_project/pages/Create/comps/countdown_show.dart';
 import 'package:bilbili_project/pages/Create/comps/mini_music_sheet_skeleton.dart';
 import 'package:bilbili_project/components/my_asset_picker_text_delegate.dart';
 import 'package:bilbili_project/components/select_dots.dart';
@@ -48,6 +49,10 @@ class CameraView extends StatefulWidget {
   final int speedSelectedIndex;
   final ValueChanged<int> onSpeedSelectedIndexChanged;
   final ValueChanged<RecordStatus> onRecordStatusChanged;
+  final int countdown;
+  final bool isStartCountDown;
+  final ValueChanged<bool> onIsStartCountDownChanged;
+  final VoidCallback onCountdownFinished;
   CameraView({
     Key? key,
     required this.topVal,
@@ -71,13 +76,17 @@ class CameraView extends StatefulWidget {
     required this.speedSelectedIndex,
     required this.onSpeedSelectedIndexChanged,
     required this.onRecordStatusChanged,
+    required this.countdown,
+    required this.isStartCountDown,
+    required this.onIsStartCountDownChanged,
+    required this.onCountdownFinished,
   }) : super(key: key);
 
   @override
-  _CameraViewState createState() => _CameraViewState();
+  CameraViewState createState() => CameraViewState();
 }
 
-class _CameraViewState extends State<CameraView> {
+class CameraViewState extends State<CameraView> {
   // 相机权限 默认为永久拒绝
   PermissionStatus _cameraPermissionStatus = PermissionStatus.granted;
   // 麦克风权限 默认为永久拒绝
@@ -489,7 +498,7 @@ class _CameraViewState extends State<CameraView> {
   Widget get ButtonUI {
     switch (widget.cameraSelectedIndex) {
       case 0:
-        return recordStatus != RecordStatus.end
+        return recordStatus != RecordStatus.end && !widget.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
                 child: TakePhotoButton(
@@ -499,7 +508,7 @@ class _CameraViewState extends State<CameraView> {
               )
             : Container();
       default:
-        return recordStatus != RecordStatus.end
+        return recordStatus != RecordStatus.end && !widget.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
                 child: Column(
@@ -549,6 +558,11 @@ class _CameraViewState extends State<CameraView> {
     SheetUtils(MiniMusicSheetSkeleton()).openAsyncSheet(context: context);
   }
 
+  // 倒计时完成后回调
+  void onCountdownFinished() {
+    widget.onCountdownFinished();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -560,6 +574,12 @@ class _CameraViewState extends State<CameraView> {
                 ? CameraPreview(_cameraController!)
                 : Container(),
           ),
+          // 倒计时
+          widget.isStartCountDown
+              ? Positioned.fill(
+                  child: CountdownShow(countdown: widget.countdown, onCountdownFinished: onCountdownFinished),
+                )
+              : Container(),
           Positioned.fill(child: perviewUI),
           // 选择音乐
           recordStatus != RecordStatus.recording
@@ -646,6 +666,7 @@ class _CameraViewState extends State<CameraView> {
                     onRecordDurationChanged: (duration) {
                       widget.onRecordDurationChanged(duration);
                     },
+                    isStartCountDown: widget.isStartCountDown,
                   ),
                 )
               : Container(),
