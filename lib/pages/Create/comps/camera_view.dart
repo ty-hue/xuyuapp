@@ -235,7 +235,11 @@ class CameraViewState extends State<CameraView> {
         );
       }
       if (index != -1) {
-        beautyOptions[index].value = value;
+        if (flag) {
+          beautyOptions[index].value = value;
+        } else {
+          filterOptions[index].value = value;
+        }
       }
       setState(() {});
     } else {
@@ -355,8 +359,7 @@ class CameraViewState extends State<CameraView> {
   void onRecordStatusChanged(RecordStatus status) {
     if (status == RecordStatus.end) {
       // 销毁音量监听控制器
-      
-    } 
+    }
     setState(() {
       recordStatus = status;
     });
@@ -592,9 +595,7 @@ class CameraViewState extends State<CameraView> {
               : Container(),
           // 网格
           widget.settingSheetType.grid
-              ? Positioned.fill(
-                  child: CameraGridOverlay(),
-                )
+              ? Positioned.fill(child: CameraGridOverlay())
               : Container(),
           Positioned.fill(child: perviewUI),
           // 选择音乐

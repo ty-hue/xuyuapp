@@ -34,6 +34,11 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
   void initState() {
     super.initState();
     selectedIndex = widget.initSelectedIndex;
+    if (selectedIndex != -1) {
+      setState(() {
+      _progressValue = widget.beautyItems[selectedIndex].value * 100.0;
+    });
+    }
   }
 
   @override
@@ -144,6 +149,7 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
                         selectedIndex = index;
                         widget.onSelectedIndexChanged(index);
                         if (widget.beautyItems[index].type != null) {
+                          print('${widget.beautyItems[index].type}- ${widget.beautyItems[index].value}');
                           _progressValue =
                               widget.beautyItems[index].value * 100;
                         } else {
