@@ -256,6 +256,7 @@ class _CreatePageState extends State<CreatePage> {
                   isStartCountDown: isStartCountDown,
                   onIsStartCountDownChanged: onIsStartCountDownChanged,
                   onCountdownFinished: onCountdownFinished,
+                  settingSheetType: settingSheetType,
                 )
               : InspirationView(),
         ),

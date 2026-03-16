@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bilbili_project/components/loading.dart';
+import 'package:bilbili_project/pages/Create/comps/camera_grid_overlay.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_show.dart';
 import 'package:bilbili_project/pages/Create/comps/mini_music_sheet_skeleton.dart';
 import 'package:bilbili_project/components/my_asset_picker_text_delegate.dart';
@@ -53,6 +54,7 @@ class CameraView extends StatefulWidget {
   final bool isStartCountDown;
   final ValueChanged<bool> onIsStartCountDownChanged;
   final VoidCallback onCountdownFinished;
+  final SettingSheetType settingSheetType;
   CameraView({
     Key? key,
     required this.topVal,
@@ -80,6 +82,7 @@ class CameraView extends StatefulWidget {
     required this.isStartCountDown,
     required this.onIsStartCountDownChanged,
     required this.onCountdownFinished,
+    required this.settingSheetType,
   }) : super(key: key);
 
   @override
@@ -577,7 +580,16 @@ class CameraViewState extends State<CameraView> {
           // 倒计时
           widget.isStartCountDown
               ? Positioned.fill(
-                  child: CountdownShow(countdown: widget.countdown, onCountdownFinished: onCountdownFinished),
+                  child: CountdownShow(
+                    countdown: widget.countdown,
+                    onCountdownFinished: onCountdownFinished,
+                  ),
+                )
+              : Container(),
+          // 网格
+          widget.settingSheetType.grid
+              ? Positioned.fill(
+                  child: CameraGridOverlay(),
                 )
               : Container(),
           Positioned.fill(child: perviewUI),
