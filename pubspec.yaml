@@ -61,6 +61,7 @@ dependencies:
   chewie: ^1.13.0
   carousel_slider: ^5.1.2
   audioplayers: ^6.6.0
+  volume_button_override: ^0.0.1
 
 dev_dependencies:
   flutter_test:

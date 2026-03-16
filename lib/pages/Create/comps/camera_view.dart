@@ -353,6 +353,10 @@ class CameraViewState extends State<CameraView> {
   RecordStatus recordStatus = RecordStatus.normal;
   // 录制状态改变
   void onRecordStatusChanged(RecordStatus status) {
+    if (status == RecordStatus.end) {
+      // 销毁音量监听控制器
+      
+    } 
     setState(() {
       recordStatus = status;
     });

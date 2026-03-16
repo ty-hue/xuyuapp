@@ -8,6 +8,7 @@ import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:volume_button_override/volume_button_override.dart';
 
 class CreatePage extends StatefulWidget {
   final String? fromUrl;
@@ -36,6 +37,12 @@ class _CreatePageState extends State<CreatePage> {
       recordDuration = RecordDuration.values.firstWhere(
         (element) => element.seconds.toString() == type.maxRecordDuration,
       );
+      // 处理音量键
+      if (settingSheetType.useVolumeKeys) {
+        _startListening();
+      } else {
+        stopListening();
+      }
     });
   }
 
@@ -80,19 +87,21 @@ class _CreatePageState extends State<CreatePage> {
     });
     cameraKey.currentState?.changeUI(RecordStatus.recording);
   }
+
   // 倒计时结束后
   void onCountdownFinished() {
     setState(() {
       isStartCountDown = false;
     });
     // 倒计时结束后，开始录制
-    if(cameraSelectedIndex == 0){
+    if (cameraSelectedIndex == 0) {
       cameraKey.currentState?.takePhoto();
       return;
-    }else{
+    } else {
       cameraKey.currentState?.startRecording();
     }
   }
+
   void openCountDownSheet() {
     SheetUtils(
       CountDownSheetSekeleton(
@@ -215,6 +224,75 @@ class _CreatePageState extends State<CreatePage> {
           ),
         );
     }
+  }
+
+  // 创建音量键控制器
+  final VolumeButtonController _controller = VolumeButtonController();
+  // 开始监听音量键
+  Future<void> _startListening() async {
+    final upAction = ButtonAction(
+      id: ButtonActionId.volumeUp,
+      onAction: () {
+        // 要做的事情
+        if (cameraSelectedIndex == 0) {
+          cameraKey.currentState?.takePhoto();
+          stopListening();
+          setState(() {
+            settingSheetType.useVolumeKeys = false;
+          });
+        } else {
+          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
+            cameraKey.currentState?.startRecording();
+          } else {
+            cameraKey.currentState?.stopRecording();
+            stopListening();
+            setState(() {
+              settingSheetType.useVolumeKeys = false;
+            });
+          }
+        }
+      },
+    );
+
+    final downAction = ButtonAction(
+      id: ButtonActionId.volumeDown,
+      onAction: () {
+        if (cameraSelectedIndex == 0) {
+          cameraKey.currentState?.takePhoto();
+          stopListening();
+        } else {
+          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
+            cameraKey.currentState?.startRecording();
+          } else {
+            cameraKey.currentState?.stopRecording();
+            stopListening();
+          }
+        }
+      },
+    );
+
+    try {
+      await _controller.startListening(
+        volumeUpAction: upAction,
+        volumeDownAction: downAction,
+      );
+    } catch (_) {}
+  }
+
+  // 移除音量键监听
+  Future<void> stopListening() async {
+    try {
+      await _controller.stopListening();
+    } catch (_) {
+      print('移除音量键监听失败');
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    // 释放音量键控制器
+    stopListening();
   }
 
   @override
