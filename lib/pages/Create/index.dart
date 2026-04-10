@@ -327,6 +327,8 @@ class _CreatePageState extends State<CreatePage> {
     stopListening();
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
@@ -341,19 +343,6 @@ class _CreatePageState extends State<CreatePage> {
         // 宽始终满屏；高由比例算出；上下黑边各为 (预览区总高 - contentH) / 2（过高则 ClipRect 居中裁切）。
         final wh = ar == '3:4' ? 3 / 4 : 9 / 16; // width / height
         final contentH = w > 0 ? w / wh : 0.0;
-        // 调试用：单边黑边高度（恢复上方 debugPrint / 叠字 UI 时一并取消注释）
-        // final barH = previewRegionH > contentH
-        //     ? (previewRegionH - contentH) / 2
-        //     : 0.0;
-
-        // 调试用：控制台打印预览区与比例（需要时取消注释）
-        // if (kDebugMode && outSelectedIndex == 1) {
-        //   debugPrint(
-        //     '[Create 相机布局] 整页高=$totalH 屏宽=$w 底栏=${bottomH.toStringAsFixed(1)} '
-        //     '预览区高=$previewRegionH 比例=$ar 内容高=$contentH 单边黑边=$barH',
-        //   );
-        // }
-
         final bottomBar = SizedBox(
           height: bottomH,
           child: Container(
@@ -422,48 +411,29 @@ class _CreatePageState extends State<CreatePage> {
           ],
         );
 
-        if (outSelectedIndex == 1) {
-          final safeTop = MediaQuery.of(context).padding.top;
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              column,
-              Positioned(
-                left: 12.w,
-                top: safeTop + 6.h,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (context.canPop()) context.pop();
-                  },
-                  child: Padding(
-                    padding: EdgeInsets.all(8.w),
-                    child: Icon(Icons.close, color: Colors.white, size: 33.sp),
-                  ),
-                ),
-              ),
-              // 调试用：叠在相机页上的宽高/比例说明（需要时取消注释）
-              // if (kDebugMode)
-              //   Positioned(
-              //     left: 8,
-              //     right: 8,
-              //     top: safeTop + 48,
-              //     child: Material(
-              //       color: Colors.black87,
-              //       borderRadius: BorderRadius.circular(6),
-              //       child: Padding(
-              //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              //         child: Text(
-              //           '调试：整页高 ${totalH.toStringAsFixed(0)}  屏宽 ${w.toStringAsFixed(0)}  底栏 ${bottomH.toStringAsFixed(0)}\n'
-              //           '预览区高 ${previewRegionH.toStringAsFixed(0)}  比例 $ar  宽满屏 内容高 ${contentH.toStringAsFixed(0)} 单边黑边 ${barH.toStringAsFixed(0)}',
-              //           style: const TextStyle(color: Colors.white70, fontSize: 10, height: 1.25),
-              //         ),
-              //       ),
-              //     ),
-              //   ),
-            ],
-          );
-        }
+        // if (outSelectedIndex == 1) {
+        //   final safeTop = MediaQuery.of(context).padding.top;
+        //   return Stack(
+        //     clipBehavior: Clip.none,
+        //     children: [
+        //       column,
+        //       Positioned(
+        //         left: 12.w,
+        //         top: safeTop + 6.h,
+        //         child: GestureDetector(
+        //           behavior: HitTestBehavior.opaque,
+        //           onTap: () {
+        //             if (context.canPop()) context.pop();
+        //           },
+        //           child: Padding(
+        //             padding: EdgeInsets.all(8.w),
+        //             child: Icon(Icons.close, color: Colors.white, size: 33.sp),
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   );
+        // }
 
         return column;
       },

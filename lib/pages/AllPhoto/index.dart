@@ -468,7 +468,7 @@ class _AllPhotoPageState extends State<AllPhotoPage> {
                       width: 40.0.w,
                       height: 40.0.h,
                       child: Image.asset(
-                        'assets/album_placeholder.svg',
+                        'lib/assets/album_placeholder.svg',
                         fit: BoxFit.cover,
                       ),
                     )

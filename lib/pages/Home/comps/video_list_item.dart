@@ -4,6 +4,7 @@ import 'package:bilbili_project/components/custom_video_player.dart';
 import 'package:bilbili_project/utils/NumberUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class VideoListItem extends StatefulWidget {
   VideoListItem({Key? key}) : super(key: key);
@@ -39,7 +40,7 @@ class _VideoListItemState extends State<VideoListItem>
           onTap: () {
             onTap();
           },
-          child: Icon(icon, color: Colors.white, size: 48.sp),
+          child: Icon(icon, color: Colors.white, size: 39.sp),
         ),
         Text(
           int.parse(count) == 0
@@ -173,28 +174,28 @@ class _VideoListItemState extends State<VideoListItem>
                   // 点赞
                   _buildVideoAttatchInfoItem(
                     title: '点赞',
-                    icon: Icons.favorite,
+                    icon: FontAwesomeIcons.heart,
                     count: '336000',
                     onTap: _onLikeTap,
                   ),
                   // 评论数
                   _buildVideoAttatchInfoItem(
                     title: '评论',
-                    icon: Icons.comment,
+                    icon: FontAwesomeIcons.commenting,
                     count: '5000',
                     onTap: _onCommentTap,
                   ),
                   // 收藏
                   _buildVideoAttatchInfoItem(
                     title: '收藏',
-                    icon: Icons.star,
+                    icon: FontAwesomeIcons.star,
                     count: '50000',
                     onTap: _onCollectTap,
                   ),
                   // 分享
                   _buildVideoAttatchInfoItem(
                     title: '分享',
-                    icon: Icons.share,
+                    icon: FontAwesomeIcons.share,
                     count: '0',
                     onTap: _onShareTap,
                   ),

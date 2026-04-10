@@ -8,8 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pixelfree_camera/pixelfree_camera.dart';
-import 'package:popover/popover.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import 'package:bilbili_project/utils/PopoverUtils.dart';
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/pages/Create/comps/camera_grid_overlay.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_show.dart';
@@ -729,14 +729,14 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
               context.pop();
             }
           },
-          child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
+          child: Padding(padding: EdgeInsets.all(8.w), child: Icon(Icons.close, color: Colors.white, size: 33.0.sp),),
         );
       case RecordStatus.recording:
         return const SizedBox.shrink();
       case RecordStatus.end:
         return GestureDetector(
           onTap: () {
-            showPopover(
+            PopoverUtils.show(
               context: contextBtn,
               bodyBuilder: (context) => Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -790,7 +790,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                         splashColor: Color.fromRGBO(207, 72, 53, 0.2),
                         highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
                         child: Padding(
-                          padding: EdgeInsetsGeometry.symmetric(horizontal: 20.w),
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             spacing: 4.0.w,
@@ -809,14 +809,14 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
               direction: PopoverDirection.bottom,
               backgroundColor: Colors.white,
               width: 180.w,
-              height: 100.h,
+              height: 130.h,
               arrowHeight: 15.h,
               arrowWidth: 30.w,
               allowClicksOnBackground: false,
               barrierColor: Colors.transparent,
             );
           },
-          child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 26.0.sp),
+          child: Padding(padding: EdgeInsets.all(8.w), child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 33.0.sp),),
         );
     }
   }
@@ -1298,6 +1298,14 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                 ),
               ),
             ),
+          Positioned(
+            left: 12.w,
+            top: widget.topVal,
+            // Popover 锚点必须用 Builder 的 context，不能用 State.build 的 context，否则弹层在屏幕外
+            child: Builder(
+              builder: (anchorContext) => backUI(anchorContext),
+            ),
+          ),
           recordStatus != RecordStatus.recording
               ? Positioned(
                   top: widget.topVal,

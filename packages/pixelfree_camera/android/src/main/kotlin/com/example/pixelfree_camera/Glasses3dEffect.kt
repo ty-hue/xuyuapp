@@ -333,7 +333,7 @@ internal class Glasses3dEffect(
         val ipdNdc = hypot((rxNdc - lxNdc).toDouble(), (ryNdc - lyNdc).toDouble()).toFloat()
             .coerceAtLeast(0.04f)
 
-        val scale = max(ipdNdc * 2.2f, 0.08f)
+        val scale = max(ipdNdc * 1.25f, 0.06f)
 
         val liz = landmarks.z(FaceLandmarks.LEFT_IRIS)
         val riz = landmarks.z(FaceLandmarks.RIGHT_IRIS)
@@ -652,7 +652,7 @@ internal class Glasses3dEffect(
     companion object {
         private const val TAG = "Glasses3dEffect"
         private const val BASE_COLOR_TEX_UNIT = 3
-        const val GLASSES_ASSET_NAME = "glasses_06.glb"
+        const val GLASSES_ASSET_NAME = "glasses.glb"
 
         /** 改网格/锚点/着色器逻辑时递增，旧 GPU VBO 与 program 会丢弃并重传。 */
         private const val GPU_LAYOUT_REVISION = 15
@@ -688,7 +688,7 @@ internal class Glasses3dEffect(
         /** 竖直：略掺额头；过大易把眼镜拉到眉弓（录屏里偏上）。 */
         private const val FOREHEAD_BLEND_Y = 0.04f
         /** NDC 竖直微调：负值略下移，让镜梁靠近鼻根/双眼。 */
-        private const val ANCHOR_BIAS_Y_NDC = -0.028f
+        private const val ANCHOR_BIAS_Y_NDC = -0.11f
         /** 略向相机前移。 */
         private const val ANCHOR_Z_NDC = -0.02f
 
@@ -698,7 +698,7 @@ internal class Glasses3dEffect(
         private const val GLASSES_SWAP_MODEL_YZ = false
 
         /** 模型空间绕 X；与 [FLIP_FACE_UP_DOWN_ABOUT_IPD] 二选一，避免叠两次上下翻。 */
-        private const val GLASSES_MODEL_ROT_X_DEG = 0f
+        private const val GLASSES_MODEL_ROT_X_DEG = 180f
         private const val GLASSES_MODEL_ROT_Y_DEG = 0f
         /** 一般保持 **0**；绕屏法向转半圈会破坏与人脸同向的旋转跟踪。 */
         private const val GLASSES_MODEL_ROT_Z_DEG = 0f
@@ -707,8 +707,18 @@ internal class Glasses3dEffect(
          * 在人脸矩阵上绕瞳距轴翻上下（见 [flipFaceUpDownAboutIpdAxisIfNeeded]）。
          * 若镜梁仍反了，可改为 **false** 并改 [GLASSES_MODEL_ROT_X_DEG] 为 **180** 试机。
          */
-        private const val FLIP_FACE_UP_DOWN_ABOUT_IPD = true
-        private val ASSET_CANDIDATES = arrayOf(GLASSES_ASSET_NAME)
+        private const val FLIP_FACE_UP_DOWN_ABOUT_IPD = false
+        private val ASSET_CANDIDATES = arrayOf(
+            // Preferred user-provided model
+            "assets/3d/glasses.glb",
+            "flutter_assets/assets/3d/glasses.glb",
+            "glasses.glb",
+            // Backward compatibility with previous asset naming
+            "assets/3d/glasses_06.glb",
+            "flutter_assets/assets/3d/glasses_06.glb",
+            "glasses_06.glb",
+            GLASSES_ASSET_NAME,
+        )
 
         private const val VS = """
             uniform mat4 uMVP;
