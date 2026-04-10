@@ -5,9 +5,11 @@ import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart'
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/text_view.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
+import 'package:bilbili_project/utils/create_sheet_precache.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:volume_button_override/volume_button_override.dart';
 
 class CreatePage extends StatefulWidget {
@@ -19,6 +21,15 @@ class CreatePage extends StatefulWidget {
 }
 
 class _CreatePageState extends State<CreatePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      scheduleCreateSheetImagePrecache(context);
+    });
+  }
+
   bool isExpandToolsBar = false; // 是否展开工具栏
   FlashStatus flashStatus = FlashStatus.off; // 闪光灯状态 默认关闭
   RecordDuration recordDuration = RecordDuration.s15; // 拍摄时长 默认短 (分段拍模式专用)
@@ -33,7 +44,14 @@ class _CreatePageState extends State<CreatePage> {
   ); // settings sheet参数
   void onChangeSettingSheetParams(SettingSheetType type) {
     setState(() {
-      settingSheetType = type;
+      // 必须新建实例：设置 Sheet 会就地改 params 再回调，若直接 settingSheetType = type
+      // 则引用不变，CameraView.didUpdateWidget 无法发现 aspectRatio 变化，原生不会按新比例重启相机。
+      settingSheetType = SettingSheetType(
+        maxRecordDuration: type.maxRecordDuration,
+        aspectRatio: type.aspectRatio,
+        useVolumeKeys: type.useVolumeKeys,
+        grid: type.grid,
+      );
       recordDuration = RecordDuration.values.firstWhere(
         (element) => element.seconds.toString() == type.maxRecordDuration,
       );
@@ -174,10 +192,20 @@ class _CreatePageState extends State<CreatePage> {
   // 控制底部AutoCenterScrollTabBar显示隐藏
   RecordStatus recordStatus = RecordStatus.normal;
 
+  /// 预览区是否已展示成片（照片路径就绪 / 视频可播放），为 false 时「下一步」禁用。
+  bool _previewReadyForNext = false;
+
+  void onPreviewReadyForNext(bool ready) {
+    setState(() {
+      _previewReadyForNext = ready;
+    });
+  }
+
   // 录制状态改变
   void onRecordStatusChanged(RecordStatus status) {
     setState(() {
       recordStatus = status;
+      _previewReadyForNext = false;
     });
   }
 
@@ -211,14 +239,18 @@ class _CreatePageState extends State<CreatePage> {
           width: MediaQuery.of(context).size.width * 0.8,
           height: 50.0.h,
           child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: _previewReadyForNext ? () {} : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color.fromRGBO(55, 55, 55, 0.72),
+              disabledForegroundColor: const Color.fromRGBO(255, 255, 255, 0.38),
+            ),
             child: Text(
               '下一步',
               style: TextStyle(
                 fontSize: 16.0.sp,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ),
@@ -298,53 +330,143 @@ class _CreatePageState extends State<CreatePage> {
   @override
   Widget build(BuildContext context) {
     final double topVal = MediaQuery.of(context).padding.top + 10.h;
-    return Column(
-      children: [
-        Expanded(
-          child: outSelectedIndex == 0
-              ? TextView()
-              : outSelectedIndex == 1
-              ? CameraView(
-                  key: cameraKey,
-                  onRecordStatusChanged: onRecordStatusChanged,
-                  topVal: topVal,
-                  fromUrl: widget.fromUrl,
-                  gifStatus: gifStatus,
-                  onGifStatusChanged: onGifStatusChanged,
-                  microphoneStatus: microphoneStatus,
-                  onMicrophoneStatusChanged: onMicrophoneStatusChanged,
-                  openCountDownSheet: openCountDownSheet,
-                  openSettingSheet: openSettingSheet,
-                  speedMode: speedMode,
-                  onSpeedModeChanged: onSpeedModeChanged,
-                  flashStatus: flashStatus,
-                  onFlashStatusChanged: onFlashStatusChanged,
-                  recordDuration: recordDuration,
-                  onRecordDurationChanged: onRecordDurationChanged,
-                  cameraSelectedIndex: cameraSelectedIndex,
-                  onInSelectedIndexChanged: onInSelectedIndexChanged,
-                  cameraOptions: cameraOptions,
-                  speedOptions: speedOptions,
-                  speedSelectedIndex: speedSelectedIndex,
-                  onSpeedSelectedIndexChanged: onSpeedSelectedIndexChanged,
-                  // countdownType.countdownDuration值为‘3秒’，需要去掉‘秒’
-                  countdown: int.parse(
-                    countdownType.countdownDuration.replaceAll('秒', ''),
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final totalH = constraints.maxHeight;
+        final bottomH = 100.0.h;
+        final previewRegionH = (totalH - bottomH).clamp(0.0, double.infinity);
+        final ar = settingSheetType.aspectRatio;
+        // 宽始终满屏；高由比例算出；上下黑边各为 (预览区总高 - contentH) / 2（过高则 ClipRect 居中裁切）。
+        final wh = ar == '3:4' ? 3 / 4 : 9 / 16; // width / height
+        final contentH = w > 0 ? w / wh : 0.0;
+        // 调试用：单边黑边高度（恢复上方 debugPrint / 叠字 UI 时一并取消注释）
+        // final barH = previewRegionH > contentH
+        //     ? (previewRegionH - contentH) / 2
+        //     : 0.0;
+
+        // 调试用：控制台打印预览区与比例（需要时取消注释）
+        // if (kDebugMode && outSelectedIndex == 1) {
+        //   debugPrint(
+        //     '[Create 相机布局] 整页高=$totalH 屏宽=$w 底栏=${bottomH.toStringAsFixed(1)} '
+        //     '预览区高=$previewRegionH 比例=$ar 内容高=$contentH 单边黑边=$barH',
+        //   );
+        // }
+
+        final bottomBar = SizedBox(
+          height: bottomH,
+          child: Container(
+            padding: EdgeInsets.only(top: 10.0.h),
+            color: const Color.fromRGBO(1, 1, 1, 1),
+            child: Align(alignment: Alignment.topCenter, child: bottomUI),
+          ),
+        );
+
+        Widget cameraPreviewSlot() {
+          final cameraTab = CameraView(
+            key: cameraKey,
+            onRecordStatusChanged: onRecordStatusChanged,
+            onPreviewReadyForNext: onPreviewReadyForNext,
+            topVal: topVal,
+            fromUrl: widget.fromUrl,
+            gifStatus: gifStatus,
+            onGifStatusChanged: onGifStatusChanged,
+            microphoneStatus: microphoneStatus,
+            onMicrophoneStatusChanged: onMicrophoneStatusChanged,
+            openCountDownSheet: openCountDownSheet,
+            openSettingSheet: openSettingSheet,
+            speedMode: speedMode,
+            onSpeedModeChanged: onSpeedModeChanged,
+            flashStatus: flashStatus,
+            onFlashStatusChanged: onFlashStatusChanged,
+            recordDuration: recordDuration,
+            onRecordDurationChanged: onRecordDurationChanged,
+            cameraSelectedIndex: cameraSelectedIndex,
+            onInSelectedIndexChanged: onInSelectedIndexChanged,
+            cameraOptions: cameraOptions,
+            speedOptions: speedOptions,
+            speedSelectedIndex: speedSelectedIndex,
+            onSpeedSelectedIndexChanged: onSpeedSelectedIndexChanged,
+            countdown: int.parse(
+              countdownType.countdownDuration.replaceAll('秒', ''),
+            ),
+            isStartCountDown: isStartCountDown,
+            onIsStartCountDownChanged: onIsStartCountDownChanged,
+            onCountdownFinished: onCountdownFinished,
+            settingSheetType: settingSheetType,
+            previewSlotWidth: w,
+            previewSlotHeight: previewRegionH,
+            previewContentHeight: contentH,
+          );
+          return ColoredBox(
+            color: Colors.black,
+            child: SizedBox(
+              width: w,
+              height: previewRegionH,
+              child: ClipRect(child: cameraTab),
+            ),
+          );
+        }
+
+        final column = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (outSelectedIndex == 1)
+              Expanded(child: cameraPreviewSlot())
+            else
+              Expanded(
+                child: outSelectedIndex == 0 ? TextView() : InspirationView(),
+              ),
+            bottomBar,
+          ],
+        );
+
+        if (outSelectedIndex == 1) {
+          final safeTop = MediaQuery.of(context).padding.top;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              column,
+              Positioned(
+                left: 12.w,
+                top: safeTop + 6.h,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (context.canPop()) context.pop();
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.all(8.w),
+                    child: Icon(Icons.close, color: Colors.white, size: 33.sp),
                   ),
-                  isStartCountDown: isStartCountDown,
-                  onIsStartCountDownChanged: onIsStartCountDownChanged,
-                  onCountdownFinished: onCountdownFinished,
-                  settingSheetType: settingSheetType,
-                )
-              : InspirationView(),
-        ),
-        Container(
-          padding: EdgeInsets.only(top: 10.0.h),
-          height: 100.0.h,
-          color: Color.fromRGBO(1, 1, 1, 1),
-          child: Align(alignment: Alignment.topCenter, child: bottomUI),
-        ),
-      ],
+                ),
+              ),
+              // 调试用：叠在相机页上的宽高/比例说明（需要时取消注释）
+              // if (kDebugMode)
+              //   Positioned(
+              //     left: 8,
+              //     right: 8,
+              //     top: safeTop + 48,
+              //     child: Material(
+              //       color: Colors.black87,
+              //       borderRadius: BorderRadius.circular(6),
+              //       child: Padding(
+              //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              //         child: Text(
+              //           '调试：整页高 ${totalH.toStringAsFixed(0)}  屏宽 ${w.toStringAsFixed(0)}  底栏 ${bottomH.toStringAsFixed(0)}\n'
+              //           '预览区高 ${previewRegionH.toStringAsFixed(0)}  比例 $ar  宽满屏 内容高 ${contentH.toStringAsFixed(0)} 单边黑边 ${barH.toStringAsFixed(0)}',
+              //           style: const TextStyle(color: Colors.white70, fontSize: 10, height: 1.25),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+            ],
+          );
+        }
+
+        return column;
+      },
     );
   }
 }

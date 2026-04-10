@@ -2,6 +2,9 @@ import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// 与 [TakePhotoButton] 一致：未录制时外径 72（再 ×1.4），与拍照按钮同大。
+const double _kCaptureBtnScale = 1.4;
+
 class RecordVideoButton extends StatefulWidget {
   final VoidCallback startRecording;
   final VoidCallback stopRecording;
@@ -60,11 +63,21 @@ class _RecordVideoButtonState extends State<RecordVideoButton>
     super.dispose();
   }
 
+  static const Duration _kStateTransition = Duration(milliseconds: 300);
+
+  /// 录制态外圈、内层圆环必须正方形，否则 [CircularProgressIndicator] 会被拉成椭圆（图2）。
+  static const Color _kRecordingOuterTint = Color.fromRGBO(0, 0, 0, 0.45);
+
   @override
   Widget build(BuildContext context) {
+    final recording = widget.recordStatus == RecordStatus.recording;
+    final s = _kCaptureBtnScale;
+    // 录制中外圈边长：宽高都用 .w，保证正圆 + 细红弧贴在圆周上（对齐参考图1）
+    final double recOuterSide = 100.0.w * s;
+
     return GestureDetector(
       onTap: () {
-        if (widget.recordStatus == RecordStatus.recording) {
+        if (recording) {
           _stopRecording();
         } else {
           _startRecording();
@@ -72,59 +85,53 @@ class _RecordVideoButtonState extends State<RecordVideoButton>
       },
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          // 圆形进度条
+          // 外层：未录制同 [TakePhotoButton]；录制中为半透明深色圆 + 红色环形进度（非实心紫底）。
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            width: widget.recordStatus == RecordStatus.recording
-                ? 100.0.w
-                : 66.0.w,
-            height: widget.recordStatus == RecordStatus.recording
-                ? 100.0.h
-                : 66.0.h,
+            duration: _kStateTransition,
+            curve: Curves.easeInOutCubic,
+            width: recording ? recOuterSide : 72.0.w * s,
+            height: recording ? recOuterSide : 72.0.h * s,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: widget.recordStatus == RecordStatus.recording
-                  ? Color.fromRGBO(88, 95, 140, 1)
-                  : Colors.transparent,
+              color: recording ? _kRecordingOuterTint : Colors.transparent,
+              border: recording
+                  ? null
+                  : Border.all(
+                      color: Colors.white,
+                      width: 6.0.w * s,
+                    ),
             ),
-            child: CircularProgressIndicator(
-              value: _controller.value,
-              strokeWidth: 6.0.w,
-              backgroundColor: widget.recordStatus == RecordStatus.recording
-                  ? Colors.transparent
-                  : Colors.white,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-            ),
+            child: recording
+                ? CircularProgressIndicator(
+                    value: _controller.value,
+                    strokeWidth: 3.2.w * s,
+                    backgroundColor: Colors.transparent,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                  )
+                : null,
           ),
-
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            width: widget.recordStatus == RecordStatus.recording
-                ? 48.0.w
-                : 54.0.w,
-            height: widget.recordStatus == RecordStatus.recording
-                ? 48.0.h
-                : 54.0.h,
-            decoration: BoxDecoration(
+            duration: _kStateTransition,
+            curve: Curves.easeInOutCubic,
+            width: recording ? 48.0.w * s : 54.0.w * s,
+            height: recording ? 48.0.w * s : 54.0.h * s,
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
           ),
-          // 录制按钮
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            width: widget.recordStatus == RecordStatus.recording
-                ? 24.0.w
-                : 54.0.w,
-            height: widget.recordStatus == RecordStatus.recording
-                ? 24.0.h
-                : 54.0.h,
+            duration: _kStateTransition,
+            curve: Curves.easeInOutCubic,
+            width: recording ? 24.0.w * s : 54.0.w * s,
+            height: recording ? 24.0.w * s : 54.0.h * s,
             decoration: BoxDecoration(
               color: Colors.red,
-              borderRadius: widget.recordStatus == RecordStatus.recording
-                  ? BorderRadius.circular(4.0.r)
-                  : BorderRadius.circular(27.0.r),
+              borderRadius: BorderRadius.circular(
+                recording ? (4.0 * s).r : (27.0 * s).r,
+              ),
             ),
           ),
         ],

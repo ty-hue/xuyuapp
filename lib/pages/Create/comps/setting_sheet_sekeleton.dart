@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bilbili_project/components/select_dots.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
@@ -23,12 +25,34 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
   List<String> aspectRatioLabels = ['9:16', '3:4'];
   int maxRecordDurationSelectedIndex = 0;
   int aspectRatioSelectedIndex = 0;
+  Timer? _aspectRatioNotifyTimer;
+
   @override
   void initState() {
     super.initState();
     params = widget.settingSheetType;
     maxRecordDurationSelectedIndex = maxRecordDurationLabels.indexOf(params.maxRecordDuration.toString());
     aspectRatioSelectedIndex = aspectRatioLabels.indexOf(params.aspectRatio.toString());
+  }
+
+  @override
+  void dispose() {
+    if (_aspectRatioNotifyTimer?.isActive ?? false) {
+      _aspectRatioNotifyTimer!.cancel();
+      _pushSettingsToParent();
+    }
+    super.dispose();
+  }
+
+  void _pushSettingsToParent() {
+    widget.onSettingChanged(
+      SettingSheetType(
+        maxRecordDuration: params.maxRecordDuration,
+        aspectRatio: params.aspectRatio,
+        useVolumeKeys: params.useVolumeKeys,
+        grid: params.grid,
+      ),
+    );
   }
 
   Widget _buildSettingSheetItem({
@@ -96,7 +120,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
                   maxRecordDurationSelectedIndex = val;
                   params.maxRecordDuration = maxRecordDurationLabels[val];
                 });
-                widget.onSettingChanged(params);
+                _pushSettingsToParent();
               },
             ),
             SizedBox(height: 20.0.h),
@@ -111,8 +135,16 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
                   aspectRatioSelectedIndex = val;
                   params.aspectRatio = aspectRatioLabels[val];
                 });
-                widget.onSettingChanged(params);
-                
+                // 延后通知父级，避免与 SelectDots 滑块动画同时进行整页/相机重建导致掉帧
+                _aspectRatioNotifyTimer?.cancel();
+                _aspectRatioNotifyTimer = Timer(
+                  const Duration(milliseconds: 320),
+                  () {
+                    if (!mounted) return;
+                    _aspectRatioNotifyTimer = null;
+                    _pushSettingsToParent();
+                  },
+                );
               },
             ),
             SizedBox(height: 20.0.h),
@@ -123,7 +155,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
                 setState(() {
                   params.useVolumeKeys = val;
                 });
-                widget.onSettingChanged(params);
+                _pushSettingsToParent();
               },
               icon: Icons.volume_up,
             ),
@@ -135,7 +167,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
                 setState(() {
                   params.grid = val;
                 });
-                widget.onSettingChanged(params);
+                _pushSettingsToParent();
               },
               icon: Icons.grid_on,
             ),

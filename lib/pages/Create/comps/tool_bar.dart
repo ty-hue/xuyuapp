@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +59,50 @@ class ToolBar extends StatefulWidget {
 }
 
 class _ToolBarState extends State<ToolBar> {
+  static const Duration _kFlipIconAnimDuration = Duration(milliseconds: 320);
+
+  /// 每次点击递增，与 [_flipRotationTween] 同步换新的一段动画。
+  int _flipAnimGeneration = 0;
+  /// 当前累计圈数（终点），+0.5 = 顺时针半圈。
+  double _flipTurnEnd = 0;
+  /// 必须在 State 里保持**同一引用**，直到下次点击再替换；若在 [build] 里每次 `Tween(...)` 新建，
+  /// 父组件相机重启 [setState] 时 [TweenAnimationBuilder] 会认为 tween 变化而重置动画 → 只剩抖动。
+  late Tween<double> _flipRotationTween;
+  /// 动画播放期间忽略连点；相机重启延后到动画结束，避免 [_restartCamera] 的 [setState] 打断补间。
+  bool _flipIconAnimating = false;
+  Timer? _flipRestartTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _flipRotationTween = Tween<double>(begin: 0, end: 0);
+  }
+
+  @override
+  void dispose() {
+    _flipRestartTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onFlipTap() {
+    if (_flipIconAnimating) return;
+    _flipIconAnimating = true;
+    _flipRestartTimer?.cancel();
+
+    final begin = _flipTurnEnd;
+    _flipTurnEnd += 0.5;
+    _flipRotationTween = Tween<double>(begin: begin, end: _flipTurnEnd);
+    _flipAnimGeneration++;
+    setState(() {});
+
+    _flipRestartTimer = Timer(_kFlipIconAnimDuration, () {
+      _flipRestartTimer = null;
+      if (!mounted) return;
+      _flipIconAnimating = false;
+      widget.onRotateChanged();
+    });
+  }
+
   // 闪光灯图标
   IconData get flashIcon {
     switch (widget.flashStatus) {
@@ -68,21 +115,29 @@ class _ToolBarState extends State<ToolBar> {
     }
   }
 
-  // 拍摄时长图标
+  /// 最大拍摄时长：Font Awesome **hourglass** 命名三连（solid），沙漏阶段与可录时长档位对应。
+  ///
+  /// - 15s → [FontAwesomeIcons.hourglassStart]
+  /// - 60s → [FontAwesomeIcons.solidHourglassHalf]
+  /// - 180s → [FontAwesomeIcons.hourglassEnd]
+  ///
+  /// 文档：<https://fontawesome.com/icons/hourglass-start?style=solid>
   IconData get recordDurationIcon {
     switch (widget.recordDuration) {
       case RecordDuration.s15:
-        return Icons.flash_off_sharp;
+        return FontAwesomeIcons.hourglassStart;
       case RecordDuration.s60:
-        return Icons.flash_on_sharp;
+        return FontAwesomeIcons.solidHourglassHalf;
       case RecordDuration.s180:
-        return Icons.flash_auto_sharp;
+        return FontAwesomeIcons.hourglassEnd;
     }
   }
 
-  // 快慢速
+  /// 快慢速：默认关闭为 [Icons.motion_photos_off_sharp]，开启为 [Icons.motion_photos_on_sharp]。
   IconData get speedModeIcon {
-    return widget.speedMode ? Icons.speed_sharp : Icons.low_priority;
+    return widget.speedMode
+        ? Icons.motion_photos_on_sharp
+        : Icons.motion_photos_off_sharp;
   }
 
   // 麦克风图标
@@ -92,9 +147,11 @@ class _ToolBarState extends State<ToolBar> {
         : Icons.mic_off_sharp;
   }
 
-  // 动图图标
+  /// 动图：严格 `xxx` / `xxx_off` 成对（与快慢速的 `motion_photos_*` 区分），用 [Icons.videocam_sharp] / [Icons.videocam_off_sharp] 表示动态影像开关。
   IconData get gifIcon {
-    return widget.gifStatus == GifStatus.on ? Icons.gif_sharp : Icons.abc_sharp;
+    return widget.gifStatus == GifStatus.on
+        ? Icons.videocam_sharp
+        : Icons.videocam_off_sharp;
   }
 
   // 是否展开工具栏
@@ -139,9 +196,7 @@ class _ToolBarState extends State<ToolBar> {
                 widget.isStartCountDown 
                     ? Container()
                     : GestureDetector(
-                        onTap: () {
-                          widget.onRotateChanged();
-                        },
+                        onTap: _onFlipTap,
                         child: Container(
                           height: 50.h,
                           alignment: Alignment.center,
@@ -150,10 +205,24 @@ class _ToolBarState extends State<ToolBar> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                FontAwesomeIcons.refresh,
-                                color: Colors.white,
-                                size: 22.0.sp,
+                              TweenAnimationBuilder<double>(
+                                key: ValueKey<int>(_flipAnimGeneration),
+                                duration: _kFlipIconAnimDuration,
+                                curve: Curves.easeInOutCubic,
+                                tween: _flipRotationTween,
+                                builder: (context, double turns, child) {
+                                  return Transform.rotate(
+                                    angle: turns * 2 * math.pi,
+                                    child: child,
+                                  );
+                                },
+                                child: Icon(
+                                  // 用户指定沿用最初循环箭头；与 Material 翻转图标区分
+                                  // ignore: deprecated_member_use
+                                  FontAwesomeIcons.refresh,
+                                  color: Colors.white,
+                                  size: 22.0.sp,
+                                ),
                               ),
                               Text(
                                 '翻转',
@@ -436,7 +505,7 @@ class _ToolBarState extends State<ToolBar> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.filter_alt_sharp,
+                                Icons.face_retouching_natural_sharp,
                                 color: Colors.white,
                                 size: 22.0.sp,
                               ),
@@ -468,7 +537,7 @@ class _ToolBarState extends State<ToolBar> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.filter_alt_sharp,
+                                Icons.movie_filter_sharp,
                                 color: Colors.white,
                                 size: 22.0.sp,
                               ),

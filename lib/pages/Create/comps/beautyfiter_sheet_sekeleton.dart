@@ -1,3 +1,4 @@
+import 'package:bilbili_project/pages/Create/comps/create_sheet_semantic_icons.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,11 +34,10 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
   @override
   void initState() {
     super.initState();
-    selectedIndex = widget.initSelectedIndex;
-    if (selectedIndex != -1) {
-      setState(() {
+    // 未指定或 -1 时默认「无」（首项 index 0）
+    selectedIndex = widget.initSelectedIndex < 0 ? 0 : widget.initSelectedIndex;
+    if (selectedIndex >= 0 && selectedIndex < widget.beautyItems.length) {
       _progressValue = widget.beautyItems[selectedIndex].value * 100.0;
-    });
     }
   }
 
@@ -50,16 +50,18 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
           left: 24.0.w,
           right: 24.0.w,
           top: 12.0.h,
-          bottom: 44.0.h,
+          bottom: 28.0.h,
         ),
         color: Color.fromRGBO(25, 25, 25, 1),
-        child: Column(
-          spacing: 20.0.h,
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+          spacing: 14.0.h,
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: 40.0.h,
+              height: 36.0.h,
               child: Stack(
                 children: [
                   Align(
@@ -79,8 +81,10 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
                       onPressed: () {
                         widget.resetBeautyOptions(widget.flag);
                         setState(() {
-                          selectedIndex = -1;
+                          selectedIndex = 0;
+                          _progressValue = 0.0;
                         });
+                        widget.onSelectedIndexChanged(0);
                       },
                       child: Row(
                         spacing: 4.0.w,
@@ -107,7 +111,7 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
               ),
             ),
             // 美颜滤镜公用的滑动条
-            selectedIndex != 0 && selectedIndex != -1
+            selectedIndex != 0
                 ? Material(
                     color: Colors.transparent,
                     child: Slider(
@@ -132,9 +136,10 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
                     ),
                   )
                 : Container(),
+            // 每项：缩略图 65 + 间距 + 一行标题 + 可选圆点，88.h 不够会 RenderFlex overflow
             SizedBox(
               width: double.infinity,
-              height: 100.0.h,
+              height: 120.0.h,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: widget.beautyItems.length,
@@ -143,13 +148,16 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
                   return SizedBox(width: 12.w); // 间距
                 },
                 itemBuilder: (context, index) {
+                  final thumbRadius = 16.0.r;
+                  final thumbW = 65.0.w;
+                  final thumbH = 65.0.h;
+                  final isSelected = selectedIndex == index;
                   return GestureDetector(
                     onTap: () {
                       setState(() {
                         selectedIndex = index;
                         widget.onSelectedIndexChanged(index);
                         if (widget.beautyItems[index].type != null) {
-                          print('${widget.beautyItems[index].type}- ${widget.beautyItems[index].value}');
                           _progressValue =
                               widget.beautyItems[index].value * 100;
                         } else {
@@ -166,29 +174,62 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
                       spacing: 4.0.h,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16.0.r),
-                          child: Container(
-                            width: 65.0.w,
-                            height: 65.0.h,
-                            decoration: BoxDecoration(
-                              color: Color.fromRGBO(58, 57, 58, 1),
-                            ),
-                            alignment: Alignment.center,
-                            child: widget.beautyItems[index].type != null
-                                ? Image.asset(
-                                    widget.beautyItems[index].icon,
-                                    fit: BoxFit.fill,
-                                  )
-                                : Icon(
-                                    FontAwesomeIcons.ban,
-                                    color: Color.fromRGBO(143, 141, 142, 1),
-                                    size: 36.0.sp,
+                        SizedBox(
+                          width: thumbW,
+                          height: thumbH,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Container(
+                                width: thumbW,
+                                height: thumbH,
+                                decoration: BoxDecoration(
+                                  color: Color.fromRGBO(58, 57, 58, 1),
+                                  borderRadius:
+                                      BorderRadius.circular(thumbRadius),
+                                ),
+                                alignment: Alignment.center,
+                                child: () {
+                                  final item = widget.beautyItems[index];
+                                  if (item.type == null) {
+                                    return Icon(
+                                      FontAwesomeIcons.ban,
+                                      color: Color.fromRGBO(143, 141, 142, 1),
+                                      size: 32.0.sp,
+                                    );
+                                  }
+                                  final IconData? icon = widget.flag
+                                      ? semanticIconForBeautyTitle(item.title)
+                                      : semanticIconForFilterTitle(item.title);
+                                  return Icon(
+                                    icon ?? Icons.tune,
+                                    color: Color.fromRGBO(230, 230, 230, 1),
+                                    size: 30.0.sp,
+                                  );
+                                }(),
+                              ),
+                              if (isSelected)
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                            thumbRadius),
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2.w,
+                                        ),
+                                      ),
+                                    ),
                                   ),
+                                ),
+                            ],
                           ),
                         ),
                         Text(
                           widget.beautyItems[index].title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: selectedIndex == index
                                 ? Colors.white
@@ -216,6 +257,7 @@ class _BeautyfiterSheetSekeletonState extends State<BeautyfiterSheetSekeleton> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

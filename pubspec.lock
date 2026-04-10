@@ -49,6 +49,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.13.0"
+  audio_video_progress_bar:
+    dependency: "direct main"
+    description:
+      name: audio_video_progress_bar
+      sha256: "552b1f73c56c4c88407999e0a8507176f60c56de3e6d63bc20a0eab48467d4c9"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.3"
   audioplayers:
     dependency: "direct main"
     description:
@@ -976,14 +984,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "8.0.1"
-  pixelfree:
+  pixelfree_camera:
     dependency: "direct main"
     description:
-      name: pixelfree
-      sha256: "4cb4aa82c58f5495cf94ea3b666abda54075a441c605a3894d991feaf5a8a4f1"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.5.3"
+      path: "packages/pixelfree_camera"
+      relative: true
+    source: path
+    version: "0.0.1"
   platform:
     dependency: transitive
     description:

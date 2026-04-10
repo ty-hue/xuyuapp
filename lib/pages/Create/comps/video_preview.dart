@@ -1,82 +1,149 @@
+import 'dart:io';
+
+import 'package:bilbili_project/components/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 
+/// 相册 [videoData] 或本地文件 [videoFilePath]（二选一）。
+/// [videoFilePath] 为 null 或空：表示 native 路径尚未就绪，仅在本组件内显示 loading（用于录制结束立刻进预览页）。
+/// [onPlaybackReady]：首帧可播放 UI（Chewie）就绪时回调一次，供父级启用「下一步」等。
 class VideoPreview extends StatefulWidget {
-  final AssetEntity videoData;
+  final AssetEntity? videoData;
+  final String? videoFilePath;
+  final VoidCallback? onPlaybackReady;
 
-  const VideoPreview({Key? key, required this.videoData}) : super(key: key);
+  const VideoPreview({
+    Key? key,
+    this.videoData,
+    this.videoFilePath,
+    this.onPlaybackReady,
+  })  : assert(
+          videoData == null || videoFilePath == null,
+          'videoData 与 videoFilePath 勿同时传入',
+        ),
+        super(key: key);
 
   @override
   _VideoPreviewState createState() => _VideoPreviewState();
 }
 
 class _VideoPreviewState extends State<VideoPreview> {
-  late VideoPlayerController _controller;
-  late ChewieController _chewieController;
+  VideoPlayerController? _controller;
+  ChewieController? _chewieController;
   bool _isControllerInitialized = false;
+  bool _initStarted = false;
+  bool _playbackReadyNotified = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 使用传递过来的 videoData 初始化播放器
-    final videoData = widget.videoData;
-    _initializePlayer(videoData);
+  void initState() {
+    super.initState();
+    _initializePlayer();
   }
 
-  // 初始化视频播放器
-  Future<void> _initializePlayer(AssetEntity videoFile) async {
-    final file = await videoFile.file;
-    if (file != null) {
-      _controller = VideoPlayerController.file(file);
+  Future<void> _initializePlayer() async {
+    if (_initStarted) return;
 
-      // 初始化视频控制器并设置 Chewie 控制器
-      await _controller.initialize();
+    File? file;
+    if (widget.videoData != null) {
+      _initStarted = true;
+      file = await widget.videoData!.file;
+    } else {
+      final p = widget.videoFilePath;
+      if (p == null || p.isEmpty) {
+        // 录制刚结束、路径未到：仅展示 loading，等父级 setState 路径后 [Key] 变化会新建 State 再解码
+        return;
+      }
+      _initStarted = true;
+      final f = File(p);
+      if (await f.exists()) file = f;
+    }
 
-      _chewieController = ChewieController(
-        videoPlayerController: _controller,
+    if (file == null || !await file.exists()) {
+      if (mounted) setState(() {});
+      return;
+    }
+
+    try {
+      final controller = VideoPlayerController.file(file);
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      final chewie = ChewieController(
+        videoPlayerController: controller,
         autoPlay: true,
         looping: false,
-        showOptions: false, // 显示视频选项（旋转、全屏等）
-        aspectRatio: _controller.value.aspectRatio,
-        showControls: true, // 显示播放控制器（播放、暂停、进度条等）
-        allowFullScreen: false, // 允许全屏播放
-        allowMuting: false, // 允许静音播放
-        allowPlaybackSpeedChanging: false, // 允许调整播放速度
-        allowedScreenSleep: false, // 允许屏幕休眠
+        showOptions: false,
+        aspectRatio: controller.value.aspectRatio,
+        showControls: true,
+        allowFullScreen: false,
+        allowMuting: false,
+        allowPlaybackSpeedChanging: false,
+        allowedScreenSleep: false,
         materialProgressColors: ChewieProgressColors(
-          playedColor: Color.fromRGBO(255,250,254, 1),
+          playedColor: const Color.fromRGBO(255, 250, 254, 1),
           handleColor: Colors.white,
-          backgroundColor: Colors.white.withOpacity(0.2),
+          backgroundColor: Colors.white.withValues(alpha: 0.2),
           bufferedColor: Colors.transparent,
         ),
-        placeholder: const Center(child: CircularProgressIndicator()),
-        
+        placeholder: const Center(child: FetchLoadingView()),
       );
 
-      // 控制器初始化完成后更新状态
+      if (!mounted) {
+        chewie.dispose();
+        await controller.dispose();
+        return;
+      }
+
       setState(() {
+        _controller = controller;
+        _chewieController = chewie;
         _isControllerInitialized = true;
       });
+      _notifyPlaybackReadyOnce();
+    } catch (_) {
+      if (mounted) setState(() {});
     }
+  }
+
+  void _notifyPlaybackReadyOnce() {
+    if (_playbackReadyNotified || !mounted) return;
+    _playbackReadyNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onPlaybackReady?.call();
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _chewieController.dispose();
+    _chewieController?.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (!_isControllerInitialized) {
-      // 控制器初始化前显示加载指示器
-      return const Center(child: CircularProgressIndicator());
+      return const ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: FetchLoadingView(),
+        ),
+      );
     }
-
-    // 控制器初始化后再渲染视频播放器
-    return Chewie(controller: _chewieController);
+    final c = _chewieController;
+    if (c == null) {
+      return const ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: FetchLoadingView(),
+        ),
+      );
+    }
+    return Chewie(controller: c);
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -39,18 +41,53 @@ class _SelectDotsState extends State<SelectDots> {
   }
 
   @override
+  void didUpdateWidget(SelectDots oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      selectedIndex = widget.selectedIndex;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(widget.borderRadius ?? 20.r),
-      child: Stack(
-        children: [
-          Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(color: widget.bgColor ?? Color.fromRGBO(70, 70, 72, 1)),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    final segW = widget.width / widget.labels.length;
+    // 激活项为完整胶囊形（椭圆/stadium）
+    final pillR = math.min(segW / 2, widget.height / 2);
+    final br = widget.borderRadius ?? 20.r;
+    final trackColor = widget.bgColor ?? const Color.fromRGBO(70, 70, 72, 1);
+    // 半透明叠在圆角上容易在四角露出底色/黑边；改为与轨道色 alpha 合成后的实色
+    final highlightColor = widget.selectedBgColor ??
+        Color.alphaBlend(Colors.white.withValues(alpha: 0.3), trackColor);
+
+    return Material(
+      color: trackColor,
+      borderRadius: BorderRadius.circular(br),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.hardEdge,
+          children: [
+            // 先画胶囊背景，再画文字，避免高亮层盖住标签
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              left: selectedIndex * segW,
+              top: 0,
+              child: IgnorePointer(
+                child: Container(
+                  width: segW,
+                  height: widget.height,
+                  decoration: BoxDecoration(
+                    color: highlightColor,
+                    borderRadius: BorderRadius.circular(pillR),
+                  ),
+                ),
+              ),
+            ),
+            Row(
               children: [
                 ...List.generate(
                   widget.labels.length,
@@ -63,8 +100,7 @@ class _SelectDotsState extends State<SelectDots> {
                           widget.onChanged(index);
                         });
                       },
-                      child: Container(
-                        alignment: Alignment.center,
+                      child: Center(
                         child: Text(
                           widget.labels[index],
                           style: TextStyle(
@@ -82,24 +118,8 @@ class _SelectDotsState extends State<SelectDots> {
                 ),
               ],
             ),
-          ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 250), // 动画时长
-            curve: Curves.easeInOut, // 动画曲线（很关键）
-            left: selectedIndex * (widget.width / widget.labels.length),
-            top: 0,
-            child: IgnorePointer(
-              child:Container(
-              width: widget.width / widget.labels.length,
-              height: widget.height,
-              decoration: BoxDecoration(
-                color: widget.selectedBgColor ?? Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 20.r),
-              ),
-            )
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

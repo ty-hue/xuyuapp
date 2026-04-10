@@ -1,5 +1,15 @@
+import 'dart:async';
 import 'dart:io';
-
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:pixelfree_camera/pixelfree_camera.dart';
+import 'package:popover/popover.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/pages/Create/comps/camera_grid_overlay.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_show.dart';
@@ -19,14 +29,12 @@ import 'package:bilbili_project/pages/Create/comps/video_preview.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
-import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:popover/popover.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+
+/// 底部「特效 / 相册」槽与图标相对原设计放大倍数（与拍照按钮 1.4 一致）。
+const double _kBottomSideIconScale = 1.4;
+
+/// 半透明块内图标相对块宽的比例（略小于 1，留白更舒服）。
+const double _kBottomIconInTileRatio = 0.75;
 
 class CameraView extends StatefulWidget {
   final double topVal;
@@ -55,8 +63,15 @@ class CameraView extends StatefulWidget {
   final ValueChanged<bool> onIsStartCountDownChanged;
   final VoidCallback onCountdownFinished;
   final SettingSheetType settingSheetType;
-  CameraView({
-    Key? key,
+  /// 父级算好的**整段预览槽**宽高（含上下黑边区域）。用于 [LayoutBuilder] 约束，使 UI 相对整槽定位。
+  final double? previewSlotWidth;
+  final double? previewSlotHeight;
+  /// 实际拍摄画面区域高度（与比例一致，不含上下黑边）。传给 native 视口；若未传则按 [settingSheetType.aspectRatio] 由槽宽推算。
+  final double? previewContentHeight;
+  /// 预览区是否已有可展示的成片（含相册选片）；为 false 时父级可禁用「下一步」等。
+  final ValueChanged<bool>? onPreviewReadyForNext;
+  const CameraView({
+    super.key,
     required this.topVal,
     this.fromUrl,
     required this.gifStatus,
@@ -83,90 +98,208 @@ class CameraView extends StatefulWidget {
     required this.onIsStartCountDownChanged,
     required this.onCountdownFinished,
     required this.settingSheetType,
-  }) : super(key: key);
+    this.previewSlotWidth,
+    this.previewSlotHeight,
+    this.previewContentHeight,
+    this.onPreviewReadyForNext,
+  });
 
   @override
   CameraViewState createState() => CameraViewState();
 }
 
-class CameraViewState extends State<CameraView> {
-  // 相机权限 默认为永久拒绝
+class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   PermissionStatus _cameraPermissionStatus = PermissionStatus.granted;
-  // 麦克风权限 默认为永久拒绝
   PermissionStatus _microphonePermissionStatus = PermissionStatus.granted;
-  CameraController? _cameraController; // 相机控制器
-  late List<CameraDescription> _cameras; // 相机列表
-  bool _isInitialized = false; // 相机是否初始化完成
-  // 初始化相机
+  bool _isInitialized = false;
+  /// 是否已成功打开过相机（本 State 生命周期内）。切换分辨率等重启时不再显示 [FetchLoadingView]。
+  bool _hasEverInitializedCamera = false;
+  bool _isRestartingCamera = false;
+  /// 本机拍照成片 JPEG（内存）；与 [_pendingPhotoPath] 互斥，优先用内存预览。
+  Uint8List? _pendingPhotoBytes;
+  /// 相册选片等仍用路径；本机直拍见 [_pendingPhotoBytes]。
+  String? _pendingPhotoPath;
+  /// 录像成片本地路径，用 [VideoPreview] 直读文件预览，不写入系统相册。
+  String? _pendingVideoPath;
+  /// 停止录制后已进入「本机录像预览」流程（含路径未到、解码中）；loading 由 [VideoPreview] 内部负责。
+  bool _cameraRecordedVideoPreview = false;
+  /// [VideoPreview] 已解码并可展示播放器（相册/本机录像均走此标记）。
+  bool _videoPlaybackReady = false;
+  int? textureId;
+  /// Native GL buffer size (portrait-normalized on Android). Used with [FittedBox] so the texture
+  /// scales **uniformly** — [SizedBox.expand] on [Texture] stretches and elongates faces.
+  double? _nativeBufferW;
+  double? _nativeBufferH;
+  final _cameraSdk = const PixelfreeCamera();
+  final Map<String, String> _stickerAssetCache = {};
+  CameraPosition _cameraPosition = CameraPosition.front;
+  /// 前置无物理闪光灯时，由 native [onFrontFlashHint] 驱动全屏补光。
+  bool _frontScreenFlashOverlay = false;
+  double _frontFlashAlpha = 0.88;
+
+  /// Last [LayoutBuilder] max width — fallback when [previewSlotWidth] is null.
+  double? _layoutViewportW;
+  bool _cameraOpenScheduled = false;
+
+  /// 拍摄比例变更后略延后重启相机（设置 sheet 已延迟通知父级，此处只需短缓冲）。
+  Timer? _cameraRestartAfterAspectTimer;
+
+  Future<void> _syncPreviewSettings() async {
+    if (!_isInitialized) return;
+    await _cameraSdk.setFlashMode(_currentFlashMode);
+    await _applyBeautyAndFilterAndSticker();
+  }
+
+  Future<void> _refreshPermissionsAndMaybeInit() async {
+    final cameraStatus = await Permissionutils.checkCameraPermission();
+    final microphoneStatus = await Permissionutils.checkMicrophonePermission();
+    if (!mounted) return;
+    setState(() {
+      _cameraPermissionStatus = cameraStatus;
+      _microphonePermissionStatus = microphoneStatus;
+    });
+  }
+
+  double _previewContentHeightOrInfer(double width) {
+    final ph = widget.previewContentHeight;
+    if (ph != null && ph > 0) return ph;
+    final wh = widget.settingSheetType.aspectRatio == '3:4' ? 3 / 4 : 9 / 16;
+    return width > 0 ? width / wh : 0;
+  }
+
   Future<void> _initializeCamera() async {
-    // 获取设备上的所有相机
-    _cameras = await availableCameras();
-    if (_cameras.isNotEmpty) {
-      // 选择后置相机
-      _cameraController = CameraController(
-        _cameras[0], // 选择第一个相机，通常是后置相机
-        ResolutionPreset.veryHigh, // 设置分辨率 1080p
-        fps: 30, // 设置帧率为 30fps
-        enableAudio: true, // 开启音频
-      );
-
-      // 初始化相机
-      await _cameraController?.initialize();
-
+    final vw = widget.previewSlotWidth ?? _layoutViewportW;
+    final wNum = (vw != null && vw > 0) ? vw : 0.0;
+    final vh = _previewContentHeightOrInfer(wNum);
+    final session = await _cameraSdk.initialize(
+      config: BeautyCameraConfig(
+        ratio: _currentRatio,
+        flashMode: _currentFlashMode,
+        cameraPosition: _cameraPosition,
+        // 麦克风开关在 [startRecording] → [PixelfreeCameraPlugin.startRecord] 传入，避免改开关即重启相机。
+        enableAudio: false,
+        previewViewportWidth: (vw != null && vw > 0) ? vw : null,
+        previewViewportHeight: vh > 0 ? vh : null,
+        enableScreenFlashForFront: true,
+      ),
+    );
+    _cameraSdk.setFrontFlashListener((FrontFlashHint? hint) {
       if (!mounted) return;
-
       setState(() {
-        _isInitialized = true;
+        _frontScreenFlashOverlay = hint?.active ?? false;
+        _frontFlashAlpha = hint?.intensity ?? 0.92;
       });
+    });
+    textureId = session.previewTextureId;
+    _nativeBufferW = session.previewWidth;
+    _nativeBufferH = session.previewHeight;
+    if (!mounted) return;
+    setState(() {
+      _isInitialized = true;
+      _hasEverInitializedCamera = true;
+    });
+  }
+
+  CameraRatio get _currentRatio =>
+      widget.settingSheetType.aspectRatio == '3:4'
+          ? CameraRatio.ratio3x4
+          : CameraRatio.ratio9x16;
+
+  FlashMode get _currentFlashMode {
+    switch (widget.flashStatus) {
+      case FlashStatus.on:
+        return FlashMode.on;
+      case FlashStatus.auto:
+        return FlashMode.auto;
+      case FlashStatus.off:
+        return FlashMode.off;
     }
   }
 
-  File? latestImage; // 最近拍摄的最新的照片
 
-  // 获取相册中最近拍摄的一张照片
-  Future<File?> getLatestImage() async {
-    // 1 获取“全部照片”相册
-    final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.image,
-      onlyAll: true,
+  Future<String> _extractAssetToTemp(String assetPath) async {
+    if (_stickerAssetCache.containsKey(assetPath)) {
+      return _stickerAssetCache[assetPath]!;
+    }
+    final byteData = await rootBundle.load(assetPath);
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/${assetPath.split('/').last}');
+    await file.writeAsBytes(byteData.buffer.asUint8List(), flush: true);
+    _stickerAssetCache[assetPath] = file.path;
+    return file.path;
+  }
+
+  double _beautyValue(List<BeautyItem> source, String title, {double fallback = 0}) {
+    final item = source.where((element) => element.title == title).firstOrNull;
+    return item?.value ?? fallback;
+  }
+
+  Future<void> _applyBeautyAndFilterAndSticker() async {
+    await _cameraSdk.setBeauty(
+      BeautySettings(
+        smoothing: _beautyValue(beautyOptions, '磨皮'),
+        whitening: _beautyValue(beautyOptions, '美白'),
+        ruddy: _beautyValue(beautyOptions, '红润'),
+        sharpen: _beautyValue(beautyOptions, '锐化'),
+        bigEye: _beautyValue(beautyOptions, '大眼'),
+        eyeBrighten: _beautyValue(beautyOptions, '亮眼'),
+        slimFace: _beautyValue(beautyOptions, '瘦脸'),
+        portraitBlur: _beautyValue(beautyOptions, '背景虚化'),
+        faceNarrow: _beautyValue(beautyOptions, '瘦颧骨'),
+        faceChin: _beautyValue(beautyOptions, '下巴'),
+        faceV: _beautyValue(beautyOptions, '瘦下颔'),
+        faceNose: _beautyValue(beautyOptions, '鼻梁'),
+        faceForehead: _beautyValue(beautyOptions, '额头'),
+        faceMouth: _beautyValue(beautyOptions, '嘴巴'),
+        facePhiltrum: _beautyValue(beautyOptions, '人中'),
+        faceLongNose: _beautyValue(beautyOptions, '长鼻'),
+        faceEyeSpace: _beautyValue(beautyOptions, '眼距'),
+        faceSmile: _beautyValue(beautyOptions, '微笑嘴角'),
+        faceCanthus: _beautyValue(beautyOptions, '开眼角'),
+      ),
     );
 
-    if (albums.isEmpty) return null;
+    if (selectedFilterIndex > 0 && selectedFilterIndex < filterOptions.length) {
+      final filter = filterOptions[selectedFilterIndex];
+      await _cameraSdk.setFilter(
+        FilterSettings(
+          filterId: filter.filterType,
+          intensity: filter.value,
+        ),
+      );
+    } else {
+      await _cameraSdk.setFilter(const FilterSettings(filterId: null, intensity: 0));
+    }
 
-    // 3 获取最近照片相册
-    final recentAlbum = albums.first;
-
-    // 4 获取最新的一张
-    final assets = await recentAlbum.getAssetListPaged(page: 0, size: 1);
-
-    if (assets.isEmpty) return null;
-
-    // 5 获取原图
-    final file = await assets.first.originFile;
-
-    return file;
+    if (selectedStickerIndex >= 0 && selectedStickerIndex < stickerOptions.length) {
+      final sticker = stickerOptions[selectedStickerIndex];
+      await _cameraSdk.setArEffect(sticker.name);
+    } else {
+      await _cameraSdk.setArEffect('none');
+    }
   }
 
-  // 图片读写权限
+  File? latestImage;
+  Future<File?> getLatestImage() async {
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image, onlyAll: true);
+    if (albums.isEmpty) return null;
+    final assets = await albums.first.getAssetListPaged(page: 0, size: 1);
+    if (assets.isEmpty) return null;
+    return assets.first.originFile;
+  }
+
   bool _photoPermissionGranted = false;
-  // 请求相册权限
   Future<bool> requestPermission() async {
     final result = await PhotoManager.requestPermissionExtend();
-    if (!result.hasAccess) {
-      return false;
-    }
-    return true;
+    return result.hasAccess;
   }
 
-  // 获取最新的照片
   Future<void> getLatestPhoto() async {
     _photoPermissionGranted = await requestPermission();
     if (!mounted) return;
     if (_photoPermissionGranted) {
       latestImage = await getLatestImage();
-      if (latestImage != null) {
-        if (!mounted) return;
-      }
+      if (!mounted) return;
     }
     setState(() {});
   }
@@ -174,36 +307,22 @@ class CameraViewState extends State<CameraView> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     () async {
-      // 获取最新的照片
       await getLatestPhoto();
-
-      // 检查相机权限
-      PermissionStatus cameraValue =
-          await Permissionutils.checkCameraPermission();
-      // 如果不是永久拒绝状态，那么就需要询问用户是否允许相机权限
+      PermissionStatus cameraValue = await Permissionutils.checkCameraPermission();
       if (cameraValue != PermissionStatus.permanentlyDenied) {
-        PermissionStatus _cameraValue =
-            await Permissionutils.requestCameraPermission();
-        setState(() {
-          _cameraPermissionStatus = _cameraValue;
-        });
+        cameraValue = await Permissionutils.requestCameraPermission();
       }
-      // 检查麦克风权限
-      PermissionStatus microphoneValue =
-          await Permissionutils.checkMicrophonePermission();
-      // 如果不是永久拒绝状态，那么就需要询问用户是否允许麦克风权限
+      PermissionStatus microphoneValue = await Permissionutils.checkMicrophonePermission();
       if (microphoneValue != PermissionStatus.permanentlyDenied) {
-        PermissionStatus _microphoneValue =
-            await Permissionutils.requestMicrophonePermission();
-        setState(() {
-          _microphonePermissionStatus = _microphoneValue;
-        });
+        microphoneValue = await Permissionutils.requestMicrophonePermission();
       }
-      // 初始化相机
-      if (isCompleteAllow) {
-        await _initializeCamera();
-      }
+      if (!mounted) return;
+      setState(() {
+        _cameraPermissionStatus = cameraValue;
+        _microphonePermissionStatus = microphoneValue;
+      });
     }();
   }
 
@@ -214,6 +333,91 @@ class CameraViewState extends State<CameraView> {
       return true;
     }
     return false;
+  }
+
+  Future<void> _restartCamera({bool forceDispose = true}) async {
+    if (_isRestartingCamera) return;
+    _isRestartingCamera = true;
+    if (forceDispose) {
+      await _cameraSdk.dispose();
+    }
+    if (!mounted) {
+      _isRestartingCamera = false;
+      return;
+    }
+    setState(() {
+      _isInitialized = false;
+      textureId = null;
+      _nativeBufferW = null;
+      _nativeBufferH = null;
+    });
+    try {
+      await _initializeCamera();
+      await _syncPreviewSettings();
+    } finally {
+      _isRestartingCamera = false;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CameraView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!isCompleteAllow) return;
+
+    final aspectChanged =
+        oldWidget.settingSheetType.aspectRatio != widget.settingSheetType.aspectRatio;
+    final slotChanged = oldWidget.previewSlotWidth != widget.previewSlotWidth ||
+        oldWidget.previewSlotHeight != widget.previewSlotHeight ||
+        oldWidget.previewContentHeight != widget.previewContentHeight;
+
+    if (aspectChanged) {
+      _cameraRestartAfterAspectTimer?.cancel();
+      _cameraRestartAfterAspectTimer = Timer(const Duration(milliseconds: 200), () {
+        _cameraRestartAfterAspectTimer = null;
+        if (!mounted) return;
+        _restartCamera();
+      });
+      return;
+    }
+
+    if (slotChanged) {
+      _restartCamera();
+      return;
+    }
+
+    if (oldWidget.flashStatus != widget.flashStatus && _isInitialized) {
+      unawaited(_cameraSdk.setFlashMode(_currentFlashMode));
+    }
+
+    if (oldWidget.cameraSelectedIndex != widget.cameraSelectedIndex &&
+        recordStatus == RecordStatus.end) {
+      setState(() {
+        _videoPlaybackReady = false;
+      });
+      _notifyPreviewReadyForNext();
+    }
+
+    if (oldWidget.onPreviewReadyForNext != widget.onPreviewReadyForNext) {
+      _notifyPreviewReadyForNext();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshPermissionsAndMaybeInit();
+    }
+    if (state == AppLifecycleState.paused && _isInitialized) {
+      _cameraSdk.dispose();
+      if (mounted) {
+        setState(() {
+          _isInitialized = false;
+          textureId = null;
+          _nativeBufferW = null;
+          _nativeBufferH = null;
+        });
+      }
+    }
   }
 
   // 滤镜数据
@@ -242,8 +446,8 @@ class CameraViewState extends State<CameraView> {
         }
       }
       setState(() {});
+      _applyBeautyAndFilterAndSticker();
     } else {
-      // 将所有value设置为0
       setState(() {
         if (flag) {
           for (var element in beautyOptions) {
@@ -255,37 +459,44 @@ class CameraViewState extends State<CameraView> {
           }
         }
       });
+      _applyBeautyAndFilterAndSticker();
     }
   }
 
-  // 重置美颜数据
   void resetBeautyOptions(bool flag) {
     setState(() {
+      if (flag) {
+        selectedBeautyIndex = 0;
+      } else {
+        selectedFilterIndex = 0;
+      }
       final originalData = flag ? createBeautyList() : createFilterList();
       if (flag) {
-        beautyOptions.forEach((element) {
+        for (final element in beautyOptions) {
           element.value = originalData
               .firstWhere((item) => item.type == element.type)
               .value;
-        });
+        }
       } else {
-        filterOptions.forEach((element) {
+        for (final element in filterOptions) {
           element.value = originalData
               .firstWhere((item) => item.filterType == element.filterType)
               .value;
-        });
+        }
       }
     });
+    _applyBeautyAndFilterAndSticker();
   }
 
-  int selectedBeautyIndex = -1;
+  /// 与列表首项「无」对应，首次进入拍摄页不应用美颜/滤镜时 sheet 应高亮「无」。
+  int selectedBeautyIndex = 0;
   void onBeautySelectedIndexChanged(int index) {
     setState(() {
       selectedBeautyIndex = index;
     });
+    _applyBeautyAndFilterAndSticker();
   }
 
-  // 打开美颜sheet
   void openBeautyfiterSheet() {
     SheetUtils(
       BeautyfiterSheetSekeleton(
@@ -300,14 +511,14 @@ class CameraViewState extends State<CameraView> {
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
-  int selectedFilterIndex = -1;
+  int selectedFilterIndex = 0;
   void onFilterSelectedIndexChanged(int index) {
     setState(() {
       selectedFilterIndex = index;
     });
+    _applyBeautyAndFilterAndSticker();
   }
 
-  // 打开滤镜sheet
   void openFiterSheet() {
     SheetUtils(
       BeautyfiterSheetSekeleton(
@@ -322,25 +533,23 @@ class CameraViewState extends State<CameraView> {
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
-  // 贴纸数据
   List<StickerItem> stickerOptions = createStickerList();
+  /// -1 = 未选/无特效；≥0 为 [createStickerList] 中对应项（如 `face_mesh`、`glasses_3d`）。
   int selectedStickerIndex = -1;
   Future<void> onStickerSelectedIndexChanged(int index) async {
     setState(() {
       selectedStickerIndex = index;
     });
-    // 后续，这里做真实的特效加载逻辑 （是异步的）
-    await Future.delayed(Duration(seconds: 1));
+    await _applyBeautyAndFilterAndSticker();
   }
 
-  // 重置特效索引
   void resetStickerIndex() {
     setState(() {
       selectedStickerIndex = -1;
     });
+    _applyBeautyAndFilterAndSticker();
   }
 
-  // 打开贴纸sheet
   void openStickerSheet() {
     SheetUtils(
       StickerSheetSekeleton(
@@ -353,39 +562,160 @@ class CameraViewState extends State<CameraView> {
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
-  // 按钮状态
   RecordStatus recordStatus = RecordStatus.normal;
-  // 录制状态改变
   void onRecordStatusChanged(RecordStatus status) {
-    if (status == RecordStatus.end) {
-      // 销毁音量监听控制器
-    }
     setState(() {
       recordStatus = status;
     });
   }
 
-  // 变动ui函数
+  bool _computePreviewReadyForNext() {
+    if (recordStatus != RecordStatus.end) return false;
+    if (widget.cameraSelectedIndex == 0) {
+      if (_pendingPhotoBytes != null && _pendingPhotoBytes!.isNotEmpty) return true;
+      if (_pendingPhotoPath != null && _pendingPhotoPath!.isNotEmpty) return true;
+      if (imagePreviewAssets.isNotEmpty) return true;
+      return false;
+    }
+    if (videoPreviewAssets.isNotEmpty) {
+      return _videoPlaybackReady;
+    }
+    if (_cameraRecordedVideoPreview) {
+      if (_pendingVideoPath == null || _pendingVideoPath!.isEmpty) return false;
+      return _videoPlaybackReady;
+    }
+    return false;
+  }
+
+  void _notifyPreviewReadyForNext() {
+    widget.onPreviewReadyForNext?.call(_computePreviewReadyForNext());
+  }
+
+  void _onVideoPreviewPlaybackReady() {
+    if (!mounted) return;
+    setState(() {
+      _videoPlaybackReady = true;
+    });
+    _notifyPreviewReadyForNext();
+  }
+
   void changeUI(RecordStatus status) {
     widget.onRecordStatusChanged(status);
     setState(() {
       recordStatus = status;
+      if (status == RecordStatus.normal) {
+        _videoPlaybackReady = false;
+      }
     });
+    _notifyPreviewReadyForNext();
   }
 
-  // 开始录制
-  void startRecording() {
+  void startRecording() async {
+    await PixelfreeCameraPlugin.startRecord(
+      enableAudio: widget.microphoneStatus == MicrophoneStatus.on,
+    );
     changeUI(RecordStatus.recording);
   }
 
-  // 停止录制
   void stopRecording() {
     changeUI(RecordStatus.end);
+    setState(() {
+      _cameraRecordedVideoPreview = true;
+      _pendingVideoPath = null;
+      _videoPlaybackReady = false;
+      videoPreviewAssets.clear();
+      imagePreviewAssets.clear();
+      _pendingPhotoPath = null;
+      _pendingPhotoBytes = null;
+    });
+    _notifyPreviewReadyForNext();
+    unawaited(_completeStopRecording());
   }
 
-  // 拍照
+  Future<void> _completeStopRecording() async {
+    try {
+      final path = await PixelfreeCameraPlugin.stopRecord();
+      if (!mounted) return;
+      if (path.isEmpty) {
+        setState(() {
+          _cameraRecordedVideoPreview = false;
+        });
+        changeUI(RecordStatus.normal);
+        return;
+      }
+      setState(() {
+        _pendingVideoPath = path;
+        _videoPlaybackReady = false;
+      });
+      _notifyPreviewReadyForNext();
+      await _cameraSdk.dispose();
+      if (!mounted) return;
+      setState(() {
+        _isInitialized = false;
+        textureId = null;
+        _nativeBufferW = null;
+        _nativeBufferH = null;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _cameraRecordedVideoPreview = false;
+        });
+        changeUI(RecordStatus.normal);
+      }
+    }
+  }
+
   void takePhoto() {
-    changeUI(RecordStatus.end);
+    unawaited(_completeTakePhoto());
+  }
+
+  /// 先 await 仍图（内存 JPEG）→ 再 [changeUI] 进入成片预览 → 帧结束后异步 [dispose] 释放相机。
+  /// 按下快门后仍保持实时 [Texture]，用户可看到闪光灯点亮过程。
+  Future<void> _completeTakePhoto() async {
+    try {
+      final shot = await PixelfreeCameraPlugin.takePhoto();
+      if (!mounted) return;
+      Uint8List? bytes = shot.jpegBytes;
+      if ((bytes == null || bytes.isEmpty) && shot.path.isNotEmpty) {
+        try {
+          final f = File(shot.path);
+          bytes = await f.readAsBytes();
+          if (await f.exists()) await f.delete();
+        } catch (_) {}
+      }
+      if (bytes == null || bytes.isEmpty) {
+        if (mounted) changeUI(RecordStatus.normal);
+        return;
+      }
+      setState(() {
+        _pendingPhotoBytes = bytes;
+        _pendingPhotoPath = null;
+        _pendingVideoPath = null;
+        _cameraRecordedVideoPreview = false;
+        _videoPlaybackReady = false;
+        imagePreviewAssets.clear();
+        videoPreviewAssets.clear();
+      });
+      changeUI(RecordStatus.end);
+      _notifyPreviewReadyForNext();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_releaseCameraAfterStillShown());
+      });
+    } catch (_) {
+      if (mounted) changeUI(RecordStatus.normal);
+    }
+  }
+
+  Future<void> _releaseCameraAfterStillShown() async {
+    if (!_isInitialized) return;
+    await _cameraSdk.dispose();
+    if (!mounted) return;
+    setState(() {
+      _isInitialized = false;
+      textureId = null;
+    });
   }
 
   Widget backUI(BuildContext contextBtn) {
@@ -402,7 +732,7 @@ class CameraViewState extends State<CameraView> {
           child: Icon(Icons.close, color: Colors.white, size: 26.0.sp),
         );
       case RecordStatus.recording:
-        return Container();
+        return const SizedBox.shrink();
       case RecordStatus.end:
         return GestureDetector(
           onTap: () {
@@ -418,6 +748,10 @@ class CameraViewState extends State<CameraView> {
                       child: InkWell(
                         onTap: () {
                           changeUI(RecordStatus.normal);
+                          _pendingPhotoPath = null;
+                          _pendingPhotoBytes = null;
+                          _pendingVideoPath = null;
+                          _cameraRecordedVideoPreview = false;
                           imagePreviewAssets.clear();
                           videoPreviewAssets.clear();
                           context.pop();
@@ -430,19 +764,8 @@ class CameraViewState extends State<CameraView> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             spacing: 4.0.w,
                             children: [
-                              Icon(
-                                Icons.arrow_back_ios,
-                                size: 26.0.sp,
-                                color: Color.fromRGBO(207, 72, 53, 1),
-                              ),
-                              Text(
-                                '不保存返回',
-                                style: TextStyle(
-                                  color: Color.fromRGBO(207, 72, 53, 1),
-                                  fontSize: 16.0.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              Icon(Icons.arrow_back_ios, size: 26.0.sp, color: Color.fromRGBO(207, 72, 53, 1)),
+                              Text('不保存返回', style: TextStyle(color: Color.fromRGBO(207, 72, 53, 1), fontSize: 16.0.sp, fontWeight: FontWeight.w500)),
                             ],
                           ),
                         ),
@@ -456,31 +779,24 @@ class CameraViewState extends State<CameraView> {
                       child: InkWell(
                         onTap: () {
                           changeUI(RecordStatus.normal);
+                          _pendingPhotoPath = null;
+                          _pendingPhotoBytes = null;
+                          _pendingVideoPath = null;
+                          _cameraRecordedVideoPreview = false;
+                          imagePreviewAssets.clear();
+                          videoPreviewAssets.clear();
                           context.pop();
                         },
                         splashColor: Color.fromRGBO(207, 72, 53, 0.2),
                         highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
                         child: Padding(
-                          padding: EdgeInsetsGeometry.symmetric(
-                            horizontal: 20.w,
-                          ),
+                          padding: EdgeInsetsGeometry.symmetric(horizontal: 20.w),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             spacing: 4.0.w,
                             children: [
-                              Icon(
-                                Icons.save,
-                                size: 26.0.sp,
-                                color: Color.fromRGBO(31, 30, 37, 1),
-                              ),
-                              Text(
-                                '存草稿',
-                                style: TextStyle(
-                                  color: Color.fromRGBO(31, 30, 37, 1),
-                                  fontSize: 16.0.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              Icon(Icons.save, size: 26.0.sp, color: Color.fromRGBO(31, 30, 37, 1)),
+                              Text('存草稿', style: TextStyle(color: Color.fromRGBO(31, 30, 37, 1), fontSize: 16.0.sp, fontWeight: FontWeight.w500)),
                             ],
                           ),
                         ),
@@ -489,7 +805,7 @@ class CameraViewState extends State<CameraView> {
                   ),
                 ],
               ),
-              onPop: () => print('Popover was popped!'),
+              onPop: () {},
               direction: PopoverDirection.bottom,
               backgroundColor: Colors.white,
               width: 180.w,
@@ -505,100 +821,483 @@ class CameraViewState extends State<CameraView> {
     }
   }
 
-  Widget get ButtonUI {
+  Widget get buttonUI {
     switch (widget.cameraSelectedIndex) {
       case 0:
         return recordStatus != RecordStatus.end && !widget.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
-                child: TakePhotoButton(
-                  takePhoto: takePhoto,
-                  recordStatus: recordStatus,
-                ),
+                child: TakePhotoButton(takePhoto: takePhoto, recordStatus: recordStatus),
               )
             : Container();
       default:
         return recordStatus != RecordStatus.end && !widget.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: recordStatus == RecordStatus.recording
-                      ? 12.0.h
-                      : 0.0.h,
-                  children: [
-                    recordStatus == RecordStatus.recording
-                        ? Timekeeping(
-                            recordDuration: widget.recordDuration,
-                            stopRecording: stopRecording,
-                          )
-                        : Container(),
-                    RecordVideoButton(
-                      recordDuration: widget.recordDuration,
-                      startRecording: startRecording,
-                      stopRecording: stopRecording,
-                      recordStatus: recordStatus,
-                    ),
-                  ],
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: recordStatus == RecordStatus.recording ? 12.0.h : 0.0.h,
+                    children: [
+                      recordStatus == RecordStatus.recording
+                          ? Timekeeping(recordDuration: widget.recordDuration, stopRecording: stopRecording)
+                          : Container(),
+                      RecordVideoButton(
+                        recordDuration: widget.recordDuration,
+                        startRecording: startRecording,
+                        stopRecording: stopRecording,
+                        recordStatus: recordStatus,
+                      ),
+                    ],
+                  ),
                 ),
               )
             : Container();
     }
   }
 
-  // 用户选择的图片资产
   List<AssetEntity> imagePreviewAssets = [];
-  // 用户选择的视频资产
   List<AssetEntity> videoPreviewAssets = [];
-  // 控制是否显示预览视图
   bool get isShowPreview =>
-      imagePreviewAssets.isNotEmpty || videoPreviewAssets.isNotEmpty;
+      videoPreviewAssets.isNotEmpty ||
+      (_pendingVideoPath != null && _pendingVideoPath!.isNotEmpty) ||
+      imagePreviewAssets.isNotEmpty ||
+      (_pendingPhotoBytes != null && _pendingPhotoBytes!.isNotEmpty) ||
+      (_pendingPhotoPath != null && _pendingPhotoPath!.isNotEmpty) ||
+      _cameraRecordedVideoPreview;
   Widget get perviewUI {
     if (videoPreviewAssets.isNotEmpty) {
-      return VideoPreview(videoData: videoPreviewAssets.first);
+      return VideoPreview(
+        videoData: videoPreviewAssets.first,
+        onPlaybackReady: _onVideoPreviewPlaybackReady,
+      );
     }
-    if (imagePreviewAssets.isNotEmpty) {
-      return PhotoPreview(assets: imagePreviewAssets);
+    // 本机录像预览：路径未到或解码中时的 loading 均在 [VideoPreview] 内；路径就绪后 [ValueKey] 变化会重新挂载并开始解码。
+    if (widget.cameraSelectedIndex != 0 &&
+        recordStatus == RecordStatus.end &&
+        _cameraRecordedVideoPreview) {
+      return VideoPreview(
+        key: ValueKey(_pendingVideoPath ?? 'waiting'),
+        videoFilePath: _pendingVideoPath,
+        onPlaybackReady: _onVideoPreviewPlaybackReady,
+      );
     }
-    return Container();
+    if (widget.cameraSelectedIndex == 0 &&
+        _pendingPhotoBytes != null &&
+        _pendingPhotoBytes!.isNotEmpty) {
+      return ColoredBox(
+        color: Colors.black,
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final cw = c.maxWidth;
+            final ch = _previewContentHeightOrInfer(cw);
+            return Center(
+              child: SizedBox(
+                width: cw,
+                height: ch,
+                child: KeyedSubtree(
+                  key: ValueKey(_pendingPhotoBytes!.length),
+                  child: _buildAspectCorrectStillMemory(_pendingPhotoBytes!),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+    final pending = _pendingPhotoPath;
+    if (pending != null && pending.isNotEmpty) {
+      // 与 live 同一 content 槽；仍图 [SizedBox] 用 readPixels 真实像素宽高（非 Texture 的 pw×ph），避免朝向差 90°。
+      return ColoredBox(
+        color: Colors.black,
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final cw = c.maxWidth;
+            final ch = _previewContentHeightOrInfer(cw);
+            return Center(
+              child: SizedBox(
+                width: cw,
+                height: ch,
+                child: KeyedSubtree(
+                  key: ValueKey(pending),
+                  child: _buildAspectCorrectStillFile(File(pending)),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+    if (imagePreviewAssets.isNotEmpty) return PhotoPreview(assets: imagePreviewAssets);
+    return const SizedBox.shrink();
   }
 
-  // 打开音乐选择mini sheet
+  Future<void> _pickFromAlbum() async {
+    if (!_photoPermissionGranted) {
+      await getLatestPhoto();
+      return;
+    }
+
+    final isPhotoMode = widget.cameraSelectedIndex == 0;
+    final assets = await AssetPicker.pickAssets(
+      context,
+      pickerConfig: AssetPickerConfig(
+        requestType: isPhotoMode ? RequestType.image : RequestType.video,
+        maxAssets: isPhotoMode ? 20 : 1,
+        textDelegate: MyAssetPickerTextDelegate(),
+      ),
+    );
+    if (!mounted || assets == null) return;
+
+    setState(() {
+      _pendingPhotoPath = null;
+      _pendingPhotoBytes = null;
+      _pendingVideoPath = null;
+      _cameraRecordedVideoPreview = false;
+      _videoPlaybackReady = false;
+      if (isPhotoMode) {
+        imagePreviewAssets = assets;
+        videoPreviewAssets.clear();
+      } else {
+        videoPreviewAssets = assets;
+        imagePreviewAssets.clear();
+      }
+    });
+    changeUI(RecordStatus.end);
+  }
+
   void openMiniMusicSheet() {
     SheetUtils(MiniMusicSheetSkeleton()).openAsyncSheet(context: context);
   }
 
-  // 倒计时完成后回调
   void onCountdownFinished() {
     widget.onCountdownFinished();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Stack(
-        children: [
-          // 视频流预览
-          Positioned.fill(
-            child: _isInitialized && isCompleteAllow && !isShowPreview
-                ? CameraPreview(_cameraController!)
-                : Container(),
-          ),
-          // 倒计时
-          widget.isStartCountDown
-              ? Positioned.fill(
-                  child: CountdownShow(
-                    countdown: widget.countdown,
-                    onCountdownFinished: onCountdownFinished,
+  void dispose() {
+    _cameraRestartAfterAspectTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraSdk.setFrontFlashListener(null);
+    PixelfreeCameraPlugin.releaseCamera();
+    super.dispose();
+  }
+
+  /// 仍图与 [_buildAspectCorrectPreview] 同一套 [FittedBox]/fitWidth + 归一化 pw×ph，与 GL 全屏 readPixels 一致。
+  Widget _buildAspectCorrectStillFile(File file) {
+    final rawW = _nativeBufferW;
+    final rawH = _nativeBufferH;
+    if (rawW != null && rawH != null && rawW > 0 && rawH > 0) {
+      var pw = rawW;
+      var ph = rawH;
+      if (pw > ph) {
+        final t = pw;
+        pw = ph;
+        ph = t;
+      }
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (!constraints.hasBoundedWidth ||
+              !constraints.hasBoundedHeight ||
+              constraints.maxWidth <= 0 ||
+              constraints.maxHeight <= 0) {
+            return ColoredBox(
+              color: Colors.black,
+              child: SizedBox.expand(
+                child: Image.file(
+                  file,
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            );
+          }
+          return ColoredBox(
+            color: Colors.black,
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: pw,
+                  height: ph,
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.fill,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.high,
                   ),
-                )
-              : Container(),
-          // 网格
-          widget.settingSheetType.grid
-              ? Positioned.fill(child: CameraGridOverlay())
-              : Container(),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    final ar = _currentRatio == CameraRatio.ratio3x4 ? 3 / 4 : 9 / 16;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth ||
+            !constraints.hasBoundedHeight ||
+            constraints.maxWidth <= 0 ||
+            constraints.maxHeight <= 0) {
+          return ColoredBox(
+            color: Colors.black,
+            child: SizedBox.expand(
+              child: Image.file(
+                file,
+                fit: BoxFit.fill,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+          );
+        }
+        return ColoredBox(
+          color: Colors.black,
+          child: ClipRect(
+            child: FittedBox(
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.center,
+              child: AspectRatio(
+                aspectRatio: ar,
+                child: Image.file(
+                  file,
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 与 [_buildAspectCorrectStillFile] 相同布局，数据源为内存 JPEG。
+  Widget _buildAspectCorrectStillMemory(Uint8List bytes) {
+    final rawW = _nativeBufferW;
+    final rawH = _nativeBufferH;
+    if (rawW != null && rawH != null && rawW > 0 && rawH > 0) {
+      var pw = rawW;
+      var ph = rawH;
+      if (pw > ph) {
+        final t = pw;
+        pw = ph;
+        ph = t;
+      }
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (!constraints.hasBoundedWidth ||
+              !constraints.hasBoundedHeight ||
+              constraints.maxWidth <= 0 ||
+              constraints.maxHeight <= 0) {
+            return ColoredBox(
+              color: Colors.black,
+              child: SizedBox.expand(
+                child: Image.memory(
+                  bytes,
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            );
+          }
+          return ColoredBox(
+            color: Colors.black,
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: pw,
+                  height: ph,
+                  child: Image.memory(
+                    bytes,
+                    fit: BoxFit.fill,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    final ar = _currentRatio == CameraRatio.ratio3x4 ? 3 / 4 : 9 / 16;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth ||
+            !constraints.hasBoundedHeight ||
+            constraints.maxWidth <= 0 ||
+            constraints.maxHeight <= 0) {
+          return ColoredBox(
+            color: Colors.black,
+            child: SizedBox.expand(
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.fill,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+          );
+        }
+        return ColoredBox(
+          color: Colors.black,
+          child: ClipRect(
+            child: FittedBox(
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.center,
+              child: AspectRatio(
+                aspectRatio: ar,
+                child: Image.memory(
+                  bytes,
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 宽铺满父约束（= 屏宽），纵向按比例缩放；[BoxFit.fitWidth] 避免出现左右黑边，多余只在上下 [ClipRect] 裁切。
+  /// 外层 Create 页已负责上下黑边与 9:16 / 3:4 槽位。
+  Widget _buildAspectCorrectPreview(int tid) {
+    final rawW = _nativeBufferW;
+    final rawH = _nativeBufferH;
+    if (rawW != null && rawH != null && rawW > 0 && rawH > 0) {
+      var pw = rawW;
+      var ph = rawH;
+      if (pw > ph) {
+        final t = pw;
+        pw = ph;
+        ph = t;
+      }
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (!constraints.hasBoundedWidth ||
+              !constraints.hasBoundedHeight ||
+              constraints.maxWidth <= 0 ||
+              constraints.maxHeight <= 0) {
+            return ColoredBox(
+              color: Colors.black,
+              child: SizedBox.expand(
+                child: Texture(textureId: tid, filterQuality: FilterQuality.high),
+              ),
+            );
+          }
+          return ColoredBox(
+            color: Colors.black,
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: pw,
+                  height: ph,
+                  child: Texture(textureId: tid, filterQuality: FilterQuality.high),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    final ar = _currentRatio == CameraRatio.ratio3x4 ? 3 / 4 : 9 / 16;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth ||
+            !constraints.hasBoundedHeight ||
+            constraints.maxWidth <= 0 ||
+            constraints.maxHeight <= 0) {
+          return ColoredBox(
+            color: Colors.black,
+            child: SizedBox.expand(
+              child: Texture(textureId: tid, filterQuality: FilterQuality.high),
+            ),
+          );
+        }
+        return ColoredBox(
+          color: Colors.black,
+          child: ClipRect(
+            child: FittedBox(
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.center,
+              child: AspectRatio(
+                aspectRatio: ar,
+                child: Texture(textureId: tid, filterQuality: FilterQuality.high),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _layoutViewportW = constraints.maxWidth;
+        final canLayout = constraints.hasBoundedWidth &&
+            constraints.hasBoundedHeight &&
+            constraints.maxWidth > 0 &&
+            constraints.maxHeight > 0;
+        if (isCompleteAllow &&
+            recordStatus == RecordStatus.normal &&
+            !_isInitialized &&
+            !_isRestartingCamera &&
+            !_cameraOpenScheduled &&
+            canLayout) {
+          _cameraOpenScheduled = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            _cameraOpenScheduled = false;
+            if (!mounted || _isInitialized || _isRestartingCamera || recordStatus != RecordStatus.normal) return;
+            await _restartCamera(forceDispose: false);
+          });
+        }
+        final contentH = _previewContentHeightOrInfer(constraints.maxWidth);
+        return Container(
+          child: Stack(
+        children: [
+          Positioned.fill(
+            child: ColoredBox(
+              color: Colors.black,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeInOutCubic,
+                  width: constraints.maxWidth,
+                  height: contentH,
+                  child: _isInitialized && isCompleteAllow && !isShowPreview && textureId != null
+                      ? _buildAspectCorrectPreview(textureId!)
+                      : const ColoredBox(color: Colors.black),
+                ),
+              ),
+            ),
+          ),
+          widget.isStartCountDown ? Positioned.fill(child: CountdownShow(countdown: widget.countdown, onCountdownFinished: onCountdownFinished)) : Container(),
+          widget.settingSheetType.grid ? Positioned.fill(child: CameraGridOverlay()) : Container(),
           Positioned.fill(child: perviewUI),
-          // 选择音乐
+          if (_frontScreenFlashOverlay)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: Colors.white.withValues(alpha: _frontFlashAlpha.clamp(0.0, 1.0)),
+                ),
+              ),
+            ),
           recordStatus != RecordStatus.recording
               ? Positioned(
                   top: widget.topVal,
@@ -612,32 +1311,14 @@ class CameraViewState extends State<CameraView> {
                           openMiniMusicSheet();
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10.0.h,
-                            horizontal: 12.0.w,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0.r),
-                            color: Colors.black.withOpacity(0.4),
-                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.0.h, horizontal: 14.0.w),
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8.0.r), color: Colors.black.withValues(alpha: 0.4)),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             spacing: 2.0.w,
                             children: [
-                              Icon(
-                                Icons.music_note,
-                                color: Colors.white,
-                                size: 20.0.sp,
-                              ),
-                              Text(
-                                '选择音乐',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              Icon(Icons.music_note, color: Colors.white, size: 20.0.sp),
+                              Text('选择音乐', style: TextStyle(color: Colors.white, fontSize: 14.0.sp, decoration: TextDecoration.none, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -646,7 +1327,6 @@ class CameraViewState extends State<CameraView> {
                   ),
                 )
               : Container(),
-          // 侧边操作栏
           recordStatus != RecordStatus.end
               ? Positioned(
                   right: 0.w,
@@ -668,8 +1348,11 @@ class CameraViewState extends State<CameraView> {
                     onSettingChanged: widget.openSettingSheet,
                     onBeautyChanged: openBeautyfiterSheet,
                     onFilterChanged: openFiterSheet,
-                    onRotateChanged: () {
-                      print('旋转');
+                    onRotateChanged: () async {
+                      _cameraPosition = _cameraPosition == CameraPosition.front
+                          ? CameraPosition.back
+                          : CameraPosition.front;
+                      await _restartCamera();
                     },
                     speedMode: widget.speedMode,
                     onSpeedModeChanged: (mode) {
@@ -687,7 +1370,6 @@ class CameraViewState extends State<CameraView> {
                   ),
                 )
               : Container(),
-          // 底部操作栏
           Positioned(
             bottom: 20.0.h,
             left: 0,
@@ -707,7 +1389,7 @@ class CameraViewState extends State<CameraView> {
                               SelectDots(
                                 width: MediaQuery.of(context).size.width * 0.7,
                                 height: 40.h,
-                                bgColor: Colors.black.withOpacity(0.3),
+                                bgColor: Colors.black.withValues(alpha: 0.3),
                                 labels: widget.speedOptions,
                                 selectedIndex: widget.speedSelectedIndex,
                                 onChanged: widget.onSpeedSelectedIndexChanged,
@@ -717,24 +1399,14 @@ class CameraViewState extends State<CameraView> {
                           ),
                         )
                       : Container(),
-
                   recordStatus == RecordStatus.normal
                       ? AutoCenterScrollTabBar(
                           itemSpacing: 20.0.w,
-                          highlightHeight: 22.0.h,
+                          highlightHeight: 30.0.h,
                           highlightColor: Colors.white,
-                          itemPadding: EdgeInsets.symmetric(horizontal: 2.0.w),
-                          activeStyle: TextStyle(
-                            fontSize: 14.0.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                          inactiveStyle: TextStyle(
-                            fontSize: 14.0.sp,
-                            color: Colors.white,
-                            decoration: TextDecoration.none,
-                          ),
+                          itemPadding: EdgeInsets.symmetric(horizontal: 2.0.w,vertical: 4.0.h),
+                          activeStyle: TextStyle(fontSize: 15.0.sp, fontWeight: FontWeight.bold, color: Colors.black, decoration: TextDecoration.none),
+                          inactiveStyle: TextStyle(fontSize: 15.0.sp, color: Colors.white, decoration: TextDecoration.none),
                           initialIndex: widget.cameraSelectedIndex,
                           tabs: widget.cameraOptions,
                           onChanged: widget.onInSelectedIndexChanged,
@@ -742,136 +1414,94 @@ class CameraViewState extends State<CameraView> {
                       : Container(),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40.0.w),
-                    child: Stack(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Builder(
+                      builder: (context) {
+                        // 与特效同一套尺寸；相册占位也用 Font Awesome，避免与 Material Icon 混用导致同数值却视觉大小不一。
+                        final sideW = 50.0.w * _kBottomSideIconScale - 4.0.w;
+                        final sideH = 50.0.h * _kBottomSideIconScale - 4.0.w;
+                        final iconSize = sideW * _kBottomIconInTileRatio;
+                        // 三等分列 + 垂直居中：左右槽与中间拍照/录制在同一行对齐，避免 Stack 叠放时仅按整列高度居中导致与圆钮错位。
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            recordStatus == RecordStatus.normal
-                                ? GestureDetector(
-                                    onTap: () {
-                                      openStickerSheet();
-                                    },
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      spacing: 4.0.h,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8.0.r,
-                                          ),
-                                          child: selectedStickerIndex != -1
-                                              ? Image.asset(
-                                                  stickerOptions[selectedStickerIndex]
-                                                      .icon,
-                                                  fit: BoxFit.cover,
-                                                  width: 50.0.w,
-                                                  height: 50.0.h,
-                                                )
-                                              : Icon(
-                                                  FontAwesomeIcons.pagelines,
-                                                  color: Colors.white,
-                                                  size: 50.0.w,
-                                                ),
-                                        ),
-                                        Text(
-                                          '特效',
-                                          style: TextStyle(
-                                            fontSize: 14.0.sp,
-                                            color: Colors.white,
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : Container(),
-
-                            recordStatus == RecordStatus.normal
-                                ? GestureDetector(
-                                    onTap: () async {
-                                      if (_photoPermissionGranted) {
-                                        if (widget.cameraSelectedIndex == 0) {
-                                          // 打开图片选择器
-                                          final List<AssetEntity>?
-                                          assets = await AssetPicker.pickAssets(
-                                            context,
-                                            pickerConfig: AssetPickerConfig(
-                                              requestType: RequestType.image,
-                                              maxAssets: 20,
-                                              textDelegate:
-                                                  MyAssetPickerTextDelegate(),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: recordStatus == RecordStatus.normal
+                                    ? GestureDetector(
+                                        onTap: openStickerSheet,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          spacing: 4.0.h,
+                                          children: [
+                                            Container(
+                                              width: sideW,
+                                              height: sideH,
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.35),
+                                                borderRadius: BorderRadius.circular(8.0.r),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.auto_awesome,
+                                                color: Colors.white,
+                                                size: iconSize,
+                                              ),
                                             ),
-                                          );
-                                          if (assets != null) {
-                                            // 处理选中的图片资产
-                                            setState(() {
-                                              imagePreviewAssets = assets;
-                                            });
-                                            changeUI(RecordStatus.end);
-                                          }
-                                        }
-                                        if (widget.cameraSelectedIndex == 1) {
-                                          // 打开视频选择器
-                                          final List<AssetEntity>?
-                                          assets = await AssetPicker.pickAssets(
-                                            context,
-                                            pickerConfig: AssetPickerConfig(
-                                              requestType: RequestType.video,
-                                              maxAssets: 1,
-                                              textDelegate:
-                                                  MyAssetPickerTextDelegate(),
+                                            Text('特效', style: TextStyle(fontSize: 14.0.sp, color: Colors.white, decoration: TextDecoration.none)),
+                                          ],
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ),
+                            Expanded(
+                              child: Center(child: buttonUI),
+                            ),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: recordStatus == RecordStatus.normal
+                                    ? GestureDetector(
+                                        onTap: _pickFromAlbum,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          spacing: 4.0.h,
+                                          children: [
+                                            Container(
+                                              width: sideW,
+                                              height: sideH,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(8.0.r),
+                                                color: _photoPermissionGranted && latestImage != null
+                                                    ? Colors.transparent
+                                                    : Colors.black.withValues(alpha: 0.35),
+                                              ),
+                                              clipBehavior: Clip.antiAlias,
+                                              alignment: Alignment.center,
+                                              child: _photoPermissionGranted && latestImage != null
+                                                  ? Image.file(
+                                                      latestImage!,
+                                                      width: sideW,
+                                                      height: sideH,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : Icon(
+                                                      FontAwesomeIcons.images,
+                                                      color: Colors.white,
+                                                      size: iconSize,
+                                                    ),
                                             ),
-                                          );
-                                          if (assets != null) {
-                                            // 处理选中的视频资产
-                                            setState(() {
-                                              videoPreviewAssets = assets;
-                                            });
-                                            changeUI(RecordStatus.end);
-                                          }
-                                        }
-                                      } else {
-                                        await getLatestPhoto();
-                                      }
-                                    },
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      spacing: 4.0.h,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8.0.r,
-                                          ),
-                                          child: _photoPermissionGranted
-                                              ? Image.file(
-                                                  latestImage!,
-                                                  width: 50.0.w,
-                                                  height: 50.0.h,
-                                                )
-                                              : Icon(
-                                                  Icons.photo_library,
-                                                  size: 50.0.w,
-                                                  color: Colors.white,
-                                                ),
+                                            Text('相册', style: TextStyle(fontSize: 14.0.sp, color: Colors.white, decoration: TextDecoration.none)),
+                                          ],
                                         ),
-                                        Text(
-                                          '相册',
-                                          style: TextStyle(
-                                            fontSize: 14.0.sp,
-                                            color: Colors.white,
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : Container(),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ),
                           ],
-                        ),
-                        ButtonUI,
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -882,29 +1512,14 @@ class CameraViewState extends State<CameraView> {
               ? Positioned.fill(
                   child: Container(
                     alignment: Alignment.center,
-                    color: Colors.black.withOpacity(0.9),
+                    color: Colors.black.withValues(alpha: 0.9),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '在絮语APP拍摄',
-                          style: TextStyle(
-                            fontSize: 22.0.sp,
-                            color: Colors.white,
-                            decoration: TextDecoration.none,
-                            letterSpacing: 2.0.w,
-                          ),
-                        ),
+                        Text('在絮语APP拍摄', style: TextStyle(fontSize: 22.0.sp, color: Colors.white, decoration: TextDecoration.none, letterSpacing: 2.0.w)),
                         SizedBox(height: 6.0.h),
-                        Text(
-                          '开启以下权限即可进入拍摄',
-                          style: TextStyle(
-                            fontSize: 13.0.sp,
-                            color: Colors.grey,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
+                        Text('开启以下权限即可进入拍摄', style: TextStyle(fontSize: 13.0.sp, color: Colors.grey, decoration: TextDecoration.none)),
                         SizedBox(height: 20.0.h),
                         Column(
                           spacing: 20.0.h,
@@ -912,92 +1527,47 @@ class CameraViewState extends State<CameraView> {
                           children: [
                             _cameraPermissionStatus != PermissionStatus.granted
                                 ? SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.6,
+                                    width: MediaQuery.of(context).size.width * 0.6,
                                     height: 50.0.h,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color.fromRGBO(
-                                          41,
-                                          41,
-                                          41,
-                                          1,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.0.r,
-                                          ),
-                                        ),
+                                        backgroundColor: Color.fromRGBO(41, 41, 41, 1),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0.r)),
                                       ),
                                       onPressed: () {
                                         openAppSettings();
                                       },
                                       child: Row(
                                         spacing: 8.0.w,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(
-                                            Icons.camera_alt,
-                                            color: Colors.white,
-                                            size: 24.0.sp,
-                                          ),
+                                          Icon(Icons.camera_alt, color: Colors.white, size: 24.0.sp),
                                           SizedBox(width: 8.0.w),
-                                          Text(
-                                            '开启相机',
-                                            style: TextStyle(
-                                              fontSize: 14.0.sp,
-                                              color: Colors.white,
-                                              decoration: TextDecoration.none,
-                                            ),
-                                          ),
+                                          Text('开启相机', style: TextStyle(fontSize: 14.0.sp, color: Colors.white, decoration: TextDecoration.none)),
                                         ],
                                       ),
                                     ),
                                   )
                                 : Container(),
-                            _microphonePermissionStatus !=
-                                    PermissionStatus.granted
+                            _microphonePermissionStatus != PermissionStatus.granted
                                 ? SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.6,
+                                    width: MediaQuery.of(context).size.width * 0.6,
                                     height: 50.0.h,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color.fromRGBO(
-                                          41,
-                                          41,
-                                          41,
-                                          1,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.0.r,
-                                          ),
-                                        ),
+                                        backgroundColor: Color.fromRGBO(41, 41, 41, 1),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0.r)),
                                       ),
                                       onPressed: () {
                                         openAppSettings();
                                       },
                                       child: Row(
                                         spacing: 8.0.w,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(
-                                            Icons.mic,
-                                            color: Colors.white,
-                                            size: 24.0.sp,
-                                          ),
+                                          Icon(Icons.mic, color: Colors.white, size: 24.0.sp),
                                           SizedBox(width: 8.0.w),
-                                          Text(
-                                            '开启麦克风',
-                                            style: TextStyle(
-                                              fontSize: 14.0.sp,
-                                              color: Colors.white,
-                                              decoration: TextDecoration.none,
-                                            ),
-                                          ),
+                                          Text('开启麦克风', style: TextStyle(fontSize: 14.0.sp, color: Colors.white, decoration: TextDecoration.none)),
                                         ],
                                       ),
                                     ),
@@ -1010,29 +1580,13 @@ class CameraViewState extends State<CameraView> {
                   ),
                 )
               : Container(),
-          Positioned.fill(
-            child: !_isInitialized && isCompleteAllow
-                ? Container(
-                    color: Colors.black.withOpacity(0.9),
-                    child: FetchLoadingView(),
-                  )
-                : Container(),
-          ),
-          // 返回按钮
-          Positioned(
-            left: 20.0.w,
-            top: widget.topVal,
-            child: Builder(
-              builder: (btnContext) {
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 10.0.h),
-                  child: backUI(btnContext), // ⭐ 这里传按钮自己的 context
-                );
-              },
-            ),
-          ),
+          !_isInitialized && isCompleteAllow && !_hasEverInitializedCamera
+              ? const FetchLoadingView()
+              : Container(),
         ],
       ),
+        );
+      },
     );
   }
 }

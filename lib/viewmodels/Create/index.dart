@@ -1,7 +1,27 @@
 // 枚举闪光灯状态
-import 'package:pixelfree/pixelfree_platform_interface.dart';
-
 enum FlashStatus { on, off, auto }
+
+enum PFBeautyFiterType {
+  faceWhitenStrength,
+  faceRuddyStrength,
+  faceBlurStrength,
+  faceEyeBrighten,
+  faceSharpenStrength,
+  eyeStrength,
+  faceThinning,
+  faceNarrow,
+  faceChin,
+  faceV,
+  faceNoseBridge,
+  faceForehead,
+  faceMouth,
+  facePhiltrum,
+  faceLongNose,
+  faceEyeSpace,
+  faceSmile,
+  faceCanthus,
+  portraitBackgroundBlur,
+}
 
 // 枚举拍摄时长
 enum RecordDuration {
@@ -57,18 +77,29 @@ class BeautyItem {
   });
 }
 
-// 贴纸选项类型
+// 贴纸选项类型（name 为原生 AR 管线 id；label 为界面展示文案）
 class StickerItem {
-  final String name; // 显示名称
-  final String bundleName; // bundle文件名
-  final String icon; // 本地icon路径
-  final int type; // 固定3
+  final String name;
+  final String bundleName;
+  final String icon;
+  /// 若为空则 UI 使用 [name]
+  final String? label;
+  final int type;
+  final String anchorType;
+  final double scale;
+  final double offsetX;
+  final double offsetY;
 
   StickerItem({
     required this.name,
     required this.bundleName,
     required this.icon,
+    this.label,
     this.type = 3,
+    this.anchorType = 'face',
+    this.scale = 1.0,
+    this.offsetX = 0.0,
+    this.offsetY = 0.0,
   });
 }
 

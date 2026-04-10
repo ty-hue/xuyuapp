@@ -1,68 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class CoverWithLoading extends StatefulWidget {
+/// 贴纸/特效缩略图：支持 asset 图、空路径时的占位图标、选中描边与加载遮罩。
+class CoverWithLoading extends StatelessWidget {
   final bool isLoading;
-  final double borderRadius;
-  final Color activeBorderColor;
-  final double borderWidth;
-  final Color borderColor;
-  final String imagePath;
   final bool isActive;
-  CoverWithLoading({
-    Key? key,
+  final String imagePath;
+  /// [imagePath] 为空时用于选择占位图标（如 [StickerItem.name]）。
+  final String name;
+
+  const CoverWithLoading({
+    super.key,
     required this.isLoading,
     required this.isActive,
-    this.borderRadius = 8.0,
-    this.activeBorderColor = Colors.white,
-    this.borderWidth = 2.0,
-    this.borderColor = Colors.transparent,
     required this.imagePath,
-  }) : super(key: key);
+    this.name = '',
+  });
 
-  @override
-  _CoverWithLoadingState createState() => _CoverWithLoadingState();
-}
-
-class _CoverWithLoadingState extends State<CoverWithLoading> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.borderRadius.r),
-        border: Border.all(
-          color: widget.isActive
-              ? widget.activeBorderColor
-              : widget.borderColor,
-          width: widget.borderWidth.w,
+    final thumbRadius = 16.0.r;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: const Color.fromRGBO(58, 57, 58, 1),
+            borderRadius: BorderRadius.circular(thumbRadius),
+            border: isActive
+                ? Border.all(color: Colors.white, width: 2.w)
+                : null,
+          ),
+          clipBehavior: Clip.antiAlias,
+          alignment: Alignment.center,
+          child: imagePath.isNotEmpty
+              ? Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _fallbackIcon(),
+                )
+              : _fallbackIcon(),
         ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius.r),
-        child: Stack(
-          children: [
-            AnimatedScale(
-              scale: widget.isLoading && widget.isActive ? 1.2 : 1.0,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: Image.asset(widget.imagePath, fit: BoxFit.cover),
+        if (isLoading)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(thumbRadius),
+              ),
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 24.w,
+                height: 24.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            widget.isActive && widget.isLoading
-                ? Positioned.fill(
-                    child: Container(
-                      color: Colors.transparent,
-                      child: CircularProgressIndicator(
-                        padding: EdgeInsets.all(10.0.w),
-                        value: null,
-                        color: Colors.white,
-                        strokeWidth: 2.0.w,
-                      ),
-                    ),
-                  )
-                : SizedBox.shrink(),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
+  }
+
+  Widget _fallbackIcon() {
+    return name == 'none'
+        ? Icon(
+            FontAwesomeIcons.ban,
+            color: const Color.fromRGBO(143, 141, 142, 1),
+            size: 32.0.sp,
+          )
+        : Icon(
+            Icons.view_in_ar,
+            color: const Color.fromRGBO(0, 200, 255, 1),
+            size: 32.0.sp,
+          );
   }
 }

@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+/// 特效（AR）选择 bottom sheet。
 class StickerSheetSekeleton extends StatefulWidget {
   final String title;
   final List<StickerItem> stickerItems;
   final Future<void> Function(int index) onSelectedIndexChanged;
   final int initSelectedIndex;
   final VoidCallback resetStickerIndex;
+
   StickerSheetSekeleton({
     Key? key,
     required this.title,
@@ -25,12 +27,20 @@ class StickerSheetSekeleton extends StatefulWidget {
 }
 
 class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
-  late int selectedIndex = 0;
-  bool isStickerCoverLoading = false;
+  late int selectedIndex;
+  int? loadingIndex;
+
   @override
   void initState() {
     super.initState();
-    selectedIndex = widget.initSelectedIndex;
+    final init = widget.initSelectedIndex;
+    if (init < 0) {
+      selectedIndex = -1;
+    } else if (init >= widget.stickerItems.length) {
+      selectedIndex = 0;
+    } else {
+      selectedIndex = init;
+    }
   }
 
   @override
@@ -38,7 +48,7 @@ class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
     return ClipRRect(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),
       child: Container(
-        color: Color.fromRGBO(1, 1, 1, 0.8),
+        color: const Color.fromRGBO(1, 1, 1, 0.8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           spacing: 10.0.h,
@@ -46,7 +56,7 @@ class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
             Container(
               width: double.infinity,
               height: 50.0.h,
-              color: Color.fromRGBO(1, 1, 1, 0.5),
+              color: const Color.fromRGBO(1, 1, 1, 0.5),
               child: Stack(
                 children: [
                   Align(
@@ -69,7 +79,7 @@ class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
                           selectedIndex = -1;
                         });
                       },
-                      child: Icon(FontAwesomeIcons.ban, color: Colors.white),
+                      child: const Icon(FontAwesomeIcons.ban, color: Colors.white),
                     ),
                   ),
                 ],
@@ -77,33 +87,37 @@ class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
             ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.0.w),
-              height: 200.0.h,
+              height: 210.0.h,
               child: GridView.builder(
+                physics: const ClampingScrollPhysics(),
                 itemCount: widget.stickerItems.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 5,
                   mainAxisSpacing: 16.0.h,
                   crossAxisSpacing: 16.0.w,
+                  childAspectRatio: 0.62,
                 ),
                 itemBuilder: (context, index) {
+                  final item = widget.stickerItems[index];
+                  final label = item.label ?? item.name;
                   return GestureDetector(
-                    onTap: () async{
+                    onTap: () async {
                       if (selectedIndex == index) {
                         setState(() {
                           selectedIndex = -1;
                         });
-                        widget.onSelectedIndexChanged(-1);
+                        await widget.onSelectedIndexChanged(-1);
                       } else {
                         setState(() {
                           selectedIndex = index;
+                          loadingIndex = index;
                         });
-                        setState(() {
-                          isStickerCoverLoading = true;
-                        });
-                       await widget.onSelectedIndexChanged(index);
-                       setState(() {
-                        isStickerCoverLoading = false;
-                       });
+                        await widget.onSelectedIndexChanged(index);
+                        if (mounted) {
+                          setState(() {
+                            loadingIndex = null;
+                          });
+                        }
                       }
                     },
                     child: Column(
@@ -111,14 +125,21 @@ class _StickerSheetSekeletonState extends State<StickerSheetSekeleton> {
                       children: [
                         Expanded(
                           child: CoverWithLoading(
-                            isLoading: isStickerCoverLoading,
+                            isLoading: loadingIndex == index,
                             isActive: selectedIndex == index,
-                            imagePath: widget.stickerItems[index].icon,
+                            imagePath: item.icon,
+                            name: item.name,
                           ),
                         ),
-                        TextAutoScroll(
-                          isActive: selectedIndex == index,
-                          text: widget.stickerItems[index].name,
+                        SizedBox(
+                          height: 36.h,
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: TextAutoScroll(
+                              isActive: selectedIndex == index,
+                              text: label,
+                            ),
+                          ),
                         ),
                       ],
                     ),

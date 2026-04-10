@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:bilbili_project/components/loading.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -77,7 +78,7 @@ class _PhotoPreviewState extends State<PhotoPreview> {
         // 1. 轮播图区域：兼容未加载完成的情况
         Positioned.fill(
           child: isLoading 
-              ? const Center(child: CircularProgressIndicator()) // 加载中占位
+              ? const Center(child: FetchLoadingView()) // 加载中占位
               : CarouselSlider(
                   carouselController: _controller,
                   items: images,
