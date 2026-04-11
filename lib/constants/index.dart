@@ -8,7 +8,7 @@ class GlobalConstants {
   static const String TOKEN_KEY = 'csclyf_xuyuapp_token'; // 本地存储的token的key
   static const String MINE_SEARCH_HISTORY_KEY =
       'csclyf_xuyuapp_mine_search_history'; // 本地存储的搜索历史的key
-   static const String MUSIC_SEARCH_HISTORY_KEY =
+  static const String MUSIC_SEARCH_HISTORY_KEY =
       'csclyf_xuyuapp_music_search_history'; // 本地存储的搜索历史的key
 }
 
@@ -21,6 +21,20 @@ class HttpConstants {
       '/api/report/getFirstReportLevels';
   static const String GET_SECOND_REPORT_TYPE_LIST =
       '/api/report/getSecondReportLevelsByFirstCode';
+  static const String GET_AGREEMENT = '/api/agreement/getByType';
+}
+
+/// 协议类型（与后端 `getByType` 等约定一致时请改成真实 type 值）
+enum AgreementType {
+  privacyPolicy(0),
+  userAgreement(1),
+  permissionDescription(2),
+  declaration(3);
+
+  const AgreementType(this.typeCode);
+
+  /// 接口侧协议类型数值
+  final int typeCode;
 }
 
 // 搜索状态
@@ -249,12 +263,7 @@ List<StickerItem> createStickerList() {
       icon: '',
       label: '3D脸部点(线框)',
     ),
-    StickerItem(
-      name: 'glasses_3d',
-      bundleName: '',
-      icon: '',
-      label: '3D眼镜',
-    ),
+    StickerItem(name: 'glasses_3d', bundleName: '', icon: '', label: '3D眼镜'),
   ];
 }
 
