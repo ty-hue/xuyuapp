@@ -2,6 +2,7 @@ import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Message/comps/contacts_list.dart';
 import 'package:bilbili_project/pages/Message/comps/frequent_contacts.dart';
+import 'package:bilbili_project/pages/Message/comps/search_view.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/PopoverUtils.dart';
 import 'package:flutter/material.dart';
@@ -16,11 +17,26 @@ class MessagePage extends StatefulWidget {
 }
 
 class _MessagePageState extends State<MessagePage> {
+  bool isSearch = false;
+  // 点击搜索按钮
+  void _onSearch() {
+    setState(() {
+      isSearch = true;
+    });
+  }
+  // 取消搜索
+  void cancelSearch(){
+    setState(() {
+      isSearch = false;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return WithStatusbarColorView(
       statusBarColor: Colors.transparent,
-      child: Scaffold(
+      child: Stack(
+        children: [
+          Scaffold(
         appBar: StaticAppBar(
           backgroundColor: Colors.white,
           statusBarHeight: MediaQuery.of(context).padding.top,
@@ -33,7 +49,9 @@ class _MessagePageState extends State<MessagePage> {
               icon: FontAwesomeIcons.search,
               size: 22.sp,
               color: Colors.black,
-              onPressed: () {},
+              onPressed: () {
+                _onSearch();
+              },
             ),
 
             Builder(
@@ -101,6 +119,7 @@ class _MessagePageState extends State<MessagePage> {
                               child: InkWell(
                                 onTap: () {
                                   AddFriendRoute().push(context);
+                                  Navigator.pop(context);
                                 },
                                 splashColor: Color.fromRGBO(207, 72, 53, 0.2),
                                 highlightColor: Color.fromRGBO(
@@ -166,6 +185,10 @@ class _MessagePageState extends State<MessagePage> {
           ),
         ),
       ),
+      if(isSearch)
+        Positioned.fill(child: SearchView(cancelSearch: cancelSearch))
+        ],
+      )
     );
   }
 }

@@ -80,6 +80,11 @@ class _PasswordInputViewState extends State<CustomInputView> {
         contentPadding:
             widget.contentPadding ??
             EdgeInsets.only(left: 20.w, top: 14.h, bottom: 14.h),
+        // 默认 min 48×48 会让前缀图标单独占一块高于文字行的区域，与 hint/正文难垂直对齐
+        prefixIconConstraints: BoxConstraints(
+          minWidth: 36.w,
+          minHeight: 0,
+        ),
         suffixIcon: widget.controller.text.isNotEmpty
             ? Padding(
                 padding: EdgeInsets.only(right: 20.w),
@@ -105,11 +110,15 @@ class _PasswordInputViewState extends State<CustomInputView> {
         suffixIconConstraints:
             widget.constraints ??
             BoxConstraints(minWidth: 40.0.w, minHeight: 40.0.h),
-        prefixIcon: widget.prefixIcon ?? Icon(
-            Icons.search, // 搜索图标
-            size: 20.0.sp, // 设置图标大小
-            color: Colors.grey, // 设置图标颜色
-          ),
+        prefixIcon: widget.prefixIcon ??
+            Padding(
+              padding: EdgeInsets.only(left: 12.w, right: 4.w),
+              child: Icon(
+                Icons.search,
+                size: 20.sp,
+                color: Colors.grey,
+              ),
+            ),
         
       ),
     );

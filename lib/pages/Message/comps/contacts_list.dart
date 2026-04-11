@@ -202,115 +202,134 @@ class _ContactRowContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90.h,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 65.0.w,
-            height: 65.0.h,
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(243, 243, 244, 1),
-              shape: BoxShape.circle,
-            ),
-            child: !data.interaction
-                ? CircleAvatar(backgroundImage: NetworkImage(data.avatarUrl))
-                : Center(
-                    child: Icon(
-                      FontAwesomeIcons.heartbeat,
-                      size: 24.sp,
-                      color: Colors.red,
-                    ),
-                  ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {},
-              child: Container(
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () {},
+        splashColor: Colors.black.withValues(alpha: 0.06),
+        highlightColor: Colors.black.withValues(alpha: 0.04),
+        child: SizedBox(
+          height: 90.h,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 65.0.w,
+                height: 65.0.h,
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      width: 1,
-                      color: Colors.grey.withOpacity(0.2),
+                  color: Color.fromRGBO(243, 243, 244, 1),
+                  shape: BoxShape.circle,
+                ),
+                child: !data.interaction
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(data.avatarUrl),
+                      )
+                    : Center(
+                        child: Icon(
+                          FontAwesomeIcons.heartbeat,
+                          size: 24.sp,
+                          color: Colors.red,
+                        ),
+                      ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        width: 1,
+                        color: Colors.grey.withValues(alpha: 0.2),
+                      ),
                     ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        spacing: 6.h,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  data.name,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          spacing: 6.h,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    data.name,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                data.time,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: const Color.fromRGBO(105, 105, 105, 1),
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  data.preview,
+                                SizedBox(width: 8.w),
+                                Text(
+                                  data.time,
                                   style: TextStyle(
                                     fontSize: 14.sp,
-                                    fontWeight: FontWeight.normal,
                                     color: const Color.fromRGBO(
                                       105,
                                       105,
                                       105,
                                       1,
                                     ),
+                                    fontWeight: FontWeight.normal,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Container(
-                                width: 20.w,
-                                height: 20.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    data.preview,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.normal,
+                                      color: const Color.fromRGBO(
+                                        105,
+                                        105,
+                                        105,
+                                        1,
+                                      ),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                child: Center(child: Text('1', style: TextStyle(fontSize: 12.sp, color: Colors.white),),),
-                              )
-                            ],
-                          ),
-                        ],
+                                SizedBox(width: 8.w),
+                                Container(
+                                  width: 20.w,
+                                  height: 20.h,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '1',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
