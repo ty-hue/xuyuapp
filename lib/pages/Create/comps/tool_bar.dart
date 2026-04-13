@@ -17,16 +17,11 @@ class ToolBar extends StatefulWidget {
   final ValueChanged<bool> onSpeedModeChanged;
   final VoidCallback onRotateChanged;
   final VoidCallback onSettingChanged;
-  // 美颜
   final VoidCallback onBeautyChanged;
-  // 滤镜
   final VoidCallback onFilterChanged;
-  // 倒计时
   final VoidCallback onCountDownChanged;
-  // 麦克风
   final MicrophoneStatus microphoneStatus;
   final ValueChanged<MicrophoneStatus> onMicrophoneStatusChanged;
-  // 动图
   final GifStatus gifStatus;
   final ValueChanged<GifStatus> onGifStatusChanged;
   final int cameraSelectedIndex;
@@ -60,17 +55,22 @@ class ToolBar extends StatefulWidget {
 
 class _ToolBarState extends State<ToolBar> {
   static const Duration _kFlipIconAnimDuration = Duration(milliseconds: 320);
+  /// 折叠时滚动区可视高度（整项行数）。
+  static const int _kCollapsedSlotCount = 4;
+  /// 点击「更多」后滚动区可视高度（半项露底，提示可滚动）。
+  static const double _kExpandedVisibleSlots = 4.5;
 
-  /// 每次点击递增，与 [_flipRotationTween] 同步换新的一段动画。
   int _flipAnimGeneration = 0;
-  /// 当前累计圈数（终点），+0.5 = 顺时针半圈。
   double _flipTurnEnd = 0;
-  /// 必须在 State 里保持**同一引用**，直到下次点击再替换；若在 [build] 里每次 `Tween(...)` 新建，
-  /// 父组件相机重启 [setState] 时 [TweenAnimationBuilder] 会认为 tween 变化而重置动画 → 只剩抖动。
   late Tween<double> _flipRotationTween;
-  /// 动画播放期间忽略连点；相机重启延后到动画结束，避免 [_restartCamera] 的 [setState] 打断补间。
   bool _flipIconAnimating = false;
   Timer? _flipRestartTimer;
+
+  /// 滚动区内「更多」展开后可视区为 [_kExpandedVisibleSlots] 项高并可滚动；
+  /// 仅当滚动项多于 [_kCollapsedSlotCount] 时出现按钮。
+  bool _scrollToolsExpanded = false;
+
+  final ScrollController _scrollToolController = ScrollController();
 
   @override
   void initState() {
@@ -81,7 +81,40 @@ class _ToolBarState extends State<ToolBar> {
   @override
   void dispose() {
     _flipRestartTimer?.cancel();
+    _scrollToolController.dispose();
     super.dispose();
+  }
+
+  void _resetScrollToolListToTop() {
+    if (_scrollToolController.hasClients) {
+      _scrollToolController.jumpTo(0);
+    }
+  }
+
+  /// 须与 [_scrollToolItems] 中 `add` 条件保持一致。
+  int _scrollToolItemCount() {
+    int n = 0;
+    if (widget.cameraSelectedIndex == 1 &&
+        widget.recordStatus == RecordStatus.normal) {
+      n++;
+    }
+    if (widget.cameraSelectedIndex != 2 &&
+        widget.recordStatus == RecordStatus.normal) {
+      n++;
+    }
+    if (widget.recordStatus == RecordStatus.normal) {
+      n += 4;
+    }
+    return n;
+  }
+
+  @override
+  void didUpdateWidget(covariant ToolBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_scrollToolItemCount() <= _kCollapsedSlotCount && _scrollToolsExpanded) {
+      _scrollToolsExpanded = false;
+      _resetScrollToolListToTop();
+    }
   }
 
   void _onFlipTap() {
@@ -103,7 +136,6 @@ class _ToolBarState extends State<ToolBar> {
     });
   }
 
-  // 闪光灯图标
   IconData get flashIcon {
     switch (widget.flashStatus) {
       case FlashStatus.off:
@@ -115,13 +147,6 @@ class _ToolBarState extends State<ToolBar> {
     }
   }
 
-  /// 最大拍摄时长：Font Awesome **hourglass** 命名三连（solid），沙漏阶段与可录时长档位对应。
-  ///
-  /// - 15s → [FontAwesomeIcons.hourglassStart]
-  /// - 60s → [FontAwesomeIcons.solidHourglassHalf]
-  /// - 180s → [FontAwesomeIcons.hourglassEnd]
-  ///
-  /// 文档：<https://fontawesome.com/icons/hourglass-start?style=solid>
   IconData get recordDurationIcon {
     switch (widget.recordDuration) {
       case RecordDuration.s15:
@@ -133,512 +158,408 @@ class _ToolBarState extends State<ToolBar> {
     }
   }
 
-  /// 快慢速：默认关闭为 [Icons.motion_photos_off_sharp]，开启为 [Icons.motion_photos_on_sharp]。
   IconData get speedModeIcon {
     return widget.speedMode
         ? Icons.motion_photos_on_sharp
         : Icons.motion_photos_off_sharp;
   }
 
-  // 麦克风图标
   IconData get microphoneIcon {
     return widget.microphoneStatus == MicrophoneStatus.on
         ? Icons.mic_sharp
         : Icons.mic_off_sharp;
   }
 
-  /// 动图：严格 `xxx` / `xxx_off` 成对（与快慢速的 `motion_photos_*` 区分），用 [Icons.videocam_sharp] / [Icons.videocam_off_sharp] 表示动态影像开关。
   IconData get gifIcon {
     return widget.gifStatus == GifStatus.on
         ? Icons.videocam_sharp
         : Icons.videocam_off_sharp;
   }
 
-  // 是否展开工具栏
-  bool isExpandToolsBar = false;
+  double get _scrollItemH => 60.0.h;
 
-  double get toolBarHeight {
-    if (isExpandToolsBar) {
-      if (widget.cameraSelectedIndex == 1) {
-        return 9 * 60.0.h;
-      }
-      return 8 * 60.0.h;
-    } else {
-      if (widget.cameraSelectedIndex == 1) {
-        return 8 * 60.0.h;
-      }
-      return 7 * 60.0.h;
+  TextStyle get _labelStyle => TextStyle(
+        color: Colors.white,
+        fontSize: 13.0.sp,
+        decoration: TextDecoration.none,
+        fontWeight: FontWeight.w600,
+      );
+
+  /// 固定区：翻转、闪光灯、设置（逻辑与原先一致）。
+  Widget _buildFixedToolColumn() {
+    return SizedBox(
+      width: 64.0.w,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!widget.isStartCountDown)
+            GestureDetector(
+              onTap: _onFlipTap,
+              child: SizedBox(
+                height: 50.h,
+                child: Column(
+                  spacing: 2.0.h,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      key: ValueKey<int>(_flipAnimGeneration),
+                      duration: _kFlipIconAnimDuration,
+                      curve: Curves.easeInOutCubic,
+                      tween: _flipRotationTween,
+                      builder: (context, double turns, child) {
+                        return Transform.rotate(
+                          angle: turns * 2 * math.pi,
+                          child: child,
+                        );
+                      },
+                      child: Icon(
+                        // ignore: deprecated_member_use
+                        FontAwesomeIcons.refresh,
+                        color: Colors.white,
+                        size: 22.0.sp,
+                      ),
+                    ),
+                    Text('翻转', style: _labelStyle),
+                  ],
+                ),
+              ),
+            ),
+          if (widget.recordStatus == RecordStatus.normal)
+            GestureDetector(
+              onTap: () {
+                switch (widget.flashStatus) {
+                  case FlashStatus.off:
+                    widget.onFlashStatusChanged(FlashStatus.on);
+                    break;
+                  case FlashStatus.on:
+                    widget.onFlashStatusChanged(FlashStatus.auto);
+                    break;
+                  case FlashStatus.auto:
+                    widget.onFlashStatusChanged(FlashStatus.off);
+                    break;
+                }
+              },
+              child: SizedBox(
+                height: _scrollItemH,
+                child: Column(
+                  spacing: 2.0.h,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(flashIcon, color: Colors.white, size: 22.0.sp),
+                    Text('闪光灯', style: _labelStyle),
+                  ],
+                ),
+              ),
+            ),
+          if (widget.recordStatus == RecordStatus.normal)
+            GestureDetector(
+              onTap: widget.onSettingChanged,
+              child: SizedBox(
+                height: _scrollItemH,
+                child: Column(
+                  spacing: 2.0.h,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.settings_sharp, color: Colors.white, size: 22.0.sp),
+                    Text('设置', style: _labelStyle),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMicrophoneItem() {
+    return GestureDetector(
+      onTap: () {
+        widget.onMicrophoneStatusChanged(
+          widget.microphoneStatus == MicrophoneStatus.off
+              ? MicrophoneStatus.on
+              : MicrophoneStatus.off,
+        );
+      },
+      child: SizedBox(
+        height: _scrollItemH,
+        child: Column(
+          spacing: 2.0.h,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              microphoneIcon,
+              color: widget.microphoneStatus == MicrophoneStatus.off
+                  ? Colors.red
+                  : Colors.white,
+              size: 22.0.sp,
+            ),
+            Text('麦克风', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationOrGifSwitcher() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: widget.cameraSelectedIndex == 1
+          ? GestureDetector(
+              key: const ValueKey(1),
+              onTap: () {
+                switch (widget.recordDuration) {
+                  case RecordDuration.s15:
+                    widget.onRecordDurationChanged(RecordDuration.s60);
+                    ToastUtils.showToastReplace(context, msg: '最大拍摄时长60秒');
+                    break;
+                  case RecordDuration.s60:
+                    widget.onRecordDurationChanged(RecordDuration.s180);
+                    ToastUtils.showToastReplace(context, msg: '最大拍摄时长3分钟');
+                    break;
+                  case RecordDuration.s180:
+                    widget.onRecordDurationChanged(RecordDuration.s15);
+                    ToastUtils.showToastReplace(context, msg: '最大拍摄时长15秒');
+                    break;
+                }
+              },
+              child: SizedBox(
+                height: _scrollItemH,
+                child: Column(
+                  spacing: 2.0.h,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(recordDurationIcon, color: Colors.white, size: 22.0.sp),
+                    Text('时长', style: _labelStyle),
+                  ],
+                ),
+              ),
+            )
+          : GestureDetector(
+              key: const ValueKey(2),
+              onTap: () {
+                widget.onGifStatusChanged(
+                  widget.gifStatus == GifStatus.off ? GifStatus.on : GifStatus.off,
+                );
+              },
+              child: SizedBox(
+                height: _scrollItemH,
+                child: Column(
+                  spacing: 2.0.h,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(gifIcon, color: Colors.white, size: 22.0.sp),
+                    Text('动图', style: _labelStyle),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildCountdownItem() {
+    return GestureDetector(
+      onTap: widget.onCountDownChanged,
+      child: SizedBox(
+        height: _scrollItemH,
+        child: Column(
+          spacing: 2.0.h,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.timer_sharp, color: Colors.white, size: 22.0.sp),
+            Text('倒计时', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBeautyItem() {
+    return GestureDetector(
+      onTap: widget.onBeautyChanged,
+      child: SizedBox(
+        height: _scrollItemH,
+        child: Column(
+          spacing: 2.0.h,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.face_retouching_natural_sharp,
+                color: Colors.white, size: 22.0.sp),
+            Text('美颜', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterItem() {
+    return GestureDetector(
+      onTap: widget.onFilterChanged,
+      child: SizedBox(
+        height: _scrollItemH,
+        child: Column(
+          spacing: 2.0.h,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.movie_filter_sharp, color: Colors.white, size: 22.0.sp),
+            Text('滤镜', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedItem() {
+    return GestureDetector(
+      onTap: () => widget.onSpeedModeChanged(!widget.speedMode),
+      child: SizedBox(
+        height: _scrollItemH,
+        child: Column(
+          spacing: 2.0.h,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(speedModeIcon, color: Colors.white, size: 22.0.sp),
+            Text('快慢速', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 滚动区条目（麦克风、时长/动图、倒计时、美颜、滤镜、快慢速），顺序与原先单列一致。
+  List<Widget> _scrollToolItems() {
+    final list = <Widget>[];
+    if (widget.cameraSelectedIndex == 1 &&
+        widget.recordStatus == RecordStatus.normal) {
+      list.add(_buildMicrophoneItem());
     }
+    if (widget.cameraSelectedIndex != 2 &&
+        widget.recordStatus == RecordStatus.normal) {
+      list.add(_buildDurationOrGifSwitcher());
+    }
+    if (widget.recordStatus == RecordStatus.normal) {
+      list.add(_buildCountdownItem());
+      list.add(_buildBeautyItem());
+      list.add(_buildFilterItem());
+      list.add(_buildSpeedItem());
+    }
+    return list;
+  }
+
+  /// 固定工具栏与滚动工具栏之间的横线分隔。
+  Widget _buildToolbarDivider() {
+    return Padding(
+      padding: EdgeInsets.only(top: 6.0.h, bottom: 8.0.h),
+      child: SizedBox(
+        width: 64.0.w,
+        child: Align(
+          alignment: Alignment.center,
+          child: Container(
+            width: 44.0.w,
+            height: 1,
+            color: Colors.white.withValues(alpha: 0.28),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreToggle(bool expanded) {
+    return GestureDetector(
+      onTap: () {
+        if (_scrollToolsExpanded) {
+          _resetScrollToolListToTop();
+        }
+        setState(() => _scrollToolsExpanded = !_scrollToolsExpanded);
+      },
+      child: SizedBox(
+        width: 64.0.w,
+        height: _scrollItemH,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              alignment: Alignment.center,
+              height: 30.0.h,
+              width: 30.0.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.0.r),
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
+              child: Icon(
+                expanded ? FontAwesomeIcons.angleUp : FontAwesomeIcons.angleDown,
+                color: Colors.white,
+                size: 18.0.sp,
+              ),
+            ),
+            Text(expanded ? '收起' : '更多', style: _labelStyle),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final scrollItems = _scrollToolItems();
+    final needMore =
+        scrollItems.length > _kCollapsedSlotCount &&
+            widget.recordStatus == RecordStatus.normal;
+
+    final collapsedH = scrollItems.isEmpty
+        ? 0.0
+        : math.min(_kCollapsedSlotCount, scrollItems.length) * _scrollItemH;
+
+    final expandedViewportH = _kExpandedVisibleSlots * _scrollItemH;
+
+    final scrollAreaH = !needMore
+        ? scrollItems.length * _scrollItemH
+        : (_scrollToolsExpanded ? expandedViewportH : collapsedH);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onVerticalDragUpdate: (details) {
-            final dy = details.delta.dy;
-
-            // 手指向上滑（dy < 0）→ 展开
-            if (dy < 0 && !isExpandToolsBar) {
-              setState(() => isExpandToolsBar = true);
-            }
-          },
-          child: AnimatedContainer(
-            duration: Duration(milliseconds: 300),
+        _buildFixedToolColumn(),
+        if (scrollItems.isNotEmpty) _buildToolbarDivider(),
+        if (scrollItems.isNotEmpty)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubic,
             width: 64.0.w,
-            height: toolBarHeight,
+            height: scrollAreaH,
+            clipBehavior: Clip.hardEdge,
+            decoration: const BoxDecoration(),
             child: ListView(
-              physics: const NeverScrollableScrollPhysics(),
+              controller: _scrollToolController,
               padding: EdgeInsets.zero,
-              children: [
-                widget.isStartCountDown 
-                    ? Container()
-                    : GestureDetector(
-                        onTap: _onFlipTap,
-                        child: Container(
-                          height: 50.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TweenAnimationBuilder<double>(
-                                key: ValueKey<int>(_flipAnimGeneration),
-                                duration: _kFlipIconAnimDuration,
-                                curve: Curves.easeInOutCubic,
-                                tween: _flipRotationTween,
-                                builder: (context, double turns, child) {
-                                  return Transform.rotate(
-                                    angle: turns * 2 * math.pi,
-                                    child: child,
-                                  );
-                                },
-                                child: Icon(
-                                  // 用户指定沿用最初循环箭头；与 Material 翻转图标区分
-                                  // ignore: deprecated_member_use
-                                  FontAwesomeIcons.refresh,
-                                  color: Colors.white,
-                                  size: 22.0.sp,
-                                ),
-                              ),
-                              Text(
-                                '翻转',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          switch (widget.flashStatus) {
-                            case FlashStatus.off:
-                              widget.onFlashStatusChanged(FlashStatus.on);
-                              break;
-                            case FlashStatus.on:
-                              widget.onFlashStatusChanged(FlashStatus.auto);
-                              break;
-                            case FlashStatus.auto:
-                              widget.onFlashStatusChanged(FlashStatus.off);
-                              break;
-                          }
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                flashIcon,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '闪光灯',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          widget.onSettingChanged();
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.settings_sharp,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '设置',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.cameraSelectedIndex == 1 &&
-                        widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          widget.onMicrophoneStatusChanged(
-                            widget.microphoneStatus == MicrophoneStatus.off
-                                ? MicrophoneStatus.on
-                                : MicrophoneStatus.off,
-                          );
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                microphoneIcon,
-                                color:
-                                    widget.microphoneStatus ==
-                                        MicrophoneStatus.off
-                                    ? Colors.red
-                                    : Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '麦克风',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.cameraSelectedIndex == 2
-                    ? Container()
-                    : AnimatedSwitcher(
-                        duration: Duration(milliseconds: 300),
-                        child: widget.recordStatus == RecordStatus.normal
-                            ? widget.cameraSelectedIndex == 1
-                                  ? GestureDetector(
-                                      key: ValueKey(1), // 每个widget都需要唯一的key
-                                      onTap: () {
-                                        switch (widget.recordDuration) {
-                                          case RecordDuration.s15:
-                                            widget.onRecordDurationChanged(
-                                              RecordDuration.s60,
-                                            );
-                                            ToastUtils.showToastReplace(
-                                              context,
-                                              msg: '最大拍摄时长60秒',
-                                            );
-                                            break;
-                                          case RecordDuration.s60:
-                                            widget.onRecordDurationChanged(
-                                              RecordDuration.s180,
-                                            );
-                                            ToastUtils.showToastReplace(
-                                              context,
-                                              msg: '最大拍摄时长3分钟',
-                                            );
-                                            break;
-                                          case RecordDuration.s180:
-                                            widget.onRecordDurationChanged(
-                                              RecordDuration.s15,
-                                            );
-                                            ToastUtils.showToastReplace(
-                                              context,
-                                              msg: '最大拍摄时长15秒',
-                                            );
-                                            break;
-                                        }
-                                      },
-                                      child: Container(
-                                        height: 60.h,
-                                        alignment: Alignment.center,
-                                        child: Column(
-                                          spacing: 2.0.h,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              recordDurationIcon,
-                                              color: Colors.white,
-                                              size: 22.0.sp,
-                                            ),
-                                            Text(
-                                              '时长',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13.0.sp,
-                                                decoration:
-                                                    TextDecoration.none, // ⭐关键
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                  : GestureDetector(
-                                      key: ValueKey(2), // 每个widget都需要唯一的key
-                                      onTap: () {
-                                        widget.onGifStatusChanged(
-                                          widget.gifStatus == GifStatus.off
-                                              ? GifStatus.on
-                                              : GifStatus.off,
-                                        );
-                                      },
-                                      child: Container(
-                                        height: 60.h,
-                                        alignment: Alignment.center,
-                                        child: Column(
-                                          spacing: 2.0.h,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              gifIcon,
-                                              color: Colors.white,
-                                              size: 22.0.sp,
-                                            ),
-                                            Text(
-                                              '动图',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13.0.sp,
-                                                decoration:
-                                                    TextDecoration.none, // ⭐关键
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                            : Container(),
-                      ),
-
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          widget.onCountDownChanged();
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.timer_sharp,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '倒计时',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          widget.onBeautyChanged();
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.face_retouching_natural_sharp,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '美颜',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          widget.onFilterChanged();
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.movie_filter_sharp,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '滤镜',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-                widget.recordStatus == RecordStatus.normal
-                    ? GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            widget.onSpeedModeChanged(!widget.speedMode);
-                          });
-                        },
-                        child: Container(
-                          height: 60.h,
-                          alignment: Alignment.center,
-                          child: Column(
-                            spacing: 2.0.h,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                speedModeIcon,
-                                color: Colors.white,
-                                size: 22.0.sp,
-                              ),
-                              Text(
-                                '快慢速',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.0.sp,
-                                  decoration: TextDecoration.none, // ⭐关键
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-              ],
+              physics: needMore && _scrollToolsExpanded
+                  ? const AlwaysScrollableScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              children: scrollItems,
             ),
           ),
-        ),
-        widget.recordStatus == RecordStatus.normal
-            ? GestureDetector(
-                onTap: () {
-                  print('更多');
-                  setState(() {
-                    isExpandToolsBar = !isExpandToolsBar;
-                  });
-                },
-                child: Container(
-                  height: 60.h,
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        alignment: Alignment.center,
-                        height: 30.0.h,
-                        width: 30.0.w,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15.0.r),
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                        // 向下的箭头 （不是三角形）
-                        child: Icon(
-                          isExpandToolsBar
-                              ? FontAwesomeIcons.angleUp
-                              : FontAwesomeIcons.angleDown,
-                          color: Colors.white,
-                          size: 18.0.sp,
-                        ),
-                      ),
-                      Text(
-                        isExpandToolsBar ? '收起' : '更多',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13.0.sp,
-                          decoration: TextDecoration.none, // ⭐关键
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : Container(),
+        if (needMore) _buildMoreToggle(_scrollToolsExpanded),
       ],
     );
   }

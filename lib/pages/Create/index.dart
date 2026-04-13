@@ -9,7 +9,6 @@ import 'package:bilbili_project/utils/create_sheet_precache.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:volume_button_override/volume_button_override.dart';
 
 class CreatePage extends StatefulWidget {
@@ -30,7 +29,6 @@ class _CreatePageState extends State<CreatePage> {
     });
   }
 
-  bool isExpandToolsBar = false; // 是否展开工具栏
   FlashStatus flashStatus = FlashStatus.off; // 闪光灯状态 默认关闭
   RecordDuration recordDuration = RecordDuration.s15; // 拍摄时长 默认短 (分段拍模式专用)
   bool speedMode = false; // 快慢速
@@ -131,7 +129,7 @@ class _CreatePageState extends State<CreatePage> {
   }
 
   List<String> options = ['文字', '相机', '创作灵感'];
-  int outSelectedIndex = 1;
+  int outSelectedIndex = 0;
   void onOptionSelected(int index) {
     setState(() {
       outSelectedIndex = index;
