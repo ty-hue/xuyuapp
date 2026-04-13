@@ -42,14 +42,23 @@ class _DeferredSheetMountState extends State<_DeferredSheetMount> {
 
 class SheetUtils {
   final Widget child;
-  SheetUtils(this.child);
+  /// 为 true 时首帧只显示占位，下一帧再挂载 [child]，减轻首帧卡顿（顶层大 sheet 建议开启）。
+  /// 在**已打开的 sheet 上再弹第二层**时建议设为 false，避免占位高度与真实内容不一致导致跳动，
+  /// 并配合 [openAsyncSheet] 的 `useRootNavigator: true` 减少动画竞争。
+  final bool deferHeavyChild;
+
+  SheetUtils(this.child, {this.deferHeavyChild = true});
+
   Future<T?> openAsyncSheet<T>({
     Color? barrierColor,
     required BuildContext context,
+    /// 嵌套 bottom sheet 时设为 true，由根 Navigator 承接路由，动画更稳。
+    bool useRootNavigator = false,
   }) async {
     final T? result = await showModalBottomSheet<T>(
       isScrollControlled: true, // 设置为true，让底部弹窗的高度可以自定义
       context: context,
+      useRootNavigator: useRootNavigator,
       backgroundColor: Colors.transparent,
       barrierColor:
           barrierColor ?? Theme.of(context).bottomSheetTheme.modalBarrierColor,
@@ -58,10 +67,13 @@ class SheetUtils {
       ),
       clipBehavior: Clip.antiAlias,
       builder: (BuildContext context) {
+        final body = deferHeavyChild
+            ? _DeferredSheetMount(child: child)
+            : child;
         return SafeArea(
           child: Material(
             type: MaterialType.transparency,
-            child: _DeferredSheetMount(child: child),
+            child: body,
           ),
         );
       },

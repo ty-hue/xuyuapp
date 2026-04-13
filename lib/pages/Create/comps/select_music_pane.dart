@@ -21,11 +21,12 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
     _tabController = TabController(vsync: this, length: 4);
   }
 
-  // 打开选择音乐sheet
+  // 打开选择音乐sheet（嵌套在迷你音乐 sheet 之上：根 Navigator + 不延迟挂载，避免占位高度与 0.9 屏内容不一致导致抖动）
   void openSelectMusicSheet() {
     SheetUtils(
       SearchMusicSheetSkeleton(),
-    ).openAsyncSheet(context: context);
+      deferHeavyChild: false,
+    ).openAsyncSheet(context: context, useRootNavigator: true);
   }
 
   @override
@@ -83,6 +84,9 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
               Expanded(
                 child: TabBar(
                   controller: _tabController,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  labelPadding: EdgeInsets.symmetric(horizontal: 18.w),
                   indicatorColor: Colors.black, // 选中下划线颜色
                   labelColor: Colors.black, // 选中项文字的颜色
                   unselectedLabelColor: Color.fromRGBO(
@@ -92,17 +96,15 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
                     1,
                   ), // 未选中文本的颜色
                   dividerColor: Colors.transparent, // 分割线颜色
-                  // 选中文本的字体样式
                   labelStyle: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
                   ),
-                  // 未选择文本的字体样式
                   unselectedLabelStyle: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
                   ),
-                  tabs: [
+                  tabs: const [
                     Tab(text: '推荐'),
                     Tab(text: '热门'),
                     Tab(text: '收藏'),
@@ -110,7 +112,7 @@ class _SelectMusicPaneState extends State<SelectMusicPane>
                   ],
                 ),
               ),
-              SizedBox(width: 30.w),
+              SizedBox(width: 8.w),
               // 导入音频按钮
               Material(
                 color: Colors.transparent,

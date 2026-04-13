@@ -124,13 +124,16 @@ class _SearchMusicSheetSkeletonState extends State<SearchMusicSheetSkeleton> {
   @override
   void initState() {
     super.initState();
-    // 初始化搜索历史
     musicSearchHistoryManager = MineSearchHistoryManager(
       searchKey: GlobalConstants.MUSIC_SEARCH_HISTORY_KEY,
     );
-    musicSearchHistoryManager.init().then((value) {
-      setState(() {
-        searchHistory = musicSearchHistoryManager.getSearchHistory();
+    // 延后读磁盘，避免与第二层 sheet 转场同一帧叠加重建导致掉帧
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      musicSearchHistoryManager.init().then((_) {
+        if (!mounted) return;
+        setState(() {
+          searchHistory = musicSearchHistoryManager.getSearchHistory();
+        });
       });
     });
   }
