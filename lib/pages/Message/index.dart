@@ -34,6 +34,8 @@ class _MessagePageState extends State<MessagePage> {
   Widget build(BuildContext context) {
     return WithStatusbarColorView(
       statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.dark,
       child: Stack(
         children: [
           Scaffold(

@@ -10,8 +10,8 @@ class WithStatusbarColorView extends StatelessWidget {
     Key? key,
     required this.statusBarColor,
     required this.child,
-    this.statusBarIconBrightness = Brightness.light,
-    this.statusBarBrightness = Brightness.dark,
+    this.statusBarIconBrightness = Brightness.light, // 改变安卓状态栏图标颜色
+    this.statusBarBrightness = Brightness.dark, // 改变ios状态栏文字颜色
   }) : super(key: key);
 
   @override
