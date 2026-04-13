@@ -4,211 +4,157 @@ import 'package:bilbili_project/pages/Create/comps/inspiration_view.dart';
 import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/text_view.dart';
+import 'package:bilbili_project/store/create/create_shoot_notifier.dart';
+import 'package:bilbili_project/store/create/create_shoot_state.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/utils/create_sheet_precache.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:volume_button_override/volume_button_override.dart';
 
-class CreatePage extends StatefulWidget {
+class CreatePage extends ConsumerStatefulWidget {
   final String? fromUrl;
-  CreatePage({Key? key, this.fromUrl}) : super(key: key);
+  const CreatePage({super.key, this.fromUrl});
 
   @override
-  State<CreatePage> createState() => _CreatePageState();
+  ConsumerState<CreatePage> createState() => _CreatePageState();
 }
 
-class _CreatePageState extends State<CreatePage> {
+class _CreatePageState extends ConsumerState<CreatePage> {
+  final GlobalKey<CameraViewState> cameraKey = GlobalKey();
+  final VolumeButtonController _controller = VolumeButtonController();
+
   @override
   void initState() {
     super.initState();
+    // 不得在 initState 同步改 provider（仍在 build 阶段，Riverpod 会断言）。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final n = ref.read(createShootProvider.notifier);
+      n.setRecordStatus(RecordStatus.normal);
+      n.setPreviewReadyForNext(false);
+      n.setIsStartCountDown(false);
       scheduleCreateSheetImagePrecache(context);
     });
   }
 
-  FlashStatus flashStatus = FlashStatus.off; // 闪光灯状态 默认关闭
-  RecordDuration recordDuration = RecordDuration.s15; // 拍摄时长 默认短 (分段拍模式专用)
-  bool speedMode = false; // 快慢速
-  MicrophoneStatus microphoneStatus = MicrophoneStatus.off; // 麦克风状态 默认关闭
-  GifStatus gifStatus = GifStatus.off; // 动图状态 默认关闭
-  SettingSheetType settingSheetType = SettingSheetType(
-    maxRecordDuration: '15',
-    aspectRatio: '9:16',
-    useVolumeKeys: false,
-    grid: false,
-  ); // settings sheet参数
-  void onChangeSettingSheetParams(SettingSheetType type) {
-    setState(() {
-      // 必须新建实例：设置 Sheet 会就地改 params 再回调，若直接 settingSheetType = type
-      // 则引用不变，CameraView.didUpdateWidget 无法发现 aspectRatio 变化，原生不会按新比例重启相机。
-      settingSheetType = SettingSheetType(
-        maxRecordDuration: type.maxRecordDuration,
-        aspectRatio: type.aspectRatio,
-        useVolumeKeys: type.useVolumeKeys,
-        grid: type.grid,
-      );
-      recordDuration = RecordDuration.values.firstWhere(
-        (element) => element.seconds.toString() == type.maxRecordDuration,
-      );
-      // 处理音量键
-      if (settingSheetType.useVolumeKeys) {
-        _startListening();
-      } else {
-        stopListening();
-      }
-    });
+  @override
+  void dispose() {
+    unawaited(stopListening());
+    super.dispose();
   }
 
-  CountDownType countdownType = CountDownType(countdownDuration: '3秒');
+  Future<void> _startListening() async {
+    final upAction = ButtonAction(
+      id: ButtonActionId.volumeUp,
+      onAction: () {
+        final shoot = ref.read(createShootProvider);
+        if (shoot.cameraSelectedIndex == 0) {
+          cameraKey.currentState?.takePhoto();
+          unawaited(stopListening());
+          ref.read(createShootProvider.notifier).clearUseVolumeKeys();
+        } else {
+          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
+            cameraKey.currentState?.startRecording();
+          } else {
+            cameraKey.currentState?.stopRecording();
+            unawaited(stopListening());
+            ref.read(createShootProvider.notifier).clearUseVolumeKeys();
+          }
+        }
+      },
+    );
 
-  List<String> speedOptions = ['极慢', '慢', '标准', '快', '极快']; // 快慢速选项
+    final downAction = ButtonAction(
+      id: ButtonActionId.volumeDown,
+      onAction: () {
+        final shoot = ref.read(createShootProvider);
+        if (shoot.cameraSelectedIndex == 0) {
+          cameraKey.currentState?.takePhoto();
+          unawaited(stopListening());
+        } else {
+          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
+            cameraKey.currentState?.startRecording();
+          } else {
+            cameraKey.currentState?.stopRecording();
+            unawaited(stopListening());
+          }
+        }
+      },
+    );
 
-  int speedSelectedIndex = 2; // 快慢速默认标准
-
-  // 快慢速改变
-  void onSpeedSelectedIndexChanged(int index) {
-    setState(() {
-      speedSelectedIndex = index;
-    });
+    try {
+      await _controller.startListening(
+        volumeUpAction: upAction,
+        volumeDownAction: downAction,
+      );
+    } catch (_) {}
   }
 
-  // 打开设置sheet
+  Future<void> stopListening() async {
+    try {
+      await _controller.stopListening();
+    } catch (_) {
+      debugPrint('移除音量键监听失败');
+    }
+  }
+
   void openSettingSheet() {
+    final shoot = ref.read(createShootProvider);
     SheetUtils(
       SettingSheetSekeleton(
-        settingSheetType: settingSheetType,
-        onSettingChanged: onChangeSettingSheetParams,
+        settingSheetType: SettingSheetType(
+          maxRecordDuration: shoot.settingSheetType.maxRecordDuration,
+          aspectRatio: shoot.settingSheetType.aspectRatio,
+          useVolumeKeys: shoot.settingSheetType.useVolumeKeys,
+          grid: shoot.settingSheetType.grid,
+        ),
+        onSettingChanged: (type) {
+          ref.read(createShootProvider.notifier).applySettingsFromSheet(type);
+          if (type.useVolumeKeys) {
+            unawaited(_startListening());
+          } else {
+            unawaited(stopListening());
+          }
+        },
       ),
     ).openAsyncSheet(context: context);
   }
 
-  // 打开倒计时sheet
-  void onCountDownChanged(CountDownType type) {
-    setState(() {
-      countdownType = type;
-    });
+  void openCountDownSheet() {
+    final shoot = ref.read(createShootProvider);
+    SheetUtils(
+      CountDownSheetSekeleton(
+        countDownType: CountDownType(
+          countdownDuration: shoot.countdownType.countdownDuration,
+        ),
+        onCountDownChanged: (type) {
+          ref.read(createShootProvider.notifier).setCountdownType(type);
+        },
+        onIsStartCountDownChanged: (isStart) {
+          ref.read(createShootProvider.notifier).setIsStartCountDown(isStart);
+          cameraKey.currentState?.changeUI(RecordStatus.recording);
+        },
+      ),
+    ).openAsyncSheet(context: context);
   }
 
-  // 是否开始倒计时
-  bool isStartCountDown = false;
-  final GlobalKey<CameraViewState> cameraKey = GlobalKey();
-
-  // 修改是否开始倒计时
-  void onIsStartCountDownChanged(bool isStart) {
-    setState(() {
-      isStartCountDown = isStart;
-    });
-    cameraKey.currentState?.changeUI(RecordStatus.recording);
-  }
-
-  // 倒计时结束后
-  void onCountdownFinished() {
-    setState(() {
-      isStartCountDown = false;
-    });
-    // 倒计时结束后，开始录制
-    if (cameraSelectedIndex == 0) {
+  void _onCountdownFinished() {
+    ref.read(createShootProvider.notifier).onCountdownFinishedFromSheet();
+    final shoot = ref.read(createShootProvider);
+    if (shoot.cameraSelectedIndex == 0) {
       cameraKey.currentState?.takePhoto();
-      return;
     } else {
       cameraKey.currentState?.startRecording();
     }
   }
 
-  void openCountDownSheet() {
-    SheetUtils(
-      CountDownSheetSekeleton(
-        countDownType: countdownType,
-        onCountDownChanged: onCountDownChanged,
-        onIsStartCountDownChanged: onIsStartCountDownChanged,
-      ),
-    ).openAsyncSheet(context: context);
-  }
-
-  List<String> options = ['文字', '相机', '创作灵感'];
-  int outSelectedIndex = 0;
-  void onOptionSelected(int index) {
-    setState(() {
-      outSelectedIndex = index;
-    });
-  }
-
-  // 动图
-  void onGifStatusChanged(GifStatus status) {
-    setState(() {
-      gifStatus = status;
-    });
-  }
-
-  // 麦克风
-  void onMicrophoneStatusChanged(MicrophoneStatus status) {
-    setState(() {
-      microphoneStatus = status;
-    });
-  }
-
-  // 速度
-  void onSpeedModeChanged(bool mode) {
-    setState(() {
-      speedMode = mode;
-    });
-  }
-
-  // 闪光灯
-  void onFlashStatusChanged(FlashStatus status) {
-    setState(() {
-      flashStatus = status;
-    });
-  }
-
-  // 时长
-  void onRecordDurationChanged(RecordDuration duration) {
-    setState(() {
-      recordDuration = duration;
-      settingSheetType.maxRecordDuration = duration.seconds.toString();
-    });
-  }
-
-  // outSelectedIndex 改变
-  void onOutSelectedIndexChanged(int index) {
-    setState(() {
-      outSelectedIndex = index;
-    });
-  }
-
-  List<String> cameraOptions = ['照片', '视频'];
-  int cameraSelectedIndex = 0;
-  void onInSelectedIndexChanged(int index) {
-    setState(() {
-      cameraSelectedIndex = index;
-    });
-  }
-
-  // 控制底部AutoCenterScrollTabBar显示隐藏
-  RecordStatus recordStatus = RecordStatus.normal;
-
-  /// 预览区是否已展示成片（照片路径就绪 / 视频可播放），为 false 时「下一步」禁用。
-  bool _previewReadyForNext = false;
-
-  void onPreviewReadyForNext(bool ready) {
-    setState(() {
-      _previewReadyForNext = ready;
-    });
-  }
-
-  // 录制状态改变
-  void onRecordStatusChanged(RecordStatus status) {
-    setState(() {
-      recordStatus = status;
-      _previewReadyForNext = false;
-    });
-  }
-
-  Widget get bottomUI {
-    switch (recordStatus) {
+  Widget _bottomBar(CreateShootState shoot) {
+    switch (shoot.recordStatus) {
       case RecordStatus.normal:
         return AutoCenterScrollTabBar(
           itemSpacing: 16.0.w,
@@ -226,18 +172,19 @@ class _CreatePageState extends State<CreatePage> {
             color: Colors.grey,
             decoration: TextDecoration.none,
           ),
-          initialIndex: outSelectedIndex,
-          tabs: options,
-          onChanged: onOutSelectedIndexChanged,
+          initialIndex: shoot.outSelectedIndex,
+          tabs: CreateShootLabels.outerTabs,
+          onChanged: (i) =>
+              ref.read(createShootProvider.notifier).setOutSelectedIndex(i),
         );
       case RecordStatus.recording:
         return Container();
       case RecordStatus.end:
         return SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
+          width: MediaQuery.sizeOf(context).width * 0.8,
           height: 50.0.h,
           child: ElevatedButton(
-            onPressed: _previewReadyForNext ? () {} : null,
+            onPressed: shoot.previewReadyForNext ? () {} : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -256,80 +203,23 @@ class _CreatePageState extends State<CreatePage> {
     }
   }
 
-  // 创建音量键控制器
-  final VolumeButtonController _controller = VolumeButtonController();
-  // 开始监听音量键
-  Future<void> _startListening() async {
-    final upAction = ButtonAction(
-      id: ButtonActionId.volumeUp,
-      onAction: () {
-        // 要做的事情
-        if (cameraSelectedIndex == 0) {
-          cameraKey.currentState?.takePhoto();
-          stopListening();
-          setState(() {
-            settingSheetType.useVolumeKeys = false;
-          });
-        } else {
-          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
-            cameraKey.currentState?.startRecording();
-          } else {
-            cameraKey.currentState?.stopRecording();
-            stopListening();
-            setState(() {
-              settingSheetType.useVolumeKeys = false;
-            });
-          }
-        }
-      },
-    );
-
-    final downAction = ButtonAction(
-      id: ButtonActionId.volumeDown,
-      onAction: () {
-        if (cameraSelectedIndex == 0) {
-          cameraKey.currentState?.takePhoto();
-          stopListening();
-        } else {
-          if (cameraKey.currentState?.recordStatus == RecordStatus.normal) {
-            cameraKey.currentState?.startRecording();
-          } else {
-            cameraKey.currentState?.stopRecording();
-            stopListening();
-          }
-        }
-      },
-    );
-
-    try {
-      await _controller.startListening(
-        volumeUpAction: upAction,
-        volumeDownAction: downAction,
-      );
-    } catch (_) {}
-  }
-
-  // 移除音量键监听
-  Future<void> stopListening() async {
-    try {
-      await _controller.stopListening();
-    } catch (_) {
-      print('移除音量键监听失败');
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    // 释放音量键控制器
-    stopListening();
-  }
-
-  
-
   @override
   Widget build(BuildContext context) {
-    final double topVal = MediaQuery.of(context).padding.top + 10.h;
+    final shoot = ref.watch(createShootProvider);
+
+    ref.listen(
+      createShootProvider.select((s) => s.settingSheetType.useVolumeKeys),
+      (prev, next) {
+        if (next) {
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => unawaited(_startListening()));
+        } else if (prev == true) {
+          unawaited(stopListening());
+        }
+      },
+    );
+
+    final double topVal = MediaQuery.paddingOf(context).top + 10.h;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -337,51 +227,26 @@ class _CreatePageState extends State<CreatePage> {
         final totalH = constraints.maxHeight;
         final bottomH = 100.0.h;
         final previewRegionH = (totalH - bottomH).clamp(0.0, double.infinity);
-        final ar = settingSheetType.aspectRatio;
-        // 宽始终满屏；高由比例算出；上下黑边各为 (预览区总高 - contentH) / 2（过高则 ClipRect 居中裁切）。
-        final wh = ar == '3:4' ? 3 / 4 : 9 / 16; // width / height
+        final ar = shoot.settingSheetType.aspectRatio;
+        final wh = ar == '3:4' ? 3 / 4 : 9 / 16;
         final contentH = w > 0 ? w / wh : 0.0;
         final bottomBar = SizedBox(
           height: bottomH,
           child: Container(
             padding: EdgeInsets.only(top: 10.0.h),
             color: const Color.fromRGBO(1, 1, 1, 1),
-            child: Align(alignment: Alignment.topCenter, child: bottomUI),
+            child: Align(alignment: Alignment.topCenter, child: _bottomBar(shoot)),
           ),
         );
 
         Widget cameraPreviewSlot() {
           final cameraTab = CameraView(
             key: cameraKey,
-            onRecordStatusChanged: onRecordStatusChanged,
-            onPreviewReadyForNext: onPreviewReadyForNext,
             topVal: topVal,
             fromUrl: widget.fromUrl,
-            gifStatus: gifStatus,
-            onGifStatusChanged: onGifStatusChanged,
-            microphoneStatus: microphoneStatus,
-            onMicrophoneStatusChanged: onMicrophoneStatusChanged,
+            onCountdownFinished: _onCountdownFinished,
             openCountDownSheet: openCountDownSheet,
             openSettingSheet: openSettingSheet,
-            speedMode: speedMode,
-            onSpeedModeChanged: onSpeedModeChanged,
-            flashStatus: flashStatus,
-            onFlashStatusChanged: onFlashStatusChanged,
-            recordDuration: recordDuration,
-            onRecordDurationChanged: onRecordDurationChanged,
-            cameraSelectedIndex: cameraSelectedIndex,
-            onInSelectedIndexChanged: onInSelectedIndexChanged,
-            cameraOptions: cameraOptions,
-            speedOptions: speedOptions,
-            speedSelectedIndex: speedSelectedIndex,
-            onSpeedSelectedIndexChanged: onSpeedSelectedIndexChanged,
-            countdown: int.parse(
-              countdownType.countdownDuration.replaceAll('秒', ''),
-            ),
-            isStartCountDown: isStartCountDown,
-            onIsStartCountDownChanged: onIsStartCountDownChanged,
-            onCountdownFinished: onCountdownFinished,
-            settingSheetType: settingSheetType,
             previewSlotWidth: w,
             previewSlotHeight: previewRegionH,
             previewContentHeight: contentH,
@@ -396,44 +261,20 @@ class _CreatePageState extends State<CreatePage> {
           );
         }
 
-        final column = Column(
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (outSelectedIndex == 1)
+            if (shoot.outSelectedIndex == 1)
               Expanded(child: cameraPreviewSlot())
             else
               Expanded(
-                child: outSelectedIndex == 0 ? TextView() : InspirationView(),
+                child: shoot.outSelectedIndex == 0
+                    ? TextView()
+                    : InspirationView(),
               ),
             bottomBar,
           ],
         );
-
-        // if (outSelectedIndex == 1) {
-        //   final safeTop = MediaQuery.of(context).padding.top;
-        //   return Stack(
-        //     clipBehavior: Clip.none,
-        //     children: [
-        //       column,
-        //       Positioned(
-        //         left: 12.w,
-        //         top: safeTop + 6.h,
-        //         child: GestureDetector(
-        //           behavior: HitTestBehavior.opaque,
-        //           onTap: () {
-        //             if (context.canPop()) context.pop();
-        //           },
-        //           child: Padding(
-        //             padding: EdgeInsets.all(8.w),
-        //             child: Icon(Icons.close, color: Colors.white, size: 33.sp),
-        //           ),
-        //         ),
-        //       ),
-        //     ],
-        //   );
-        // }
-
-        return column;
       },
     );
   }

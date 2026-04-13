@@ -31,8 +31,11 @@ import 'package:bilbili_project/pages/Create/comps/work_preview_skeleton.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SaveImageUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
+import 'package:bilbili_project/store/create/create_shoot_notifier.dart';
+import 'package:bilbili_project/store/create/create_shoot_state.dart';
 import 'package:bilbili_project/utils/app_messenger.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// [showModalBottomSheet] 返回的 Future 往往早于退场动画结束；切回实时预览前多等一拍，避免 sheet 未滑完就抢画面。
 const Duration _kAfterBottomSheetExitVisual = Duration(milliseconds: 360);
@@ -44,11 +47,10 @@ final FilterOptionGroup _kLatestAlbumImageOrder = FilterOptionGroup(
   ],
 );
 
-/// 上次「存草稿」写入相册的资源 id，重新进入拍摄页时用 [AssetEntity.fromId] 取封面，避免列表排序/索引不准。
-const String _kPrefLastGalleryCoverAssetId = 'xuyu_last_gallery_cover_asset_id';
-
-/// 上次成功写入 [xuyu_last_album_cover.jpg] 的本地时间戳（ms）；仅作记录，封面展示以磁盘缓存 + [assetId] 为准。
-const String _kPrefLastGalleryCoverWrittenMs = 'xuyu_last_gallery_cover_written_ms';
+Future<void> _removeAllGalleryCoverPrefs(SharedPreferences p) async {
+  await p.remove(GlobalConstants.LAST_GALLERY_COVER_ASSET_ID_KEY);
+  await p.remove(GlobalConstants.LAST_GALLERY_COVER_WRITTEN_MS_KEY);
+}
 
 /// 底部「特效 / 相册」槽与图标相对原设计放大倍数（与拍照按钮 1.4 一致）。
 const double _kBottomSideIconScale = 1.4;
@@ -56,79 +58,38 @@ const double _kBottomSideIconScale = 1.4;
 /// 半透明块内图标相对块宽的比例（略小于 1，留白更舒服）。
 const double _kBottomIconInTileRatio = 0.75;
 
-class CameraView extends StatefulWidget {
+class CameraView extends ConsumerStatefulWidget {
   final double topVal;
   final String? fromUrl;
-  final GifStatus gifStatus;
-  final ValueChanged<GifStatus> onGifStatusChanged;
-  final MicrophoneStatus microphoneStatus;
-  final ValueChanged<MicrophoneStatus> onMicrophoneStatusChanged;
+  final VoidCallback onCountdownFinished;
   final VoidCallback openCountDownSheet;
   final VoidCallback openSettingSheet;
-  final bool speedMode;
-  final ValueChanged<bool> onSpeedModeChanged;
-  final FlashStatus flashStatus;
-  final ValueChanged<FlashStatus> onFlashStatusChanged;
-  final RecordDuration recordDuration;
-  final ValueChanged<RecordDuration> onRecordDurationChanged;
-  final int cameraSelectedIndex;
-  final ValueChanged<int> onInSelectedIndexChanged;
-  final List<String> cameraOptions;
-  final List<String> speedOptions;
-  final int speedSelectedIndex;
-  final ValueChanged<int> onSpeedSelectedIndexChanged;
-  final ValueChanged<RecordStatus> onRecordStatusChanged;
-  final int countdown;
-  final bool isStartCountDown;
-  final ValueChanged<bool> onIsStartCountDownChanged;
-  final VoidCallback onCountdownFinished;
-  final SettingSheetType settingSheetType;
   /// 父级算好的**整段预览槽**宽高（含上下黑边区域）。用于 [LayoutBuilder] 约束，使 UI 相对整槽定位。
   final double? previewSlotWidth;
   final double? previewSlotHeight;
-  /// 实际拍摄画面区域高度（与比例一致，不含上下黑边）。传给 native 视口；若未传则按 [settingSheetType.aspectRatio] 由槽宽推算。
+  /// 实际拍摄画面区域高度（与比例一致，不含上下黑边）。传给 native 视口；若未传则按设置里的比例由槽宽推算。
   final double? previewContentHeight;
-  /// 预览区是否已有可展示的成片（含相册选片）；为 false 时父级可禁用「下一步」等。
-  final ValueChanged<bool>? onPreviewReadyForNext;
+
   const CameraView({
     super.key,
     required this.topVal,
     this.fromUrl,
-    required this.gifStatus,
-    required this.onGifStatusChanged,
-    required this.microphoneStatus,
-    required this.onMicrophoneStatusChanged,
+    required this.onCountdownFinished,
     required this.openCountDownSheet,
     required this.openSettingSheet,
-    required this.speedMode,
-    required this.onSpeedModeChanged,
-    required this.flashStatus,
-    required this.onFlashStatusChanged,
-    required this.recordDuration,
-    required this.onRecordDurationChanged,
-    required this.cameraSelectedIndex,
-    required this.onInSelectedIndexChanged,
-    required this.cameraOptions,
-    required this.speedOptions,
-    required this.speedSelectedIndex,
-    required this.onSpeedSelectedIndexChanged,
-    required this.onRecordStatusChanged,
-    required this.countdown,
-    required this.isStartCountDown,
-    required this.onIsStartCountDownChanged,
-    required this.onCountdownFinished,
-    required this.settingSheetType,
     this.previewSlotWidth,
     this.previewSlotHeight,
     this.previewContentHeight,
-    this.onPreviewReadyForNext,
   });
 
   @override
-  CameraViewState createState() => CameraViewState();
+  ConsumerState<CameraView> createState() => CameraViewState();
 }
 
-class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
+class CameraViewState extends ConsumerState<CameraView> with WidgetsBindingObserver {
+  /// 供音量键等读取；与 [createShootProvider] 同步。
+  RecordStatus get recordStatus => ref.read(createShootProvider).recordStatus;
+
   /// 真实权限未就绪前必须为「未授权」，否则首帧会误走 openCamera。
   PermissionStatus _cameraPermissionStatus = PermissionStatus.denied;
   PermissionStatus _microphonePermissionStatus = PermissionStatus.denied;
@@ -155,7 +116,6 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   double? _nativeBufferH;
   final _cameraSdk = const PixelfreeCamera();
   final Map<String, String> _stickerAssetCache = {};
-  CameraPosition _cameraPosition = CameraPosition.front;
   /// 前置无物理闪光灯时，由 native [onFrontFlashHint] 驱动全屏补光。
   bool _frontScreenFlashOverlay = false;
   double _frontFlashAlpha = 0.88;
@@ -207,7 +167,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   double _previewContentHeightOrInfer(double width) {
     final ph = widget.previewContentHeight;
     if (ph != null && ph > 0) return ph;
-    final wh = widget.settingSheetType.aspectRatio == '3:4' ? 3 / 4 : 9 / 16;
+    final ar = ref.read(createShootProvider).settingSheetType.aspectRatio;
+    final wh = ar == '3:4' ? 3 / 4 : 9 / 16;
     return width > 0 ? width / wh : 0;
   }
 
@@ -219,7 +180,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       config: BeautyCameraConfig(
         ratio: _currentRatio,
         flashMode: _currentFlashMode,
-        cameraPosition: _cameraPosition,
+        cameraPosition: ref.read(createShootProvider).useFrontCamera
+            ? CameraPosition.front
+            : CameraPosition.back,
         // 麦克风开关在 [startRecording] → [PixelfreeCameraPlugin.startRecord] 传入，避免改开关即重启相机。
         enableAudio: false,
         previewViewportWidth: (vw != null && vw > 0) ? vw : null,
@@ -243,13 +206,13 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     });
   }
 
-  CameraRatio get _currentRatio =>
-      widget.settingSheetType.aspectRatio == '3:4'
-          ? CameraRatio.ratio3x4
-          : CameraRatio.ratio9x16;
+  CameraRatio get _currentRatio {
+    final ar = ref.read(createShootProvider).settingSheetType.aspectRatio;
+    return ar == '3:4' ? CameraRatio.ratio3x4 : CameraRatio.ratio9x16;
+  }
 
   FlashMode get _currentFlashMode {
-    switch (widget.flashStatus) {
+    switch (ref.read(createShootProvider).flashStatus) {
       case FlashStatus.on:
         return FlashMode.on;
       case FlashStatus.auto:
@@ -278,32 +241,34 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   Future<void> _applyBeautyAndFilterAndSticker() async {
+    final shoot = ref.read(createShootProvider);
     await _cameraSdk.setBeauty(
       BeautySettings(
-        smoothing: _beautyValue(beautyOptions, '磨皮'),
-        whitening: _beautyValue(beautyOptions, '美白'),
-        ruddy: _beautyValue(beautyOptions, '红润'),
-        sharpen: _beautyValue(beautyOptions, '锐化'),
-        bigEye: _beautyValue(beautyOptions, '大眼'),
-        eyeBrighten: _beautyValue(beautyOptions, '亮眼'),
-        slimFace: _beautyValue(beautyOptions, '瘦脸'),
-        portraitBlur: _beautyValue(beautyOptions, '背景虚化'),
-        faceNarrow: _beautyValue(beautyOptions, '瘦颧骨'),
-        faceChin: _beautyValue(beautyOptions, '下巴'),
-        faceV: _beautyValue(beautyOptions, '瘦下颔'),
-        faceNose: _beautyValue(beautyOptions, '鼻梁'),
-        faceForehead: _beautyValue(beautyOptions, '额头'),
-        faceMouth: _beautyValue(beautyOptions, '嘴巴'),
-        facePhiltrum: _beautyValue(beautyOptions, '人中'),
-        faceLongNose: _beautyValue(beautyOptions, '长鼻'),
-        faceEyeSpace: _beautyValue(beautyOptions, '眼距'),
-        faceSmile: _beautyValue(beautyOptions, '微笑嘴角'),
-        faceCanthus: _beautyValue(beautyOptions, '开眼角'),
+        smoothing: _beautyValue(shoot.beautyOptions, '磨皮'),
+        whitening: _beautyValue(shoot.beautyOptions, '美白'),
+        ruddy: _beautyValue(shoot.beautyOptions, '红润'),
+        sharpen: _beautyValue(shoot.beautyOptions, '锐化'),
+        bigEye: _beautyValue(shoot.beautyOptions, '大眼'),
+        eyeBrighten: _beautyValue(shoot.beautyOptions, '亮眼'),
+        slimFace: _beautyValue(shoot.beautyOptions, '瘦脸'),
+        portraitBlur: _beautyValue(shoot.beautyOptions, '背景虚化'),
+        faceNarrow: _beautyValue(shoot.beautyOptions, '瘦颧骨'),
+        faceChin: _beautyValue(shoot.beautyOptions, '下巴'),
+        faceV: _beautyValue(shoot.beautyOptions, '瘦下颔'),
+        faceNose: _beautyValue(shoot.beautyOptions, '鼻梁'),
+        faceForehead: _beautyValue(shoot.beautyOptions, '额头'),
+        faceMouth: _beautyValue(shoot.beautyOptions, '嘴巴'),
+        facePhiltrum: _beautyValue(shoot.beautyOptions, '人中'),
+        faceLongNose: _beautyValue(shoot.beautyOptions, '长鼻'),
+        faceEyeSpace: _beautyValue(shoot.beautyOptions, '眼距'),
+        faceSmile: _beautyValue(shoot.beautyOptions, '微笑嘴角'),
+        faceCanthus: _beautyValue(shoot.beautyOptions, '开眼角'),
       ),
     );
 
-    if (selectedFilterIndex > 0 && selectedFilterIndex < filterOptions.length) {
-      final filter = filterOptions[selectedFilterIndex];
+    if (shoot.selectedFilterIndex > 0 &&
+        shoot.selectedFilterIndex < shoot.filterOptions.length) {
+      final filter = shoot.filterOptions[shoot.selectedFilterIndex];
       await _cameraSdk.setFilter(
         FilterSettings(
           filterId: filter.filterType,
@@ -372,9 +337,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       }
       if (!wrote) return;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_kPrefLastGalleryCoverAssetId, entity.id);
+      await prefs.setString(GlobalConstants.LAST_GALLERY_COVER_ASSET_ID_KEY, entity.id);
       await prefs.setInt(
-        _kPrefLastGalleryCoverWrittenMs,
+        GlobalConstants.LAST_GALLERY_COVER_WRITTEN_MS_KEY,
         DateTime.now().millisecondsSinceEpoch,
       );
     } catch (e, st) {
@@ -416,8 +381,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     if (!mounted || op != _albumThumbOpSeq) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString(_kPrefLastGalleryCoverAssetId);
-    final coverWrittenMs = prefs.getInt(_kPrefLastGalleryCoverWrittenMs);
+    final id = prefs.getString(GlobalConstants.LAST_GALLERY_COVER_ASSET_ID_KEY);
+    final coverWrittenMs =
+        prefs.getInt(GlobalConstants.LAST_GALLERY_COVER_WRITTEN_MS_KEY);
     final coverBytes = await _tryReadAlbumCoverBytes(cache);
     final cacheReadable = coverBytes != null && coverBytes.isNotEmpty;
     final cacheExists = await cache.exists();
@@ -481,8 +447,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
           return;
         }
         if (e == null) {
-          await prefs.remove(_kPrefLastGalleryCoverAssetId);
-          await prefs.remove(_kPrefLastGalleryCoverWrittenMs);
+          await _removeAllGalleryCoverPrefs(prefs);
         }
       } catch (e, st) {
         debugPrint('CameraView: fromId cover failed: $e\n$st');
@@ -493,8 +458,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
           setState(() {});
           return;
         }
-        await prefs.remove(_kPrefLastGalleryCoverAssetId);
-        await prefs.remove(_kPrefLastGalleryCoverWrittenMs);
+        await _removeAllGalleryCoverPrefs(prefs);
       }
     }
     if (!mounted || op != _albumThumbOpSeq) return;
@@ -658,41 +622,12 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     super.didUpdateWidget(oldWidget);
     if (!isCompleteAllow) return;
 
-    final aspectChanged =
-        oldWidget.settingSheetType.aspectRatio != widget.settingSheetType.aspectRatio;
     final slotChanged = oldWidget.previewSlotWidth != widget.previewSlotWidth ||
         oldWidget.previewSlotHeight != widget.previewSlotHeight ||
         oldWidget.previewContentHeight != widget.previewContentHeight;
 
-    if (aspectChanged) {
-      _cameraRestartAfterAspectTimer?.cancel();
-      _cameraRestartAfterAspectTimer = Timer(const Duration(milliseconds: 200), () {
-        _cameraRestartAfterAspectTimer = null;
-        if (!mounted) return;
-        _restartCamera();
-      });
-      return;
-    }
-
     if (slotChanged) {
-      _restartCamera();
-      return;
-    }
-
-    if (oldWidget.flashStatus != widget.flashStatus && _isInitialized) {
-      unawaited(_cameraSdk.setFlashMode(_currentFlashMode));
-    }
-
-    if (oldWidget.cameraSelectedIndex != widget.cameraSelectedIndex &&
-        recordStatus == RecordStatus.end) {
-      setState(() {
-        _videoPlaybackReady = false;
-      });
-      _notifyPreviewReadyForNext();
-    }
-
-    if (oldWidget.onPreviewReadyForNext != widget.onPreviewReadyForNext) {
-      _notifyPreviewReadyForNext();
+      unawaited(_restartCamera());
     }
   }
 
@@ -714,115 +649,52 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     }
   }
 
-  // 滤镜数据
-  List<BeautyItem> filterOptions = createFilterList();
-
-  // 美颜数据
-  List<BeautyItem> beautyOptions = createBeautyList();
-  // 修改美颜数据
-  void setBeautyOptions(BeautyItem item, double value, bool flag) {
-    if (item.type != null) {
-      int index = -1;
-      if (flag) {
-        index = beautyOptions.indexWhere(
-          (element) => element.type == item.type,
-        );
-      } else {
-        index = filterOptions.indexWhere(
-          (element) => element.filterType == item.filterType,
-        );
-      }
-      if (index != -1) {
-        if (flag) {
-          beautyOptions[index].value = value;
-        } else {
-          filterOptions[index].value = value;
-        }
-      }
-      setState(() {});
-      _applyBeautyAndFilterAndSticker();
-    } else {
-      setState(() {
-        if (flag) {
-          for (var element in beautyOptions) {
-            element.value = 0.0;
-          }
-        } else {
-          for (var element in filterOptions) {
-            element.value = 0.0;
-          }
-        }
-      });
-      _applyBeautyAndFilterAndSticker();
-    }
-  }
-
-  void resetBeautyOptions(bool flag) {
-    setState(() {
-      if (flag) {
-        selectedBeautyIndex = 0;
-      } else {
-        selectedFilterIndex = 0;
-      }
-      final originalData = flag ? createBeautyList() : createFilterList();
-      if (flag) {
-        for (final element in beautyOptions) {
-          element.value = originalData
-              .firstWhere((item) => item.type == element.type)
-              .value;
-        }
-      } else {
-        for (final element in filterOptions) {
-          element.value = originalData
-              .firstWhere((item) => item.filterType == element.filterType)
-              .value;
-        }
-      }
-    });
-    _applyBeautyAndFilterAndSticker();
-  }
-
-  /// 与列表首项「无」对应，首次进入拍摄页不应用美颜/滤镜时 sheet 应高亮「无」。
-  int selectedBeautyIndex = 0;
-  void onBeautySelectedIndexChanged(int index) {
-    setState(() {
-      selectedBeautyIndex = index;
-    });
-    _applyBeautyAndFilterAndSticker();
-  }
-
   void openBeautyfiterSheet() {
+    final shoot = ref.read(createShootProvider);
+    final n = ref.read(createShootProvider.notifier);
     SheetUtils(
       BeautyfiterSheetSekeleton(
         title: '美颜',
-        beautyItems: beautyOptions,
-        setBeautyOptions: setBeautyOptions,
-        resetBeautyOptions: resetBeautyOptions,
+        beautyItems: shoot.beautyOptions,
+        setBeautyOptions: (item, value, flag) {
+          n.setBeautyOptions(item, value, flag);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
+        resetBeautyOptions: (flag) {
+          n.resetBeautyOptions(flag);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
         flag: true,
-        initSelectedIndex: selectedBeautyIndex,
-        onSelectedIndexChanged: onBeautySelectedIndexChanged,
+        initSelectedIndex: shoot.selectedBeautyIndex,
+        onSelectedIndexChanged: (index) {
+          n.setSelectedBeautyIndex(index);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
       ),
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
-  int selectedFilterIndex = 0;
-  void onFilterSelectedIndexChanged(int index) {
-    setState(() {
-      selectedFilterIndex = index;
-    });
-    _applyBeautyAndFilterAndSticker();
-  }
-
   void openFiterSheet() {
+    final shoot = ref.read(createShootProvider);
+    final n = ref.read(createShootProvider.notifier);
     SheetUtils(
       BeautyfiterSheetSekeleton(
         title: '滤镜',
-        beautyItems: filterOptions,
-        setBeautyOptions: setBeautyOptions,
-        resetBeautyOptions: resetBeautyOptions,
+        beautyItems: shoot.filterOptions,
+        setBeautyOptions: (item, value, flag) {
+          n.setBeautyOptions(item, value, flag);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
+        resetBeautyOptions: (flag) {
+          n.resetBeautyOptions(flag);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
         flag: false,
-        initSelectedIndex: selectedFilterIndex,
-        onSelectedIndexChanged: onFilterSelectedIndexChanged,
+        initSelectedIndex: shoot.selectedFilterIndex,
+        onSelectedIndexChanged: (index) {
+          n.setSelectedFilterIndex(index);
+          unawaited(_applyBeautyAndFilterAndSticker());
+        },
       ),
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
@@ -856,16 +728,10 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     ).openAsyncSheet(context: context, barrierColor: Colors.transparent);
   }
 
-  RecordStatus recordStatus = RecordStatus.normal;
-  void onRecordStatusChanged(RecordStatus status) {
-    setState(() {
-      recordStatus = status;
-    });
-  }
-
   bool _computePreviewReadyForNext() {
-    if (recordStatus != RecordStatus.end) return false;
-    if (widget.cameraSelectedIndex == 0) {
+    final shoot = ref.read(createShootProvider);
+    if (shoot.recordStatus != RecordStatus.end) return false;
+    if (shoot.cameraSelectedIndex == 0) {
       if (_pendingPhotoBytes != null && _pendingPhotoBytes!.isNotEmpty) return true;
       if (_pendingPhotoPath != null && _pendingPhotoPath!.isNotEmpty) return true;
       if (imagePreviewAssets.isNotEmpty) return true;
@@ -882,7 +748,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   void _notifyPreviewReadyForNext() {
-    widget.onPreviewReadyForNext?.call(_computePreviewReadyForNext());
+    ref
+        .read(createShootProvider.notifier)
+        .setPreviewReadyForNext(_computePreviewReadyForNext());
   }
 
   void _onVideoPreviewPlaybackReady() {
@@ -898,9 +766,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   void changeUI(RecordStatus status) {
-    widget.onRecordStatusChanged(status);
+    ref.read(createShootProvider.notifier).setRecordStatus(status);
     setState(() {
-      recordStatus = status;
       if (status == RecordStatus.normal) {
         _videoPlaybackReady = false;
       }
@@ -913,10 +780,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   /// [refreshAlbumThumb] 为 false 时跳过立即 [getLatestPhoto]（例如存草稿后已用 [AssetEntity] 设过缩略图，
   /// 避免相册索引未更新时把缩略图刷成旧图/null）。
   void _exitPreviewToLiveCamera({bool refreshAlbumThumb = true}) {
-    widget.onRecordStatusChanged(RecordStatus.normal);
+    ref.read(createShootProvider.notifier).setRecordStatus(RecordStatus.normal);
     if (!mounted) return;
     setState(() {
-      recordStatus = RecordStatus.normal;
       _videoPlaybackReady = false;
       _pendingPhotoPath = null;
       _pendingPhotoBytes = null;
@@ -939,7 +805,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   /// 存草稿写入相册；成功返回新建 [AssetEntity]，供立即更新底部缩略图。
   Future<AssetEntity?> _saveDraftToGallery() async {
     try {
-      if (widget.cameraSelectedIndex == 0) {
+      if (ref.read(createShootProvider).cameraSelectedIndex == 0) {
         final bytes = _pendingPhotoBytes;
         if (bytes != null && bytes.isNotEmpty) {
           return saveImageUtils.saveImageToGallery(bytes);
@@ -968,7 +834,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
 
   void startRecording() async {
     await PixelfreeCameraPlugin.startRecord(
-      enableAudio: widget.microphoneStatus == MicrophoneStatus.on,
+      enableAudio:
+          ref.read(createShootProvider).microphoneStatus == MicrophoneStatus.on,
     );
     changeUI(RecordStatus.recording);
   }
@@ -1115,7 +982,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
         if (saved != null) {
           final pending = _pendingPhotoBytes;
           final Uint8List? jpegForCover =
-              (widget.cameraSelectedIndex == 0 &&
+              (ref.read(createShootProvider).cameraSelectedIndex == 0 &&
                       pending != null &&
                       pending.isNotEmpty)
                   ? Uint8List.fromList(pending)
@@ -1138,8 +1005,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     }
   }
 
-  Widget backUI(BuildContext contextBtn) {
-    switch (recordStatus) {
+  Widget backUI(BuildContext contextBtn, CreateShootState shoot) {
+    switch (shoot.recordStatus) {
       case RecordStatus.normal:
         return GestureDetector(
           onTap: () {
@@ -1161,17 +1028,20 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     }
   }
 
-  Widget get buttonUI {
-    switch (widget.cameraSelectedIndex) {
+  Widget _buttonUI(CreateShootState shoot) {
+    switch (shoot.cameraSelectedIndex) {
       case 0:
-        return recordStatus != RecordStatus.end && !widget.isStartCountDown
+        return shoot.recordStatus != RecordStatus.end && !shoot.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
-                child: TakePhotoButton(takePhoto: takePhoto, recordStatus: recordStatus),
+                child: TakePhotoButton(
+                  takePhoto: takePhoto,
+                  recordStatus: shoot.recordStatus,
+                ),
               )
             : Container();
       default:
-        return recordStatus != RecordStatus.end && !widget.isStartCountDown
+        return shoot.recordStatus != RecordStatus.end && !shoot.isStartCountDown
             ? Align(
                 alignment: Alignment.center,
                 child: FittedBox(
@@ -1179,16 +1049,21 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                   alignment: Alignment.center,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    spacing: recordStatus == RecordStatus.recording ? 12.0.h : 0.0.h,
+                    spacing: shoot.recordStatus == RecordStatus.recording
+                        ? 12.0.h
+                        : 0.0.h,
                     children: [
-                      recordStatus == RecordStatus.recording
-                          ? Timekeeping(recordDuration: widget.recordDuration, stopRecording: stopRecording)
+                      shoot.recordStatus == RecordStatus.recording
+                          ? Timekeeping(
+                              recordDuration: shoot.recordDuration,
+                              stopRecording: stopRecording,
+                            )
                           : Container(),
                       RecordVideoButton(
-                        recordDuration: widget.recordDuration,
+                        recordDuration: shoot.recordDuration,
                         startRecording: startRecording,
                         stopRecording: stopRecording,
-                        recordStatus: recordStatus,
+                        recordStatus: shoot.recordStatus,
                       ),
                     ],
                   ),
@@ -1207,7 +1082,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       (_pendingPhotoBytes != null && _pendingPhotoBytes!.isNotEmpty) ||
       (_pendingPhotoPath != null && _pendingPhotoPath!.isNotEmpty) ||
       _cameraRecordedVideoPreview;
-  Widget get perviewUI {
+  Widget _perviewUI(CreateShootState shoot) {
     if (videoPreviewAssets.isNotEmpty) {
       return VideoPreview(
         videoData: videoPreviewAssets.first,
@@ -1216,8 +1091,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       );
     }
     // 本机录像预览：路径未到或解码中时的 loading 均在 [VideoPreview] 内；路径就绪后 [ValueKey] 变化会重新挂载并开始解码。
-    if (widget.cameraSelectedIndex != 0 &&
-        recordStatus == RecordStatus.end &&
+    if (shoot.cameraSelectedIndex != 0 &&
+        shoot.recordStatus == RecordStatus.end &&
         _cameraRecordedVideoPreview) {
       return VideoPreview(
         key: ValueKey(_pendingVideoPath ?? 'waiting'),
@@ -1226,7 +1101,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
         onVideoPlayerBound: _onPreviewVideoPlayerBound,
       );
     }
-    if (widget.cameraSelectedIndex == 0 &&
+    if (shoot.cameraSelectedIndex == 0 &&
         _pendingPhotoBytes != null &&
         _pendingPhotoBytes!.isNotEmpty) {
       return ColoredBox(
@@ -1282,7 +1157,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       return;
     }
 
-    final isPhotoMode = widget.cameraSelectedIndex == 0;
+    final isPhotoMode = ref.read(createShootProvider).cameraSelectedIndex == 0;
     final assets = await AssetPicker.pickAssets(
       context,
       pickerConfig: AssetPickerConfig(
@@ -1589,6 +1464,68 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // ref.listen 必须在 ConsumerState.build 顶层调用，不可放在 LayoutBuilder.builder
+    //（后者在 layout 子阶段执行，debugDoingBuild 为 false，会触发断言）。
+    final shoot = ref.watch(createShootProvider);
+
+    ref.listen(
+      createShootProvider.select((s) => s.settingSheetType.aspectRatio),
+      (prev, next) {
+        if (prev == next) return;
+        if (!isCompleteAllow) return;
+        _cameraRestartAfterAspectTimer?.cancel();
+        _cameraRestartAfterAspectTimer =
+            Timer(const Duration(milliseconds: 200), () {
+          _cameraRestartAfterAspectTimer = null;
+          if (!mounted) return;
+          unawaited(_restartCamera());
+        });
+      },
+    );
+
+    ref.listen(
+      createShootProvider.select((s) => s.flashStatus),
+      (prev, next) {
+        if (prev == next || !_isInitialized) return;
+        unawaited(_cameraSdk.setFlashMode(_currentFlashMode));
+      },
+    );
+
+    ref.listen(
+      createShootProvider.select((s) => s.cameraSelectedIndex),
+      (prev, next) {
+        if (prev == next) return;
+        if (ref.read(createShootProvider).recordStatus != RecordStatus.end) {
+          return;
+        }
+        setState(() => _videoPlaybackReady = false);
+        _notifyPreviewReadyForNext();
+      },
+    );
+
+    ref.listen(
+      createShootProvider.select((s) => s.useFrontCamera),
+      (prev, next) {
+        if (prev == next || !_isInitialized || _isRestartingCamera) return;
+        unawaited(_restartCamera());
+      },
+    );
+
+    ref.listen(
+      createShootProvider.select(
+        (s) => Object.hash(
+          s.selectedBeautyIndex,
+          s.selectedFilterIndex,
+          Object.hashAll(s.beautyOptions.map((e) => e.value)),
+          Object.hashAll(s.filterOptions.map((e) => e.value)),
+        ),
+      ),
+      (prev, next) {
+        if (prev == next || !_isInitialized) return;
+        unawaited(_syncPreviewSettings());
+      },
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         _layoutViewportW = constraints.maxWidth;
@@ -1598,7 +1535,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
             constraints.maxHeight > 0;
         if (_permissionsResolved &&
             isCompleteAllow &&
-            recordStatus == RecordStatus.normal &&
+            shoot.recordStatus == RecordStatus.normal &&
             !_isInitialized &&
             !_isRestartingCamera &&
             !_cameraOpenScheduled &&
@@ -1606,11 +1543,21 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
           _cameraOpenScheduled = true;
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             _cameraOpenScheduled = false;
-            if (!mounted || _isInitialized || _isRestartingCamera || recordStatus != RecordStatus.normal) return;
+            if (!mounted ||
+                _isInitialized ||
+                _isRestartingCamera ||
+                ref.read(createShootProvider).recordStatus !=
+                    RecordStatus.normal) {
+              return;
+            }
             await _restartCamera(forceDispose: false);
           });
         }
         final contentH = _previewContentHeightOrInfer(constraints.maxWidth);
+        final countdownSec = int.tryParse(
+              shoot.countdownType.countdownDuration.replaceAll('秒', ''),
+            ) ??
+            3;
         return Container(
           child: Stack(
         children: [
@@ -1630,9 +1577,18 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
               ),
             ),
           ),
-          widget.isStartCountDown ? Positioned.fill(child: CountdownShow(countdown: widget.countdown, onCountdownFinished: onCountdownFinished)) : Container(),
-          widget.settingSheetType.grid ? Positioned.fill(child: CameraGridOverlay()) : Container(),
-          Positioned.fill(child: perviewUI),
+          shoot.isStartCountDown
+              ? Positioned.fill(
+                  child: CountdownShow(
+                    countdown: countdownSec,
+                    onCountdownFinished: onCountdownFinished,
+                  ),
+                )
+              : Container(),
+          shoot.settingSheetType.grid
+              ? Positioned.fill(child: CameraGridOverlay())
+              : Container(),
+          Positioned.fill(child: _perviewUI(shoot)),
           if (_frontScreenFlashOverlay)
             Positioned.fill(
               child: IgnorePointer(
@@ -1646,10 +1602,10 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
             top: widget.topVal,
             // Popover 锚点必须用 Builder 的 context，不能用 State.build 的 context，否则弹层在屏幕外
             child: Builder(
-              builder: (anchorContext) => backUI(anchorContext),
+              builder: (anchorContext) => backUI(anchorContext, shoot),
             ),
           ),
-          recordStatus != RecordStatus.recording
+          shoot.recordStatus != RecordStatus.recording
               ? Positioned(
                   top: widget.topVal,
                   left: 0,
@@ -1678,46 +1634,15 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                   ),
                 )
               : Container(),
-          recordStatus != RecordStatus.end
+          shoot.recordStatus != RecordStatus.end
               ? Positioned(
                   right: 0.w,
                   top: widget.topVal + 10.h,
                   child: ToolBar(
-                    recordStatus: recordStatus,
-                    cameraSelectedIndex: widget.cameraSelectedIndex,
-                    gifStatus: widget.gifStatus,
-                    onGifStatusChanged: (status) {
-                      widget.onGifStatusChanged(status);
-                    },
-                    microphoneStatus: widget.microphoneStatus,
-                    onMicrophoneStatusChanged: (status) {
-                      widget.onMicrophoneStatusChanged(status);
-                    },
-                    onCountDownChanged: () {
-                      widget.openCountDownSheet();
-                    },
-                    onSettingChanged: widget.openSettingSheet,
-                    onBeautyChanged: openBeautyfiterSheet,
-                    onFilterChanged: openFiterSheet,
-                    onRotateChanged: () async {
-                      _cameraPosition = _cameraPosition == CameraPosition.front
-                          ? CameraPosition.back
-                          : CameraPosition.front;
-                      await _restartCamera();
-                    },
-                    speedMode: widget.speedMode,
-                    onSpeedModeChanged: (mode) {
-                      widget.onSpeedModeChanged(mode);
-                    },
-                    flashStatus: widget.flashStatus,
-                    recordDuration: widget.recordDuration,
-                    onFlashStatusChanged: (status) {
-                      widget.onFlashStatusChanged(status);
-                    },
-                    onRecordDurationChanged: (duration) {
-                      widget.onRecordDurationChanged(duration);
-                    },
-                    isStartCountDown: widget.isStartCountDown,
+                    openCountDownSheet: widget.openCountDownSheet,
+                    openSettingSheet: widget.openSettingSheet,
+                    onBeautyTap: openBeautyfiterSheet,
+                    onFilterTap: openFiterSheet,
                   ),
                 )
               : Container(),
@@ -1730,7 +1655,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                 spacing: 24.0.h,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  widget.speedMode
+                  shoot.speedMode
                       ? Container(
                           alignment: Alignment.center,
                           height: 40.h,
@@ -1741,16 +1666,18 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                                 width: MediaQuery.of(context).size.width * 0.7,
                                 height: 40.h,
                                 bgColor: Colors.black.withValues(alpha: 0.3),
-                                labels: widget.speedOptions,
-                                selectedIndex: widget.speedSelectedIndex,
-                                onChanged: widget.onSpeedSelectedIndexChanged,
+                                labels: CreateShootLabels.speedLabels,
+                                selectedIndex: shoot.speedSelectedIndex,
+                                onChanged: (i) => ref
+                                    .read(createShootProvider.notifier)
+                                    .setSpeedSelectedIndex(i),
                                 borderRadius: 4.0.r,
                               ),
                             ],
                           ),
                         )
                       : Container(),
-                  recordStatus == RecordStatus.normal
+                  shoot.recordStatus == RecordStatus.normal
                       ? AutoCenterScrollTabBar(
                           itemSpacing: 20.0.w,
                           highlightHeight: 30.0.h,
@@ -1758,9 +1685,11 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                           itemPadding: EdgeInsets.symmetric(horizontal: 2.0.w,vertical: 4.0.h),
                           activeStyle: TextStyle(fontSize: 15.0.sp, fontWeight: FontWeight.bold, color: Colors.black, decoration: TextDecoration.none),
                           inactiveStyle: TextStyle(fontSize: 15.0.sp, color: Colors.white, decoration: TextDecoration.none),
-                          initialIndex: widget.cameraSelectedIndex,
-                          tabs: widget.cameraOptions,
-                          onChanged: widget.onInSelectedIndexChanged,
+                          initialIndex: shoot.cameraSelectedIndex,
+                          tabs: CreateShootLabels.cameraModeTabs,
+                          onChanged: (i) => ref
+                              .read(createShootProvider.notifier)
+                              .setCameraSelectedIndex(i),
                         )
                       : Container(),
                   Padding(
@@ -1778,7 +1707,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                             Expanded(
                               child: Align(
                                 alignment: Alignment.centerLeft,
-                                child: recordStatus == RecordStatus.normal
+                                child: shoot.recordStatus == RecordStatus.normal
                                     ? GestureDetector(
                                         onTap: openStickerSheet,
                                         child: Column(
@@ -1807,12 +1736,12 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                               ),
                             ),
                             Expanded(
-                              child: Center(child: buttonUI),
+                              child: Center(child: _buttonUI(shoot)),
                             ),
                             Expanded(
                               child: Align(
                                 alignment: Alignment.centerRight,
-                                child: recordStatus == RecordStatus.normal
+                                child: shoot.recordStatus == RecordStatus.normal
                                     ? GestureDetector(
                                         onTap: _pickFromAlbum,
                                         child: Column(
@@ -1949,7 +1878,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                   _permissionsResolved &&
                   isCompleteAllow &&
                   !isShowPreview &&
-                  recordStatus == RecordStatus.normal
+                  shoot.recordStatus == RecordStatus.normal
               ? const FetchLoadingView()
               : Container(),
         ],

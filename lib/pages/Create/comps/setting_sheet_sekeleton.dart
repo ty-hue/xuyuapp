@@ -27,12 +27,51 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
   int aspectRatioSelectedIndex = 0;
   Timer? _aspectRatioNotifyTimer;
 
+  void _applyWidgetSettings() {
+    params = SettingSheetType(
+      maxRecordDuration: widget.settingSheetType.maxRecordDuration,
+      aspectRatio: widget.settingSheetType.aspectRatio,
+      useVolumeKeys: widget.settingSheetType.useVolumeKeys,
+      grid: widget.settingSheetType.grid,
+    );
+    maxRecordDurationSelectedIndex = _durationSelectedIndex(params.maxRecordDuration);
+    aspectRatioSelectedIndex = _aspectSelectedIndex(params.aspectRatio);
+  }
+
+  int _durationSelectedIndex(String raw) {
+    final s = raw.trim();
+    var i = maxRecordDurationLabels.indexOf(s);
+    if (i < 0) {
+      final n = int.tryParse(s);
+      if (n != null) {
+        i = maxRecordDurationLabels.indexOf('$n');
+      }
+    }
+    return i >= 0 ? i : 0;
+  }
+
+  int _aspectSelectedIndex(String raw) {
+    final i = aspectRatioLabels.indexOf(raw.trim());
+    return i >= 0 ? i : 0;
+  }
+
   @override
   void initState() {
     super.initState();
-    params = widget.settingSheetType;
-    maxRecordDurationSelectedIndex = maxRecordDurationLabels.indexOf(params.maxRecordDuration.toString());
-    aspectRatioSelectedIndex = aspectRatioLabels.indexOf(params.aspectRatio.toString());
+    _applyWidgetSettings();
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingSheetSekeleton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final o = oldWidget.settingSheetType;
+    final w = widget.settingSheetType;
+    if (o.maxRecordDuration != w.maxRecordDuration ||
+        o.aspectRatio != w.aspectRatio ||
+        o.useVolumeKeys != w.useVolumeKeys ||
+        o.grid != w.grid) {
+      setState(_applyWidgetSettings);
+    }
   }
 
   @override
@@ -150,7 +189,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
             SizedBox(height: 20.0.h),
             _buildSettingSheetItem(
               title: '使用音量键拍摄',
-              value: widget.settingSheetType.useVolumeKeys,
+              value: params.useVolumeKeys,
               onChanged: (val) {
                 setState(() {
                   params.useVolumeKeys = val;
@@ -162,7 +201,7 @@ class _SettingSheetSekeletonState extends State<SettingSheetSekeleton> {
             SizedBox(height: 20.0.h),
             _buildSettingSheetItem(
               title: '网格',
-              value: widget.settingSheetType.grid,
+              value: params.grid,
               onChanged: (val) {
                 setState(() {
                   params.grid = val;

@@ -10,6 +10,18 @@ class GlobalConstants {
       'csclyf_xuyuapp_mine_search_history'; // 本地存储的搜索历史的key
   static const String MUSIC_SEARCH_HISTORY_KEY =
       'csclyf_xuyuapp_music_search_history'; // 本地存储的搜索历史的key
+
+  /// 创作页拍摄偏好（JSON，供 [CreateShootPersistence]）
+  static const String CREATE_SHOOT_PREFS_KEY =
+      'csclyf_xuyuapp_create_shoot_prefs_v1';
+
+  /// 拍摄页相册缩略图：最近写入相册的资源 id
+  static const String LAST_GALLERY_COVER_ASSET_ID_KEY =
+      'csclyf_xuyuapp_last_gallery_cover_asset_id';
+
+  /// 拍摄页相册缩略图：封面文件写入本地时间戳（ms）
+  static const String LAST_GALLERY_COVER_WRITTEN_MS_KEY =
+      'csclyf_xuyuapp_last_gallery_cover_written_ms';
 }
 
 // 请求地址接口的的常量

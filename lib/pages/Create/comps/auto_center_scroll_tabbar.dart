@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class AutoCenterScrollTabBar extends StatefulWidget {
@@ -54,13 +56,40 @@ class _AutoCenterScrollTabBarState extends State<AutoCenterScrollTabBar> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _currentIndex = _clampIndex(widget.initialIndex);
     _itemKeys.addAll(List.generate(widget.tabs.length, (_) => GlobalKey()));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       _updateHighlightWidth();
       await _scrollToIndex(_currentIndex, jump: true);
-      setState(() {});
+      if (mounted) setState(() {});
+    });
+  }
+
+  int _clampIndex(int i) {
+    if (widget.tabs.isEmpty) return 0;
+    return i.clamp(0, widget.tabs.length - 1);
+  }
+
+  /// 父级用 [initialIndex] 表达当前选中（如 Riverpod 异步恢复后），须与内部 [_currentIndex] 同步。
+  @override
+  void didUpdateWidget(covariant AutoCenterScrollTabBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialIndex == oldWidget.initialIndex) return;
+    final next = _clampIndex(widget.initialIndex);
+    if (next == _currentIndex) return;
+    _currentIndex = next;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (_itemKeys.length != widget.tabs.length) return;
+      try {
+        _updateHighlightWidth();
+      } catch (_) {
+        return;
+      }
+      await _scrollToIndex(_currentIndex, jump: true);
+      if (mounted) setState(() {});
     });
   }
 

@@ -1,59 +1,35 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:bilbili_project/store/create/create_shoot_notifier.dart';
+import 'package:bilbili_project/store/create/create_shoot_state.dart';
 import 'package:bilbili_project/utils/ToastUtils.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class ToolBar extends StatefulWidget {
-  final RecordStatus recordStatus;
-  final FlashStatus flashStatus;
-  final RecordDuration recordDuration;
-  final ValueChanged<FlashStatus> onFlashStatusChanged;
-  final ValueChanged<RecordDuration> onRecordDurationChanged;
-  final bool speedMode;
-  final ValueChanged<bool> onSpeedModeChanged;
-  final VoidCallback onRotateChanged;
-  final VoidCallback onSettingChanged;
-  final VoidCallback onBeautyChanged;
-  final VoidCallback onFilterChanged;
-  final VoidCallback onCountDownChanged;
-  final MicrophoneStatus microphoneStatus;
-  final ValueChanged<MicrophoneStatus> onMicrophoneStatusChanged;
-  final GifStatus gifStatus;
-  final ValueChanged<GifStatus> onGifStatusChanged;
-  final int cameraSelectedIndex;
-  final bool isStartCountDown;
+/// 右侧工具栏：状态来自 [createShootProvider]（含翻转摄像头）；打开 Sheet 依赖外部回调。
+class ToolBar extends ConsumerStatefulWidget {
+  const ToolBar({
+    super.key,
+    required this.openCountDownSheet,
+    required this.openSettingSheet,
+    required this.onBeautyTap,
+    required this.onFilterTap,
+  });
 
-  ToolBar({
-    Key? key,
-    required this.recordStatus,
-    required this.flashStatus,
-    required this.recordDuration,
-    required this.onFlashStatusChanged,
-    required this.onRecordDurationChanged,
-    required this.speedMode,
-    required this.onSpeedModeChanged,
-    required this.onRotateChanged,
-    required this.onSettingChanged,
-    required this.onBeautyChanged,
-    required this.onFilterChanged,
-    required this.onCountDownChanged,
-    required this.microphoneStatus,
-    required this.onMicrophoneStatusChanged,
-    required this.gifStatus,
-    required this.onGifStatusChanged,
-    required this.cameraSelectedIndex,
-    required this.isStartCountDown,
-  }) : super(key: key);
+  final VoidCallback openCountDownSheet;
+  final VoidCallback openSettingSheet;
+  final VoidCallback onBeautyTap;
+  final VoidCallback onFilterTap;
 
   @override
-  _ToolBarState createState() => _ToolBarState();
+  ConsumerState<ToolBar> createState() => _ToolBarState();
 }
 
-class _ToolBarState extends State<ToolBar> {
+class _ToolBarState extends ConsumerState<ToolBar> {
   static const Duration _kFlipIconAnimDuration = Duration(milliseconds: 320);
   /// 折叠时滚动区可视高度（整项行数）。
   static const int _kCollapsedSlotCount = 4;
@@ -75,7 +51,9 @@ class _ToolBarState extends State<ToolBar> {
   @override
   void initState() {
     super.initState();
-    _flipRotationTween = Tween<double>(begin: 0, end: 0);
+    final front = ref.read(createShootProvider).useFrontCamera;
+    _flipTurnEnd = front ? 0.0 : 0.5;
+    _flipRotationTween = Tween<double>(begin: _flipTurnEnd, end: _flipTurnEnd);
   }
 
   @override
@@ -92,17 +70,15 @@ class _ToolBarState extends State<ToolBar> {
   }
 
   /// 须与 [_scrollToolItems] 中 `add` 条件保持一致。
-  int _scrollToolItemCount() {
+  int _scrollToolItemCount(CreateShootState s) {
     int n = 0;
-    if (widget.cameraSelectedIndex == 1 &&
-        widget.recordStatus == RecordStatus.normal) {
+    if (s.cameraSelectedIndex == 1 && s.recordStatus == RecordStatus.normal) {
       n++;
     }
-    if (widget.cameraSelectedIndex != 2 &&
-        widget.recordStatus == RecordStatus.normal) {
+    if (s.cameraSelectedIndex != 2 && s.recordStatus == RecordStatus.normal) {
       n++;
     }
-    if (widget.recordStatus == RecordStatus.normal) {
+    if (s.recordStatus == RecordStatus.normal) {
       n += 4;
     }
     return n;
@@ -111,7 +87,8 @@ class _ToolBarState extends State<ToolBar> {
   @override
   void didUpdateWidget(covariant ToolBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_scrollToolItemCount() <= _kCollapsedSlotCount && _scrollToolsExpanded) {
+    final s = ref.read(createShootProvider);
+    if (_scrollToolItemCount(s) <= _kCollapsedSlotCount && _scrollToolsExpanded) {
       _scrollToolsExpanded = false;
       _resetScrollToolListToTop();
     }
@@ -132,12 +109,22 @@ class _ToolBarState extends State<ToolBar> {
       _flipRestartTimer = null;
       if (!mounted) return;
       _flipIconAnimating = false;
-      widget.onRotateChanged();
+      ref.read(createShootProvider.notifier).toggleUseFrontCamera();
     });
   }
 
-  IconData get flashIcon {
-    switch (widget.flashStatus) {
+  void _syncFlipTurnsToFacing() {
+    final front = ref.read(createShootProvider).useFrontCamera;
+    var n = (_flipTurnEnd / 0.5).round();
+    final needEven = front;
+    final isEven = n % 2 == 0;
+    if (needEven != isEven) n += 1;
+    _flipTurnEnd = n * 0.5;
+    _flipRotationTween = Tween<double>(begin: _flipTurnEnd, end: _flipTurnEnd);
+  }
+
+  IconData _flashIcon(FlashStatus f) {
+    switch (f) {
       case FlashStatus.off:
         return Icons.flash_off_sharp;
       case FlashStatus.on:
@@ -147,8 +134,8 @@ class _ToolBarState extends State<ToolBar> {
     }
   }
 
-  IconData get recordDurationIcon {
-    switch (widget.recordDuration) {
+  IconData _recordDurationIcon(RecordDuration d) {
+    switch (d) {
       case RecordDuration.s15:
         return FontAwesomeIcons.hourglassStart;
       case RecordDuration.s60:
@@ -158,22 +145,18 @@ class _ToolBarState extends State<ToolBar> {
     }
   }
 
-  IconData get speedModeIcon {
-    return widget.speedMode
+  IconData _speedModeIcon(bool speedMode) {
+    return speedMode
         ? Icons.motion_photos_on_sharp
         : Icons.motion_photos_off_sharp;
   }
 
-  IconData get microphoneIcon {
-    return widget.microphoneStatus == MicrophoneStatus.on
-        ? Icons.mic_sharp
-        : Icons.mic_off_sharp;
+  IconData _microphoneIcon(MicrophoneStatus m) {
+    return m == MicrophoneStatus.on ? Icons.mic_sharp : Icons.mic_off_sharp;
   }
 
-  IconData get gifIcon {
-    return widget.gifStatus == GifStatus.on
-        ? Icons.videocam_sharp
-        : Icons.videocam_off_sharp;
+  IconData _gifIcon(GifStatus g) {
+    return g == GifStatus.on ? Icons.videocam_sharp : Icons.videocam_off_sharp;
   }
 
   double get _scrollItemH => 60.0.h;
@@ -186,13 +169,13 @@ class _ToolBarState extends State<ToolBar> {
       );
 
   /// 固定区：翻转、闪光灯、设置（逻辑与原先一致）。
-  Widget _buildFixedToolColumn() {
+  Widget _buildFixedToolColumn(CreateShootState s, CreateShootNotifier n) {
     return SizedBox(
       width: 64.0.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!widget.isStartCountDown)
+          if (!s.isStartCountDown)
             GestureDetector(
               onTap: _onFlipTap,
               child: SizedBox(
@@ -226,18 +209,18 @@ class _ToolBarState extends State<ToolBar> {
                 ),
               ),
             ),
-          if (widget.recordStatus == RecordStatus.normal)
+          if (s.recordStatus == RecordStatus.normal)
             GestureDetector(
               onTap: () {
-                switch (widget.flashStatus) {
+                switch (s.flashStatus) {
                   case FlashStatus.off:
-                    widget.onFlashStatusChanged(FlashStatus.on);
+                    n.setFlashStatus(FlashStatus.on);
                     break;
                   case FlashStatus.on:
-                    widget.onFlashStatusChanged(FlashStatus.auto);
+                    n.setFlashStatus(FlashStatus.auto);
                     break;
                   case FlashStatus.auto:
-                    widget.onFlashStatusChanged(FlashStatus.off);
+                    n.setFlashStatus(FlashStatus.off);
                     break;
                 }
               },
@@ -249,15 +232,16 @@ class _ToolBarState extends State<ToolBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(flashIcon, color: Colors.white, size: 22.0.sp),
+                    Icon(_flashIcon(s.flashStatus),
+                        color: Colors.white, size: 22.0.sp),
                     Text('闪光灯', style: _labelStyle),
                   ],
                 ),
               ),
             ),
-          if (widget.recordStatus == RecordStatus.normal)
+          if (s.recordStatus == RecordStatus.normal)
             GestureDetector(
-              onTap: widget.onSettingChanged,
+              onTap: widget.openSettingSheet,
               child: SizedBox(
                 height: _scrollItemH,
                 child: Column(
@@ -277,11 +261,11 @@ class _ToolBarState extends State<ToolBar> {
     );
   }
 
-  Widget _buildMicrophoneItem() {
+  Widget _buildMicrophoneItem(CreateShootState s, CreateShootNotifier n) {
     return GestureDetector(
       onTap: () {
-        widget.onMicrophoneStatusChanged(
-          widget.microphoneStatus == MicrophoneStatus.off
+        n.setMicrophoneStatus(
+          s.microphoneStatus == MicrophoneStatus.off
               ? MicrophoneStatus.on
               : MicrophoneStatus.off,
         );
@@ -295,8 +279,8 @@ class _ToolBarState extends State<ToolBar> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              microphoneIcon,
-              color: widget.microphoneStatus == MicrophoneStatus.off
+              _microphoneIcon(s.microphoneStatus),
+              color: s.microphoneStatus == MicrophoneStatus.off
                   ? Colors.red
                   : Colors.white,
               size: 22.0.sp,
@@ -308,24 +292,24 @@ class _ToolBarState extends State<ToolBar> {
     );
   }
 
-  Widget _buildDurationOrGifSwitcher() {
+  Widget _buildDurationOrGifSwitcher(CreateShootState s, CreateShootNotifier n) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: widget.cameraSelectedIndex == 1
+      child: s.cameraSelectedIndex == 1
           ? GestureDetector(
               key: const ValueKey(1),
               onTap: () {
-                switch (widget.recordDuration) {
+                switch (s.recordDuration) {
                   case RecordDuration.s15:
-                    widget.onRecordDurationChanged(RecordDuration.s60);
+                    n.setRecordDuration(RecordDuration.s60);
                     ToastUtils.showToastReplace(context, msg: '最大拍摄时长60秒');
                     break;
                   case RecordDuration.s60:
-                    widget.onRecordDurationChanged(RecordDuration.s180);
+                    n.setRecordDuration(RecordDuration.s180);
                     ToastUtils.showToastReplace(context, msg: '最大拍摄时长3分钟');
                     break;
                   case RecordDuration.s180:
-                    widget.onRecordDurationChanged(RecordDuration.s15);
+                    n.setRecordDuration(RecordDuration.s15);
                     ToastUtils.showToastReplace(context, msg: '最大拍摄时长15秒');
                     break;
                 }
@@ -338,7 +322,8 @@ class _ToolBarState extends State<ToolBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(recordDurationIcon, color: Colors.white, size: 22.0.sp),
+                    Icon(_recordDurationIcon(s.recordDuration),
+                        color: Colors.white, size: 22.0.sp),
                     Text('时长', style: _labelStyle),
                   ],
                 ),
@@ -347,8 +332,8 @@ class _ToolBarState extends State<ToolBar> {
           : GestureDetector(
               key: const ValueKey(2),
               onTap: () {
-                widget.onGifStatusChanged(
-                  widget.gifStatus == GifStatus.off ? GifStatus.on : GifStatus.off,
+                n.setGifStatus(
+                  s.gifStatus == GifStatus.off ? GifStatus.on : GifStatus.off,
                 );
               },
               child: SizedBox(
@@ -359,7 +344,8 @@ class _ToolBarState extends State<ToolBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(gifIcon, color: Colors.white, size: 22.0.sp),
+                    Icon(_gifIcon(s.gifStatus),
+                        color: Colors.white, size: 22.0.sp),
                     Text('动图', style: _labelStyle),
                   ],
                 ),
@@ -370,7 +356,7 @@ class _ToolBarState extends State<ToolBar> {
 
   Widget _buildCountdownItem() {
     return GestureDetector(
-      onTap: widget.onCountDownChanged,
+      onTap: widget.openCountDownSheet,
       child: SizedBox(
         height: _scrollItemH,
         child: Column(
@@ -389,7 +375,7 @@ class _ToolBarState extends State<ToolBar> {
 
   Widget _buildBeautyItem() {
     return GestureDetector(
-      onTap: widget.onBeautyChanged,
+      onTap: widget.onBeautyTap,
       child: SizedBox(
         height: _scrollItemH,
         child: Column(
@@ -409,7 +395,7 @@ class _ToolBarState extends State<ToolBar> {
 
   Widget _buildFilterItem() {
     return GestureDetector(
-      onTap: widget.onFilterChanged,
+      onTap: widget.onFilterTap,
       child: SizedBox(
         height: _scrollItemH,
         child: Column(
@@ -426,9 +412,9 @@ class _ToolBarState extends State<ToolBar> {
     );
   }
 
-  Widget _buildSpeedItem() {
+  Widget _buildSpeedItem(CreateShootState s, CreateShootNotifier n) {
     return GestureDetector(
-      onTap: () => widget.onSpeedModeChanged(!widget.speedMode),
+      onTap: () => n.setSpeedMode(!s.speedMode),
       child: SizedBox(
         height: _scrollItemH,
         child: Column(
@@ -437,7 +423,7 @@ class _ToolBarState extends State<ToolBar> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(speedModeIcon, color: Colors.white, size: 22.0.sp),
+            Icon(_speedModeIcon(s.speedMode), color: Colors.white, size: 22.0.sp),
             Text('快慢速', style: _labelStyle),
           ],
         ),
@@ -446,21 +432,19 @@ class _ToolBarState extends State<ToolBar> {
   }
 
   /// 滚动区条目（麦克风、时长/动图、倒计时、美颜、滤镜、快慢速），顺序与原先单列一致。
-  List<Widget> _scrollToolItems() {
+  List<Widget> _scrollToolItems(CreateShootState s, CreateShootNotifier n) {
     final list = <Widget>[];
-    if (widget.cameraSelectedIndex == 1 &&
-        widget.recordStatus == RecordStatus.normal) {
-      list.add(_buildMicrophoneItem());
+    if (s.cameraSelectedIndex == 1 && s.recordStatus == RecordStatus.normal) {
+      list.add(_buildMicrophoneItem(s, n));
     }
-    if (widget.cameraSelectedIndex != 2 &&
-        widget.recordStatus == RecordStatus.normal) {
-      list.add(_buildDurationOrGifSwitcher());
+    if (s.cameraSelectedIndex != 2 && s.recordStatus == RecordStatus.normal) {
+      list.add(_buildDurationOrGifSwitcher(s, n));
     }
-    if (widget.recordStatus == RecordStatus.normal) {
+    if (s.recordStatus == RecordStatus.normal) {
       list.add(_buildCountdownItem());
       list.add(_buildBeautyItem());
       list.add(_buildFilterItem());
-      list.add(_buildSpeedItem());
+      list.add(_buildSpeedItem(s, n));
     }
     return list;
   }
@@ -522,10 +506,24 @@ class _ToolBarState extends State<ToolBar> {
 
   @override
   Widget build(BuildContext context) {
-    final scrollItems = _scrollToolItems();
+    final shoot = ref.watch(createShootProvider);
+    final notifier = ref.read(createShootProvider.notifier);
+
+    ref.listen(
+      createShootProvider.select((s) => s.useFrontCamera),
+      (prev, next) {
+        if (prev == next) return;
+        if (_flipIconAnimating) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(_syncFlipTurnsToFacing);
+        });
+      },
+    );
+    final scrollItems = _scrollToolItems(shoot, notifier);
     final needMore =
         scrollItems.length > _kCollapsedSlotCount &&
-            widget.recordStatus == RecordStatus.normal;
+            shoot.recordStatus == RecordStatus.normal;
 
     final collapsedH = scrollItems.isEmpty
         ? 0.0
@@ -540,7 +538,7 @@ class _ToolBarState extends State<ToolBar> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildFixedToolColumn(),
+        _buildFixedToolColumn(shoot, notifier),
         if (scrollItems.isNotEmpty) _buildToolbarDivider(),
         if (scrollItems.isNotEmpty)
           AnimatedContainer(
