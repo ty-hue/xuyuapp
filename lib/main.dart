@@ -16,7 +16,7 @@ void main() {
           routerConfig: router,
           // 🌍 全局主题
           theme: ThemeData(
-            useMaterial3: true, // 👈 关键        // Switch 全局样式
+            useMaterial3: false, 
             switchTheme: SwitchThemeData(
               trackColor: MaterialStateProperty.resolveWith((states) {
                 if (states.contains(MaterialState.selected)) {
@@ -32,6 +32,11 @@ void main() {
             textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 14)),
             // Scaffold 统一背景色
             scaffoldBackgroundColor: Colors.white,
+            bottomSheetTheme: const BottomSheetThemeData(
+              elevation: 0,
+              modalElevation: 0,
+              shadowColor: Colors.transparent,
+            ),
           ),
           // 🌙 暗黑模式（可选）
           // darkTheme: ThemeData.dark(),

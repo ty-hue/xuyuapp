@@ -1,6 +1,8 @@
+import 'package:bilbili_project/layout/home_feed_playback_scope.dart';
 import 'package:bilbili_project/layout/mine_side_menu_scope.dart';
 import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
 import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/routes/index.dart' show router;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -38,10 +40,23 @@ class _ShellPageState extends State<ShellPage>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    router.routerDelegate.addListener(_onRouterChanged);
+  }
+
+  void _onRouterChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// 首页视频：仅底部选中首页且顶层路由仍是 `/`（例如未 push 全屏页）时可播。
+  bool _allowHomeFeedPlayback() {
+    if (widget.navigationShell.currentIndex != 0) return false;
+    final path = router.routeInformationProvider.value.uri.path;
+    return path.isEmpty || path == '/';
   }
 
   @override
   void dispose() {
+    router.routerDelegate.removeListener(_onRouterChanged);
     _drawerCtrl.dispose();
     super.dispose();
   }
@@ -192,7 +207,10 @@ class _ShellPageState extends State<ShellPage>
                     fit: StackFit.expand,
                     children: [
                       Scaffold(
-                        body: widget.navigationShell,
+                        body: HomeFeedPlaybackScope(
+                          allowPlayback: _allowHomeFeedPlayback(),
+                          child: widget.navigationShell,
+                        ),
                         bottomNavigationBar: _buildBottomBar(context, bottomIndex),
                       ),
                       if (rawT > 0.01)

@@ -30,10 +30,8 @@ class _DeferredSheetMountState extends State<_DeferredSheetMount> {
       return SizedBox(
         width: double.infinity,
         height: h,
-        child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-          child: const ColoredBox(color: Color.fromRGBO(25, 25, 25, 1)),
-        ),
+        // 圆角仅由外层 modal [Material.shape] 裁剪，避免与内层 ClipRRect 叠出缝透出遮罩。
+        child: const ColoredBox(color: Color.fromRGBO(25, 25, 25, 1)),
       );
     }
     return widget.child;
@@ -54,28 +52,33 @@ class SheetUtils {
     required BuildContext context,
     /// 嵌套 bottom sheet 时设为 true，由根 Navigator 承接路由，动画更稳。
     bool useRootNavigator = false,
+    /// 弹层 [Material] 底色。不要用 [Colors.transparent]：圆角抗锯齿处会透出
+    /// [modalBarrierColor] 遮罩，左上角/右上角常出现发黑、发灰的「溢出角」。
+    /// 默认与 [ThemeData.colorScheme.surface] 一致；若 sheet 主色与 surface 不同，
+    /// 仍应用不透明子组件铺满（如现有 skeleton 的 `Container`），或传入与内容一致的色值。
+    Color? sheetBackgroundColor,
   }) async {
+    final Color modalBg =
+        sheetBackgroundColor ?? Theme.of(context).colorScheme.surface;
     final T? result = await showModalBottomSheet<T>(
       isScrollControlled: true, // 设置为true，让底部弹窗的高度可以自定义
       context: context,
       useRootNavigator: useRootNavigator,
-      backgroundColor: Colors.transparent,
+      // 默认 false 时路由会 removeTop padding，导致 builder 内 SafeArea 顶部不生效，易与圆角错位透出遮罩。
+      useSafeArea: true,
+      backgroundColor: modalBg,
+      elevation: 0,
       barrierColor:
           barrierColor ?? Theme.of(context).bottomSheetTheme.modalBarrierColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.0.r)),
       ),
       clipBehavior: Clip.antiAlias,
       builder: (BuildContext context) {
         final body = deferHeavyChild
             ? _DeferredSheetMount(child: child)
             : child;
-        return SafeArea(
-          child: Material(
-            type: MaterialType.transparency,
-            child: body,
-          ),
-        );
+        return body;
       },
     );
     return result;
