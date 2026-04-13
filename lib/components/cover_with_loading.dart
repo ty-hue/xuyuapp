@@ -21,41 +21,57 @@ class CoverWithLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumbRadius = 16.0.r;
+    final borderW = 2.w;
     return Stack(
       fit: StackFit.expand,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: const Color.fromRGBO(58, 57, 58, 1),
-            borderRadius: BorderRadius.circular(thumbRadius),
-            border: isActive
-                ? Border.all(color: Colors.white, width: 2.w)
-                : null,
-          ),
+        // 底图与圆角裁剪：铺满父级，不受选中描边挤压（描边叠在上方）。
+        ClipRRect(
+          borderRadius: BorderRadius.circular(thumbRadius),
           clipBehavior: Clip.antiAlias,
-          alignment: Alignment.center,
-          child: imagePath.isNotEmpty
-              ? Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _fallbackIcon(),
-                )
-              : _fallbackIcon(),
+          child: ColoredBox(
+            color: const Color.fromRGBO(58, 57, 58, 1),
+            child: imagePath.isNotEmpty
+                ? Image.asset(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    alignment: Alignment.center,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Center(child: _fallbackIcon()),
+                  )
+                : Center(child: _fallbackIcon()),
+          ),
         ),
+        // 选中描边与内容同圆角，叠画在最上层，不改变 Image 布局约束。
+        if (isActive)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(thumbRadius),
+                  border: Border.all(color: Colors.white, width: borderW),
+                ),
+              ),
+            ),
+          ),
         if (isLoading)
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(thumbRadius),
+              clipBehavior: Clip.antiAlias,
+              child: ColoredBox(
                 color: Colors.black26,
-                borderRadius: BorderRadius.circular(thumbRadius),
-              ),
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 24.w,
-                height: 24.w,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
+                child: Center(
+                  child: SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),

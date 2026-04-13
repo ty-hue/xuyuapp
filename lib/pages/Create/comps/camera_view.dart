@@ -1700,6 +1700,11 @@ class CameraViewState extends ConsumerState<CameraView> with WidgetsBindingObser
                         final sideW = 50.0.w * _kBottomSideIconScale - 4.0.w;
                         final sideH = 50.0.h * _kBottomSideIconScale - 4.0.w;
                         final iconSize = sideW * _kBottomIconInTileRatio;
+                        final stickerIconAsset = selectedStickerIndex >= 0 &&
+                                selectedStickerIndex < stickerOptions.length &&
+                                stickerOptions[selectedStickerIndex].icon.isNotEmpty
+                            ? stickerOptions[selectedStickerIndex].icon
+                            : null;
                         // 三等分列 + 垂直居中：左右槽与中间拍照/录制在同一行对齐，避免 Stack 叠放时仅按整列高度居中导致与圆钮错位。
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1718,15 +1723,34 @@ class CameraViewState extends ConsumerState<CameraView> with WidgetsBindingObser
                                               width: sideW,
                                               height: sideH,
                                               decoration: BoxDecoration(
-                                                color: Colors.black.withValues(alpha: 0.35),
-                                                borderRadius: BorderRadius.circular(8.0.r),
+                                                color: stickerIconAsset != null
+                                                    ? Colors.transparent
+                                                    : Colors.black
+                                                        .withValues(alpha: 0.35),
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0.r),
                                               ),
+                                              clipBehavior: Clip.antiAlias,
                                               alignment: Alignment.center,
-                                              child: Icon(
-                                                Icons.auto_awesome,
-                                                color: Colors.white,
-                                                size: iconSize,
-                                              ),
+                                              child: stickerIconAsset != null
+                                                  ? Image.asset(
+                                                      stickerIconAsset,
+                                                      width: sideW,
+                                                      height: sideH,
+                                                      fit: BoxFit.cover,
+                                                      gaplessPlayback: true,
+                                                      errorBuilder:
+                                                          (c, e, s) => Icon(
+                                                        Icons.auto_awesome,
+                                                        color: Colors.white,
+                                                        size: iconSize,
+                                                      ),
+                                                    )
+                                                  : Icon(
+                                                      Icons.auto_awesome,
+                                                      color: Colors.white,
+                                                      size: iconSize,
+                                                    ),
                                             ),
                                             Text('特效', style: TextStyle(fontSize: 14.0.sp, color: Colors.white, decoration: TextDecoration.none)),
                                           ],

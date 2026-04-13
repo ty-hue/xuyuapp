@@ -272,10 +272,10 @@ List<StickerItem> createStickerList() {
     StickerItem(
       name: 'face_mesh',
       bundleName: '',
-      icon: '',
+      icon: 'assets/stickers/3d_line.jpg',
       label: '3D脸部点(线框)',
     ),
-    StickerItem(name: 'lip_color', bundleName: '', icon: '', label: '玫瑰唇色'),
+    StickerItem(name: 'lip_color', bundleName: '', icon: 'assets/stickers/red_lips.jpg', label: '玫瑰唇色'),
   ];
 }
 
