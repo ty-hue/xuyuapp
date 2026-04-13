@@ -22,7 +22,7 @@ import kotlin.math.max
 internal class PhotoEffectProcessor {
     companion object {
         /** 仍保持清晰，但把像素量压到可接受，CPU 磨皮/矩阵与像素数近似线性。 */
-        private const val MAX_STILL_LONG_EDGE_PX = 2160
+        private const val MAX_STILL_LONG_EDGE_PX = 4096
     }
 
     fun processJpeg(

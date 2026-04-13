@@ -9,16 +9,19 @@ import 'package:chewie/chewie.dart';
 /// 相册 [videoData] 或本地文件 [videoFilePath]（二选一）。
 /// [videoFilePath] 为 null 或空：表示 native 路径尚未就绪，仅在本组件内显示 loading（用于录制结束立刻进预览页）。
 /// [onPlaybackReady]：首帧可播放 UI（Chewie）就绪时回调一次，供父级启用「下一步」等。
+/// [onVideoPlayerBound]：解码完成并持有 [VideoPlayerController] 时回调；dispose 前回调 `null`。
 class VideoPreview extends StatefulWidget {
   final AssetEntity? videoData;
   final String? videoFilePath;
   final VoidCallback? onPlaybackReady;
+  final ValueChanged<VideoPlayerController?>? onVideoPlayerBound;
 
   const VideoPreview({
     Key? key,
     this.videoData,
     this.videoFilePath,
     this.onPlaybackReady,
+    this.onVideoPlayerBound,
   })  : assert(
           videoData == null || videoFilePath == null,
           'videoData 与 videoFilePath 勿同时传入',
@@ -104,6 +107,7 @@ class _VideoPreviewState extends State<VideoPreview> {
         _chewieController = chewie;
         _isControllerInitialized = true;
       });
+      widget.onVideoPlayerBound?.call(controller);
       _notifyPlaybackReadyOnce();
     } catch (_) {
       if (mounted) setState(() {});
@@ -120,6 +124,7 @@ class _VideoPreviewState extends State<VideoPreview> {
 
   @override
   void dispose() {
+    widget.onVideoPlayerBound?.call(null);
     _chewieController?.dispose();
     _controller?.dispose();
     super.dispose();

@@ -25,6 +25,8 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.concurrent.CountDownLatch
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * OpenGL ES 2.0 renderer: camera + beauty (whiten, contrast, big-eye, slim-face, portrait blur)
@@ -45,13 +47,19 @@ import kotlin.math.abs
  */
 internal class GlPreviewRenderer(
     private val outputTexture: SurfaceTexture,
-    /** Used to load `glasses_06.glb` from [Context.getAssets] for [glasses_3d] AR. */
     private val androidContext: Context? = null,
 ) {
     private var renderThread: HandlerThread? = null
     private var renderHandler: Handler? = null
     private var surfaceWidth = 0
     private var surfaceHeight = 0
+    /**
+     * 传感器仍图目标像素（通常即 [CameraXEngine] 的 JPEG [android.util.Size]）。
+     * 预览 [surfaceWidth]/[surfaceHeight] 常为 CameraX Preview 绑定分辨率，明显小于仍图时，
+     * [renderStillSnapshotToJpeg] 会离屏 FBO 按此尺寸再绘制一遍，避免存相册 JPEG 只有「预览级」像素。
+     */
+    @Volatile private var stillJpegTargetW: Int = 0
+    @Volatile private var stillJpegTargetH: Int = 0
     private var eglDisplay = EGL14.EGL_NO_DISPLAY
     private var eglContext = EGL14.EGL_NO_CONTEXT
     private var eglSurface = EGL14.EGL_NO_SURFACE
@@ -251,9 +259,10 @@ internal class GlPreviewRenderer(
     @Volatile var selfieSegmentationHelper: SelfieSegmentationHelper? = null
     /** ML Kit subject foreground mask for [green_hair] AR ([SubjectSegmentationHelper]). */
     @Volatile var subjectSegmentationHelper: SubjectSegmentationHelper? = null
-
     private var portraitSegMaskGpuReady = false
     private var subjectSegMaskGpuReady = false
+
+    private val lipColorEffect = LipColorEffect()
 
     /** Face mesh + camera texture AR (replaces flat 2D stickers for listed effects). */
     private val faceMeshArPass = FaceMeshArPass()
@@ -492,6 +501,12 @@ internal class GlPreviewRenderer(
      * recreate the EGL window surface, and [glViewport], or `stMatrix` letterboxing breaks linear
      * landmark ↔ NDC mapping and the mesh drifts globally.
      */
+    /** 由 [CameraXEngine] 在 [android.hardware.camera2.CameraCharacteristics] 仍图尺寸确定后设置。 */
+    fun setStillJpegTargetSize(width: Int, height: Int) {
+        stillJpegTargetW = width.coerceAtLeast(0)
+        stillJpegTargetH = height.coerceAtLeast(0)
+    }
+
     fun syncPreviewPipelineSize(width: Int, height: Int) {
         if (width <= 0 || height <= 0) return
         if (renderThread == null) return
@@ -659,6 +674,7 @@ internal class GlPreviewRenderer(
         cameraSurface = Surface(cameraSurfaceTexture)
         faceMeshArPass.init()
         faceMeshWireframeOverlay.init()
+        lipColorEffect.init()
     }
 
     private fun initEglSharedFaceMesh(faceMesh: FaceMesh, w: Int, h: Int) {
@@ -685,6 +701,7 @@ internal class GlPreviewRenderer(
         cameraSurface = null
         faceMeshArPass.init()
         faceMeshWireframeOverlay.init()
+        lipColorEffect.init()
     }
 
     private fun makeCurrentMainSurface() {
@@ -791,18 +808,114 @@ internal class GlPreviewRenderer(
     }
 
     /**
-     * 与当前帧 [drawScene] 写入默认 framebuffer 的像素一致（与 [jpegBurstRemaining] 路径相同），
-     * 不再二次绘制到竖屏 FBO，避免与 Flutter [FittedBox]/fitWidth 预览构图不一致。
+     * 与当前帧 [drawScene] 同源；若仍图目标大于预览表面，则离屏 FBO 按目标像素再绘一遍，避免相册 JPEG 仅预览分辨率。
      */
     private fun renderStillSnapshotToJpeg(): Triple<ByteArray?, Int, Int> {
-        val bw = surfaceWidth
-        val bh = surfaceHeight
-        if (bw <= 1 || bh <= 1) return Triple(null, 0, 0)
+        val sw = surfaceWidth
+        val sh = surfaceHeight
+        if (sw <= 1 || sh <= 1) return Triple(null, 0, 0)
         makeCurrentMainSurface()
+
+        val (tw, th) = pickStillJpegOutputSize(sw, sh)
+        if (tw == sw && th == sh) {
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+            GLES20.glViewport(0, 0, sw, sh)
+            val jpeg = readPixelsToJpeg(sw, sh)
+            return Triple(jpeg, sw, sh)
+        }
+
+        val result = tryRenderToFbo(tw, th, sw, sh)
+        if (result != null) return result
+
+        // Retry at 75 % if the full-size FBO failed (GPU memory / driver limit).
+        val tw2 = (tw * 3) / 4
+        val th2 = (th * 3) / 4
+        if (tw2 > sw && th2 > sh) {
+            val result2 = tryRenderToFbo(tw2, th2, sw, sh)
+            if (result2 != null) return result2
+        }
+
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
-        GLES20.glViewport(0, 0, bw, bh)
-        val jpeg = readPixelsToJpeg(bw, bh)
-        return Triple(jpeg, bw, bh)
+        GLES20.glViewport(0, 0, sw, sh)
+        val jpeg = readPixelsToJpeg(sw, sh)
+        return Triple(jpeg, sw, sh)
+    }
+
+    private fun tryRenderToFbo(tw: Int, th: Int, sw: Int, sh: Int): Triple<ByteArray?, Int, Int>? {
+        val tex = IntArray(1)
+        val fbo = IntArray(1)
+        GLES20.glGenTextures(1, tex, 0)
+        GLES20.glGenFramebuffers(1, fbo, 0)
+        val tid = tex[0]
+        val fid = fbo[0]
+        try {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tid)
+            GLES20.glTexImage2D(
+                GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, tw, th, 0,
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null,
+            )
+            if (GLES20.glGetError() != GLES20.GL_NO_ERROR) return null
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fid)
+            GLES20.glFramebufferTexture2D(
+                GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
+                GLES20.GL_TEXTURE_2D, tid, 0,
+            )
+            if (GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER) != GLES20.GL_FRAMEBUFFER_COMPLETE) {
+                return null
+            }
+            GLES20.glViewport(0, 0, tw, th)
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+            when {
+                usesFaceMeshCameraInput && lastFaceMeshPipeTexId != 0 ->
+                    drawScene(tw, th, useAnalysisRgb = true, cameraPipeRgbTexId = lastFaceMeshPipeTexId)
+                lastComposedUsedAnalysisRgb ->
+                    drawScene(tw, th, useAnalysisRgb = true)
+                else ->
+                    drawScene(tw, th, useAnalysisRgb = false)
+            }
+            val jpeg = readPixelsToJpeg(tw, th)
+            return Triple(jpeg, tw, th)
+        } finally {
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+            GLES20.glDeleteFramebuffers(1, fbo, 0)
+            GLES20.glDeleteTextures(1, tex, 0)
+            GLES20.glViewport(0, 0, sw, sh)
+        }
+    }
+
+    /** Clamp long edge to the smaller of [hardMax] and the GPU's GL_MAX_TEXTURE_SIZE. */
+    private fun clampStillJpegLongEdge(w: Int, h: Int): Pair<Int, Int> {
+        val gpuMax = IntArray(1).also { GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, it, 0) }
+        val maxLong = min(4096, if (gpuMax[0] > 0) gpuMax[0] else 4096)
+        val long = max(w, h)
+        if (long <= maxLong) return w to h
+        val scale = maxLong.toFloat() / long.toFloat()
+        return (w * scale).toInt().coerceAtLeast(1) to (h * scale).toInt().coerceAtLeast(1)
+    }
+
+    private fun pickStillJpegOutputSize(sw: Int, sh: Int): Pair<Int, Int> {
+        val tw0 = stillJpegTargetW
+        val th0 = stillJpegTargetH
+        if (tw0 <= 0 || th0 <= 0) return sw to sh
+        var cw = tw0
+        var ch = th0
+        val surfPortrait = sw <= sh
+        val capPortrait = cw <= ch
+        if (surfPortrait != capPortrait) {
+            val t = cw
+            cw = ch
+            ch = t
+        }
+        val (cw2, ch2) = clampStillJpegLongEdge(cw, ch)
+        val surfMax = max(sw, sh)
+        val outMax = max(cw2, ch2)
+        if (outMax <= surfMax) return sw to sh
+        return cw2 to ch2
     }
 
     private fun drawEncoderPassIfAny() {
@@ -1019,6 +1132,18 @@ internal class GlPreviewRenderer(
         subjectSegMaskGpuReady = true
     }
 
+    private fun ensureLuminanceTexture(currentId: Int): Int {
+        if (currentId != 0) return currentId
+        val ids = IntArray(1)
+        GLES20.glGenTextures(1, ids, 0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, ids[0])
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        return ids[0]
+    }
+
     private fun uploadAnalysisSensorArgb(b: Bitmap) {
         if (analysisRgbTexId == 0) {
             val t = IntArray(1)
@@ -1147,8 +1272,8 @@ internal class GlPreviewRenderer(
         val bh = if (useRgb) beautyRgb ?: return else beautyOes ?: return
         // AR 层（眼镜等）常开 GL_BLEND 且未关；若保留到下一帧，美颜全屏四边形会在混合模式下叠成黑屏。
         GLES20.glDisable(GLES20.GL_BLEND)
-        // 预览/美颜全屏为 z=0、默认深度比较为 GL_LESS；若 AR（如 glasses_3d）曾打开深度测试，
-        // 次帧 0 < 0 失败 → 整屏不画 → 仅清屏黑底 + 仍关闭深度测试的眼镜可见。
+        // 预览/美颜全屏为 z=0、默认深度比较为 GL_LESS；若 AR 曾打开深度测试，
+        // 次帧 0 < 0 失败 → 整屏不画。
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
         GLES20.glDepthMask(false)
         val lm = currentLandmarks
@@ -1216,14 +1341,7 @@ internal class GlPreviewRenderer(
                 lm ?: cachedLandmarksForAr ?: FaceLandmarks.neutralForArEffects()
             else -> lm ?: cachedLandmarksForAr
         }
-        // 3D 眼镜：与美颜同级的「未明确无脸」(mpReportedFace != false)，但测量时效放宽到 600ms；
-        // 不再强制 lastMeshResultHadFace==true（ML 辅助路径、首帧 null 时曾与 beauty 不一致导致永远不画）。
-        val glassesArOk =
-            currentArEffect == "glasses_3d" &&
-                lmSrc != null &&
-                kalmanFilter?.hasData == true &&
-                (mpReportedFace != false) &&
-                kalmanFilter?.isMeasurementFresh(nowNsBeauty, 600_000_000L) == true
+        
         if (lmSrc != null) {
             val left = landmarkToTexUv(lmSrc.x(FaceLandmarks.LEFT_IRIS), lmSrc.y(FaceLandmarks.LEFT_IRIS))
             val right = landmarkToTexUv(lmSrc.x(FaceLandmarks.RIGHT_IRIS), lmSrc.y(FaceLandmarks.RIGHT_IRIS))
@@ -1350,11 +1468,15 @@ internal class GlPreviewRenderer(
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
+        // Lip color overlay (needs face landmarks)
+        if (currentArEffect == "lip_color" && lm != null && beautyFaceOk) {
+            lipColorEffect.draw(lm, ::landmarkToGl, LIP_COLOR)
+        }
+
         val nowNs = System.nanoTime()
         // AR 线框/粒子/网格变形：仅在「当前帧确有检出 + 测量仍新鲜」时绘制（与上方 [beautyFaceOk] / uHasFace 一致）。
         // 若仍用 [landmarksForArDraw] 在丢检后绘制，Kalman 外推 + [cachedLandmarksForAr] 会把线框留在旧位置。
-        // [glassesArOk]：仅放宽 glasses_3d，不放宽线框类特效。
-        if (beautyFaceOk || glassesArOk) {
+        if (beautyFaceOk) {
             val arLm = landmarksForArDraw(nowNs)
             if (currentArEffect != "portrait_blur") {
                 if (FaceMeshArPass.MESH_DEFORM_AR_EFFECTS.contains(currentArEffect)) {
@@ -1393,8 +1515,14 @@ internal class GlPreviewRenderer(
                 val r = buf.get().toInt() and 0xFF
                 val g = buf.get().toInt() and 0xFF
                 val b = buf.get().toInt() and 0xFF
-                val a = buf.get().toInt() and 0xFF
-                pixels[(h - 1 - y) * w + x] = (a shl 24) or (r shl 16) or (g shl 8) or b
+                buf.get() // skip GL alpha — see below
+                // Force alpha to 0xFF: AR overlays (lip color, particles, etc.)
+                // can leave framebuffer alpha < 1.0; Bitmap.createBitmap treats
+                // int[] as non-premultiplied and internally premultiplies,
+                // darkening RGB where alpha < 255.  The live preview surface
+                // ignores alpha, so forcing opaque here keeps the JPEG matching
+                // the on-screen appearance.
+                pixels[(h - 1 - y) * w + x] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
             }
         }
         val bmp = Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888)
@@ -1412,23 +1540,9 @@ internal class GlPreviewRenderer(
         activeEffect = null
         if (name != "none" && name != "portrait_blur") {
             if (name !in FaceMeshArPass.MESH_DEFORM_AR_EFFECTS) {
-                if (name == "glasses_3d") {
-                    val ctx = androidContext?.applicationContext
-                    if (ctx != null) {
-                        val g = Glasses3dEffect(ctx)
-                        g.init()
-                        activeEffect = g
-                    } else {
-                        Log.e(
-                            "GlPreviewRenderer",
-                            "glasses_3d: androidContext is null — pass Context into GlPreviewRenderer constructor",
-                        )
-                    }
-                } else {
-                    val effect = ArEffectRenderer.create(name)
-                    effect?.init()
-                    activeEffect = effect
-                }
+                val effect = ArEffectRenderer.create(name)
+                effect?.init()
+                activeEffect = effect
             }
         }
     }
@@ -1447,6 +1561,7 @@ internal class GlPreviewRenderer(
         activeEffect = null
         faceMeshArPass.release()
         faceMeshWireframeOverlay.release()
+        lipColorEffect.release()
         pendingSnapshot = null
         jpegBurstRemaining = 0
         jpegBurstList = null
@@ -1473,6 +1588,7 @@ internal class GlPreviewRenderer(
         if (subjectSegTextureId != 0) GLES20.glDeleteTextures(1, intArrayOf(subjectSegTextureId), 0)
         subjectSegTextureId = 0
         subjectSegMaskGpuReady = false
+        
         currentLandmarks = null
         cachedLandmarksForAr = null
         mediaPipeTracker = null
@@ -1542,6 +1658,9 @@ internal class GlPreviewRenderer(
     }
 
     companion object {
+        /** Rose red lip color: ARGB(0x80, 0xC8, 0x32, 0x55) */
+        private const val LIP_COLOR = 0x80C83255.toInt()
+
         private val VERTICES = floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)
 
         private fun allocBuf(a: FloatArray): FloatBuffer =

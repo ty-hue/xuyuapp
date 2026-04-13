@@ -56,7 +56,6 @@ internal abstract class ArEffectRenderer {
             "green_hair",      // Green tint on hair / top of head
             "puffy_face",      // Inflated / chubby cheeks
             "pig_nose",        // Cartoon pig snout on nose tip
-            "glasses_3d",      // GLB glasses (GLES2), assets/glasses_06.glb
         )
 
         fun create(name: String): ArEffectRenderer? = when (name) {

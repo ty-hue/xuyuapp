@@ -263,7 +263,7 @@ List<StickerItem> createStickerList() {
       icon: '',
       label: '3D脸部点(线框)',
     ),
-    StickerItem(name: 'glasses_3d', bundleName: '', icon: '', label: '3D眼镜'),
+    StickerItem(name: 'lip_color', bundleName: '', icon: '', label: '玫瑰唇色'),
   ];
 }
 

@@ -1,4 +1,5 @@
 import 'package:bilbili_project/routes/index.dart';
+import 'package:bilbili_project/utils/app_messenger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -9,6 +10,7 @@ void main() {
       minTextAdapt: true, // ⚡文字自适应，防止小屏文字溢出
       splitScreenMode: true, // ⚡支持折叠屏 / 分屏
       builder: (context, child) => MaterialApp.router(
+        scaffoldMessengerKey: AppMessenger.scaffoldMessengerKey,
         routerConfig: router,
         // 🌍 全局主题
         theme: ThemeData(

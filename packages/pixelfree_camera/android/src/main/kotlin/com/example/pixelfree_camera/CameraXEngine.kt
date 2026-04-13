@@ -73,6 +73,7 @@ class CameraXEngine(
     @Volatile private var useFaceMeshCameraInputPipeline: Boolean = false
     private var selfieSegmentationHelper: SelfieSegmentationHelper? = null
     private var subjectSegmentationHelper: SubjectSegmentationHelper? = null
+    
     /** Official Solutions [com.google.mediapipe.solutions.facemesh.FaceMesh] runs on [cameraExecutor] (sync per frame). */
     private val mediaPipeInitLock = Any()
     @Volatile private var mediaPipeInitFailed = false
@@ -403,6 +404,7 @@ class CameraXEngine(
             gl.mediaPipeTracker = tracker
             tracker?.onFaceMeshGlFrame = { tf -> gl.queueFaceMeshFrame(tf) }
             applyRecordSpeedMultiplier()
+            gl.setStillJpegTargetSize(captureSize!!.width, captureSize!!.height)
         }
         val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         runCatching { dm.unregisterDisplayListener(displayRotationListener) }
@@ -951,12 +953,40 @@ class CameraXEngine(
     }
 
     /**
+     * True when the device is held in portrait (or reverse-portrait) and the
+     * GL buffer is landscape (width > height).  The Flutter preview applies
+     * [BoxFit.fill] with portrait-normalised dimensions, which stretches the
+     * landscape buffer to portrait.  We must perform the same stretch before
+     * saving so the gallery image matches the preview exactly.
+     */
+    private fun shouldStretchGlStillToPortrait(): Boolean {
+        val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val rotation = dm.getDisplay(Display.DEFAULT_DISPLAY)?.rotation ?: Surface.ROTATION_0
+        return rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180
+    }
+
+    /**
      * GL 仍图为全屏 surface [readPixels] 与预览同源；第二元组为 JPEG 像素宽高，失败 (0,0)。
+     *
+     * The GL buffer is landscape (sensor native).  Flutter preview displays it
+     * through [SizedBox] with portrait-normalised (w≤h) dimensions +
+     * [BoxFit.fill], which non-uniformly scales the landscape pixels into a
+     * portrait frame.  To make the gallery image match the preview exactly, we
+     * apply the same stretch here: swap width↔height via [createScaledBitmap].
      */
     private fun finalizeGlStillJpeg(jpegBytes: ByteArray): Pair<ByteArray, Pair<Int, Int>> {
         return try {
-            val bmp = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+            val src = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
                 ?: return Pair(attachNormalExifOrientation(jpegBytes), Pair(0, 0))
+
+            val bmp = if (src.width > src.height && shouldStretchGlStillToPortrait()) {
+                val stretched = Bitmap.createScaledBitmap(src, src.height, src.width, true)
+                src.recycle()
+                stretched
+            } else {
+                src
+            }
+
             val fw = bmp.width
             val fh = bmp.height
             val bos = ByteArrayOutputStream(max(fw * fh / 6, 65536))

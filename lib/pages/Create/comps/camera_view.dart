@@ -8,8 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pixelfree_camera/pixelfree_camera.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
-import 'package:bilbili_project/utils/PopoverUtils.dart';
 import 'package:bilbili_project/components/loading.dart';
 import 'package:bilbili_project/pages/Create/comps/camera_grid_overlay.dart';
 import 'package:bilbili_project/pages/Create/comps/countdown_show.dart';
@@ -26,9 +27,28 @@ import 'package:bilbili_project/pages/Create/comps/take_photo_btn.dart';
 import 'package:bilbili_project/pages/Create/comps/timekeeping.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/pages/Create/comps/video_preview.dart';
+import 'package:bilbili_project/pages/Create/comps/work_preview_skeleton.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
+import 'package:bilbili_project/utils/SaveImageUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
+import 'package:bilbili_project/utils/app_messenger.dart';
 import 'package:bilbili_project/viewmodels/Create/index.dart';
+
+/// [showModalBottomSheet] 返回的 Future 往往早于退场动画结束；切回实时预览前多等一拍，避免 sheet 未滑完就抢画面。
+const Duration _kAfterBottomSheetExitVisual = Duration(milliseconds: 360);
+
+/// 系统相册「全部图片」按创建时间倒序，第一页第一张即为最新仍图。
+final FilterOptionGroup _kLatestAlbumImageOrder = FilterOptionGroup(
+  orders: <OrderOption>[
+    OrderOption(type: OrderOptionType.createDate, asc: false),
+  ],
+);
+
+/// 上次「存草稿」写入相册的资源 id，重新进入拍摄页时用 [AssetEntity.fromId] 取封面，避免列表排序/索引不准。
+const String _kPrefLastGalleryCoverAssetId = 'xuyu_last_gallery_cover_asset_id';
+
+/// 上次成功写入 [xuyu_last_album_cover.jpg] 的本地时间戳（ms）；仅作记录，封面展示以磁盘缓存 + [assetId] 为准。
+const String _kPrefLastGalleryCoverWrittenMs = 'xuyu_last_gallery_cover_written_ms';
 
 /// 底部「特效 / 相册」槽与图标相对原设计放大倍数（与拍照按钮 1.4 一致）。
 const double _kBottomSideIconScale = 1.4;
@@ -109,11 +129,12 @@ class CameraView extends StatefulWidget {
 }
 
 class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
-  PermissionStatus _cameraPermissionStatus = PermissionStatus.granted;
-  PermissionStatus _microphonePermissionStatus = PermissionStatus.granted;
+  /// 真实权限未就绪前必须为「未授权」，否则首帧会误走 openCamera。
+  PermissionStatus _cameraPermissionStatus = PermissionStatus.denied;
+  PermissionStatus _microphonePermissionStatus = PermissionStatus.denied;
+  /// 已完成相机+麦克风的 request（或从后台 [resumed] 时刷新过权限），之后才允许调度初始化。
+  bool _permissionsResolved = false;
   bool _isInitialized = false;
-  /// 是否已成功打开过相机（本 State 生命周期内）。切换分辨率等重启时不再显示 [FetchLoadingView]。
-  bool _hasEverInitializedCamera = false;
   bool _isRestartingCamera = false;
   /// 本机拍照成片 JPEG（内存）；与 [_pendingPhotoPath] 互斥，优先用内存预览。
   Uint8List? _pendingPhotoBytes;
@@ -125,6 +146,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   bool _cameraRecordedVideoPreview = false;
   /// [VideoPreview] 已解码并可展示播放器（相册/本机录像均走此标记）。
   bool _videoPlaybackReady = false;
+  /// 当前成片 [VideoPreview] 的 controller；成片操作 sheet 打开时可暂停以省资源。
+  VideoPlayerController? _previewVideoPlayer;
   int? textureId;
   /// Native GL buffer size (portrait-normalized on Android). Used with [FittedBox] so the texture
   /// scales **uniformly** — [SizedBox.expand] on [Texture] stretches and elongates faces.
@@ -157,7 +180,28 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     setState(() {
       _cameraPermissionStatus = cameraStatus;
       _microphonePermissionStatus = microphoneStatus;
+      _permissionsResolved = true;
     });
+  }
+
+  /// 权限已齐、且当前应是实时预览时，确保原生相机已打开（用于从后台恢复、或 init 失败后重试）。
+  Future<void> _ensureLivePreviewIfNeeded() async {
+    if (!_permissionsResolved || !isCompleteAllow) return;
+    if (recordStatus != RecordStatus.normal) return;
+    if (isShowPreview) return;
+    if (_isRestartingCamera || _isInitialized) return;
+    try {
+      await _restartCamera(forceDispose: true);
+    } catch (e, st) {
+      debugPrint('CameraView: _ensureLivePreviewIfNeeded failed: $e\n$st');
+    }
+  }
+
+  Future<void> _onAppResumed() async {
+    await _refreshPermissionsAndMaybeInit();
+    if (!mounted) return;
+    await _ensureLivePreviewIfNeeded();
+    if (mounted) unawaited(getLatestPhoto());
   }
 
   double _previewContentHeightOrInfer(double width) {
@@ -196,7 +240,6 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     if (!mounted) return;
     setState(() {
       _isInitialized = true;
-      _hasEverInitializedCamera = true;
     });
   }
 
@@ -280,8 +323,72 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   File? latestImage;
+
+  /// 本机拍照存草稿后的缩略图字节；与磁盘缓存同内容，用于同会话内绕开 [Image.file] 对同路径的解码缓存问题。
+  Uint8List? _albumThumbMemoryJpeg;
+
+  /// 取消已过期的 [getLatestPhoto] 异步结果，避免晚到的请求用 [getLatestImage] 盖住刚存的草稿封面。
+  int _albumThumbOpSeq = 0;
+  /// [Image.file] / [Image.memory] 的 Key，同路径覆盖或替换字节后必须递增否则 Flutter 可能仍显示旧解码。
+  int _albumCoverDisplayToken = 0;
+
+  /// 与应用同寿命的封面缓存（非系统临时目录，离开拍摄页再进入仍可读）。
+  Future<File> _albumCoverCacheFile() async {
+    final d = await getApplicationSupportDirectory();
+    return File('${d.path}/xuyu_last_album_cover.jpg');
+  }
+
+  /// 读取应用内封面 JPEG；不依赖 [File.exists]（少数环境下与可读性不一致）。
+  Future<Uint8List?> _tryReadAlbumCoverBytes(File cache) async {
+    try {
+      final b = await cache.readAsBytes();
+      return b.isEmpty ? null : b;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 记录存草稿对应的相册资源，并写入 [latestImage] 用的 JPEG 缓存。
+  Future<void> _persistLastGalleryCover(AssetEntity entity, {Uint8List? cameraJpeg}) async {
+    _albumThumbOpSeq++;
+    try {
+      final out = await _albumCoverCacheFile();
+      var wrote = false;
+      if (cameraJpeg != null && cameraJpeg.isNotEmpty) {
+        await out.writeAsBytes(cameraJpeg, flush: true);
+        wrote = true;
+      } else if (entity.type == AssetType.video) {
+        final data = await entity.thumbnailDataWithSize(const ThumbnailSize.square(512));
+        if (data != null) {
+          await out.writeAsBytes(data, flush: true);
+          wrote = true;
+        }
+      } else {
+        final src = await entity.originFile;
+        if (src != null && await src.exists()) {
+          await out.writeAsBytes(await src.readAsBytes(), flush: true);
+          wrote = true;
+        }
+      }
+      if (!wrote) return;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPrefLastGalleryCoverAssetId, entity.id);
+      await prefs.setInt(
+        _kPrefLastGalleryCoverWrittenMs,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e, st) {
+      debugPrint('CameraView: _persistLastGalleryCover failed: $e\n$st');
+    }
+  }
+
+  /// 当前「全部图片」中创建时间最新的一张（仍图文件，用于底部相册缩略图）。
   Future<File?> getLatestImage() async {
-    final albums = await PhotoManager.getAssetPathList(type: RequestType.image, onlyAll: true);
+    final albums = await PhotoManager.getAssetPathList(
+      type: RequestType.image,
+      onlyAll: true,
+      filterOption: _kLatestAlbumImageOrder,
+    );
     if (albums.isEmpty) return null;
     final assets = await albums.first.getAssetListPaged(page: 0, size: 1);
     if (assets.isEmpty) return null;
@@ -295,13 +402,190 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   Future<void> getLatestPhoto() async {
+    final op = ++_albumThumbOpSeq;
     _photoPermissionGranted = await requestPermission();
-    if (!mounted) return;
-    if (_photoPermissionGranted) {
-      latestImage = await getLatestImage();
-      if (!mounted) return;
+    if (!mounted || op != _albumThumbOpSeq) return;
+    if (!_photoPermissionGranted) {
+      latestImage = null;
+      if (!mounted || op != _albumThumbOpSeq) return;
+      setState(() {});
+      return;
     }
+
+    final cache = await _albumCoverCacheFile();
+    if (!mounted || op != _albumThumbOpSeq) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString(_kPrefLastGalleryCoverAssetId);
+    final coverWrittenMs = prefs.getInt(_kPrefLastGalleryCoverWrittenMs);
+    final coverBytes = await _tryReadAlbumCoverBytes(cache);
+    final cacheReadable = coverBytes != null && coverBytes.isNotEmpty;
+    final cacheExists = await cache.exists();
+    final hasDraftCoverMeta =
+        (id != null && id.isNotEmpty) || coverWrittenMs != null;
+
+    if (!mounted || op != _albumThumbOpSeq) return;
+
+    // 以「能读出非空 JPEG」+ 曾有过存草稿记录为准；读入内存用 Image.memory，避免回首页再进时 Image.file 同路径解码缓存仍显示旧图。
+    if (cacheReadable && hasDraftCoverMeta) {
+      latestImage = cache;
+      _albumThumbMemoryJpeg = Uint8List.fromList(coverBytes);
+      _albumCoverDisplayToken++;
+      if (!mounted || op != _albumThumbOpSeq) return;
+      setState(() {});
+      return;
+    }
+    if (!mounted || op != _albumThumbOpSeq) return;
+
+    if (id != null && id.isNotEmpty) {
+      try {
+        final e = await AssetEntity.fromId(id);
+        if (!mounted || op != _albumThumbOpSeq) return;
+        if (e != null) {
+          if (e.type == AssetType.video) {
+            if (cacheExists) {
+              latestImage = cache;
+              _albumCoverDisplayToken++;
+              if (!mounted || op != _albumThumbOpSeq) return;
+              setState(() {});
+              return;
+            }
+            final data = await e.thumbnailDataWithSize(const ThumbnailSize.square(512));
+            if (!mounted || op != _albumThumbOpSeq) return;
+            if (data != null) {
+              await cache.writeAsBytes(data, flush: true);
+              latestImage = cache;
+              _albumCoverDisplayToken++;
+              if (!mounted || op != _albumThumbOpSeq) return;
+              setState(() {});
+              return;
+            }
+          } else {
+            final f = await e.originFile;
+            if (!mounted || op != _albumThumbOpSeq) return;
+            if (f != null && await f.exists()) {
+              latestImage = f;
+              _albumThumbMemoryJpeg = null;
+              _albumCoverDisplayToken++;
+              if (!mounted || op != _albumThumbOpSeq) return;
+              setState(() {});
+              return;
+            }
+          }
+        }
+        if (cacheExists) {
+          latestImage = cache;
+          _albumCoverDisplayToken++;
+          if (!mounted || op != _albumThumbOpSeq) return;
+          setState(() {});
+          return;
+        }
+        if (e == null) {
+          await prefs.remove(_kPrefLastGalleryCoverAssetId);
+          await prefs.remove(_kPrefLastGalleryCoverWrittenMs);
+        }
+      } catch (e, st) {
+        debugPrint('CameraView: fromId cover failed: $e\n$st');
+        if (cacheExists) {
+          latestImage = cache;
+          _albumCoverDisplayToken++;
+          if (!mounted || op != _albumThumbOpSeq) return;
+          setState(() {});
+          return;
+        }
+        await prefs.remove(_kPrefLastGalleryCoverAssetId);
+        await prefs.remove(_kPrefLastGalleryCoverWrittenMs);
+      }
+    }
+    if (!mounted || op != _albumThumbOpSeq) return;
+
+    if (cacheExists) {
+      latestImage = cache;
+      _albumCoverDisplayToken++;
+      if (!mounted || op != _albumThumbOpSeq) return;
+      setState(() {});
+      return;
+    }
+
+    latestImage = await getLatestImage();
+    if (!mounted || op != _albumThumbOpSeq) return;
+    _albumThumbMemoryJpeg = null;
+    _albumCoverDisplayToken++;
     setState(() {});
+  }
+
+  /// 写入相册后系统索引往往晚于 [PhotoManager.editor]；仅在不具备「本机成片 JPEG」时用查询对齐。
+  void _scheduleAlbumThumbRefreshAfterWrite() {
+    for (final ms in [400, 1200, 3000]) {
+      Future.delayed(Duration(milliseconds: ms), () {
+        if (mounted) unawaited(getLatestPhoto());
+      });
+    }
+  }
+
+  /// 存草稿成功后更新底栏缩略图。
+  ///
+  /// **拍照直出**：优先用 [cameraJpeg]（与写入相册的是同一份像素），避免 [AssetEntity]/系统相册列表延迟或错乱。
+  /// 无字节时再回退 [entity]（相册选片、路径成片、视频等）。
+  Future<void> _applyAlbumThumbAfterDraftSave({
+    required AssetEntity? entity,
+    Uint8List? cameraJpeg,
+  }) async {
+    if (entity == null) return;
+    await _persistLastGalleryCover(entity, cameraJpeg: cameraJpeg);
+    final out = await _albumCoverCacheFile();
+    if (await out.exists() && mounted) {
+      setState(() {
+        latestImage = out;
+        _photoPermissionGranted = true;
+        if (cameraJpeg != null && cameraJpeg.isNotEmpty) {
+          _albumThumbMemoryJpeg = Uint8List.fromList(cameraJpeg);
+        } else {
+          _albumThumbMemoryJpeg = null;
+        }
+        _albumCoverDisplayToken++;
+      });
+      return;
+    }
+    await _applyAlbumThumbFromEntity(entity);
+  }
+
+  /// 使用保存接口返回的 [AssetEntity] 立即更新底部缩略图（不依赖相册列表是否已刷新）。
+  Future<void> _applyAlbumThumbFromEntity(AssetEntity entity) async {
+    try {
+      if (entity.type == AssetType.video) {
+        final data = await entity.thumbnailDataWithSize(const ThumbnailSize.square(512));
+        if (data == null || !mounted) return;
+        final dir = await getTemporaryDirectory();
+        final f = File('${dir.path}/xuyu_album_thumb_${entity.id}.jpg');
+        await f.writeAsBytes(data, flush: true);
+        if (!mounted) return;
+        setState(() {
+          latestImage = f;
+          _photoPermissionGranted = true;
+          _albumThumbMemoryJpeg = null;
+          _albumCoverDisplayToken++;
+        });
+        return;
+      }
+      File? f = await entity.originFile;
+      if (f == null || !await f.exists()) {
+        final data = await entity.thumbnailDataWithSize(const ThumbnailSize.square(512));
+        if (data == null || !mounted) return;
+        final dir = await getTemporaryDirectory();
+        f = File('${dir.path}/xuyu_album_thumb_${entity.id}.jpg');
+        await f.writeAsBytes(data, flush: true);
+      }
+      if (!mounted || !await f.exists()) return;
+      setState(() {
+        latestImage = f;
+        _photoPermissionGranted = true;
+        _albumThumbMemoryJpeg = null;
+        _albumCoverDisplayToken++;
+      });
+    } catch (e, st) {
+      debugPrint('CameraView: _applyAlbumThumbFromEntity failed: $e\n$st');
+    }
   }
 
   @override
@@ -309,7 +593,6 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     () async {
-      await getLatestPhoto();
       PermissionStatus cameraValue = await Permissionutils.checkCameraPermission();
       if (cameraValue != PermissionStatus.permanentlyDenied) {
         cameraValue = await Permissionutils.requestCameraPermission();
@@ -322,7 +605,15 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       setState(() {
         _cameraPermissionStatus = cameraValue;
         _microphonePermissionStatus = microphoneValue;
+        _permissionsResolved = true;
       });
+      // 放到首帧之后，确保父级 [previewSlotWidth] 与本地 [_layoutViewportW] 已随 layout 写好再 init。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_ensureLivePreviewIfNeeded());
+      });
+      // 相册缩略图不阻塞相机预览：避免先弹相册权限导致相机初始化过晚。
+      unawaited(getLatestPhoto());
     }();
   }
 
@@ -354,6 +645,9 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     try {
       await _initializeCamera();
       await _syncPreviewSettings();
+    } catch (e, st) {
+      debugPrint('CameraView: _restartCamera init failed: $e\n$st');
+      if (mounted) setState(() {});
     } finally {
       _isRestartingCamera = false;
     }
@@ -405,7 +699,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshPermissionsAndMaybeInit();
+      unawaited(_onAppResumed());
     }
     if (state == AppLifecycleState.paused && _isInitialized) {
       _cameraSdk.dispose();
@@ -534,7 +828,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
   }
 
   List<StickerItem> stickerOptions = createStickerList();
-  /// -1 = 未选/无特效；≥0 为 [createStickerList] 中对应项（如 `face_mesh`、`glasses_3d`）。
+  /// -1 = 未选/无特效；≥0 为 [createStickerList] 中对应项（如 `face_mesh`、`lip_color`）。
   int selectedStickerIndex = -1;
   Future<void> onStickerSelectedIndexChanged(int index) async {
     setState(() {
@@ -599,6 +893,10 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     _notifyPreviewReadyForNext();
   }
 
+  void _onPreviewVideoPlayerBound(VideoPlayerController? c) {
+    _previewVideoPlayer = c;
+  }
+
   void changeUI(RecordStatus status) {
     widget.onRecordStatusChanged(status);
     setState(() {
@@ -608,6 +906,64 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       }
     });
     _notifyPreviewReadyForNext();
+  }
+
+  /// 成片预览 → 回到实时相机：单次 [setState] 清空成片数据并触发重新打开相机（与 [changeUI] 分离以免漏清字段）。
+  ///
+  /// [refreshAlbumThumb] 为 false 时跳过立即 [getLatestPhoto]（例如存草稿后已用 [AssetEntity] 设过缩略图，
+  /// 避免相册索引未更新时把缩略图刷成旧图/null）。
+  void _exitPreviewToLiveCamera({bool refreshAlbumThumb = true}) {
+    widget.onRecordStatusChanged(RecordStatus.normal);
+    if (!mounted) return;
+    setState(() {
+      recordStatus = RecordStatus.normal;
+      _videoPlaybackReady = false;
+      _pendingPhotoPath = null;
+      _pendingPhotoBytes = null;
+      _pendingVideoPath = null;
+      _cameraRecordedVideoPreview = false;
+      imagePreviewAssets.clear();
+      videoPreviewAssets.clear();
+    });
+    _notifyPreviewReadyForNext();
+    if (refreshAlbumThumb) {
+      unawaited(getLatestPhoto());
+    }
+    // 与成片 Video/Texture 卸载错开一拍再开相机，减轻单帧内 jank。
+    Future.delayed(const Duration(milliseconds: 48), () {
+      if (!mounted) return;
+      unawaited(_ensureLivePreviewIfNeeded());
+    });
+  }
+
+  /// 存草稿写入相册；成功返回新建 [AssetEntity]，供立即更新底部缩略图。
+  Future<AssetEntity?> _saveDraftToGallery() async {
+    try {
+      if (widget.cameraSelectedIndex == 0) {
+        final bytes = _pendingPhotoBytes;
+        if (bytes != null && bytes.isNotEmpty) {
+          return saveImageUtils.saveImageToGallery(bytes);
+        }
+        final p = _pendingPhotoPath;
+        if (p != null && p.isNotEmpty) {
+          return saveImageUtils.saveImageFromPathToGallery(p);
+        }
+        if (imagePreviewAssets.isNotEmpty) {
+          return saveImageUtils.saveAssetEntityDraft(imagePreviewAssets.first);
+        }
+      } else {
+        final vp = _pendingVideoPath;
+        if (vp != null && vp.isNotEmpty) {
+          return saveImageUtils.saveVideoFromPathToGallery(vp);
+        }
+        if (videoPreviewAssets.isNotEmpty) {
+          return saveImageUtils.saveAssetEntityDraft(videoPreviewAssets.first);
+        }
+      }
+    } catch (e, st) {
+      debugPrint('CameraView: save draft failed: $e\n$st');
+    }
+    return null;
   }
 
   void startRecording() async {
@@ -641,6 +997,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
           _cameraRecordedVideoPreview = false;
         });
         changeUI(RecordStatus.normal);
+        unawaited(getLatestPhoto());
         return;
       }
       setState(() {
@@ -662,6 +1019,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
           _cameraRecordedVideoPreview = false;
         });
         changeUI(RecordStatus.normal);
+        unawaited(getLatestPhoto());
       }
     }
   }
@@ -686,6 +1044,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       }
       if (bytes == null || bytes.isEmpty) {
         if (mounted) changeUI(RecordStatus.normal);
+        unawaited(getLatestPhoto());
         return;
       }
       setState(() {
@@ -718,6 +1077,67 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _openEndPreviewSheet(BuildContext contextBtn) async {
+    final vpc = _previewVideoPlayer;
+    final wasPlaying = vpc?.value.isPlaying ?? false;
+    unawaited(vpc?.pause() ?? Future.value());
+
+    void resumeIfPlaying() {
+      if (!mounted) return;
+      if (!wasPlaying) return;
+      final c = _previewVideoPlayer;
+      if (c != null) unawaited(c.play());
+    }
+
+    final WorkPreviewSheetResult? result = await SheetUtils(
+      const WorkPreviewSheetSkeleton(),
+    ).openAsyncSheet<WorkPreviewSheetResult>(context: contextBtn);
+
+    if (!mounted) return;
+
+    // 划掉关闭：仍留在成片预览，恢复播放。
+    if (result == null) {
+      resumeIfPlaying();
+      return;
+    }
+
+    // 点了「不保存 / 存草稿」：不要先 resume 成片（会叠在尚未退完的 sheet 下）；等 sheet 视觉退场后再改 UI。
+    await Future<void>.delayed(_kAfterBottomSheetExitVisual);
+    if (!mounted) return;
+
+    switch (result) {
+      case WorkPreviewSheetResult.discardWithoutSave:
+        _exitPreviewToLiveCamera();
+        break;
+      case WorkPreviewSheetResult.saveDraft:
+        final saved = await _saveDraftToGallery();
+        if (!mounted) return;
+        if (saved != null) {
+          final pending = _pendingPhotoBytes;
+          final Uint8List? jpegForCover =
+              (widget.cameraSelectedIndex == 0 &&
+                      pending != null &&
+                      pending.isNotEmpty)
+                  ? Uint8List.fromList(pending)
+                  : null;
+          await _applyAlbumThumbAfterDraftSave(
+            entity: saved,
+            cameraJpeg: jpegForCover,
+          );
+          if (!mounted) return;
+          AppMessenger.show(context, '已保存到相册');
+          _exitPreviewToLiveCamera(refreshAlbumThumb: false);
+          if (jpegForCover == null) {
+            _scheduleAlbumThumbRefreshAfterWrite();
+          }
+        } else {
+          AppMessenger.show(context, '保存失败，请检查相册权限');
+          resumeIfPlaying();
+        }
+        break;
+    }
+  }
+
   Widget backUI(BuildContext contextBtn) {
     switch (recordStatus) {
       case RecordStatus.normal:
@@ -735,87 +1155,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
         return const SizedBox.shrink();
       case RecordStatus.end:
         return GestureDetector(
-          onTap: () {
-            PopoverUtils.show(
-              context: contextBtn,
-              bodyBuilder: (context) => Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          changeUI(RecordStatus.normal);
-                          _pendingPhotoPath = null;
-                          _pendingPhotoBytes = null;
-                          _pendingVideoPath = null;
-                          _cameraRecordedVideoPreview = false;
-                          imagePreviewAssets.clear();
-                          videoPreviewAssets.clear();
-                          context.pop();
-                        },
-                        splashColor: Color.fromRGBO(207, 72, 53, 0.2),
-                        highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            spacing: 4.0.w,
-                            children: [
-                              Icon(Icons.arrow_back_ios, size: 26.0.sp, color: Color.fromRGBO(207, 72, 53, 1)),
-                              Text('不保存返回', style: TextStyle(color: Color.fromRGBO(207, 72, 53, 1), fontSize: 16.0.sp, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Divider(height: 1.0.h),
-                  Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          changeUI(RecordStatus.normal);
-                          _pendingPhotoPath = null;
-                          _pendingPhotoBytes = null;
-                          _pendingVideoPath = null;
-                          _cameraRecordedVideoPreview = false;
-                          imagePreviewAssets.clear();
-                          videoPreviewAssets.clear();
-                          context.pop();
-                        },
-                        splashColor: Color.fromRGBO(207, 72, 53, 0.2),
-                        highlightColor: Color.fromRGBO(207, 72, 53, 0.1),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            spacing: 4.0.w,
-                            children: [
-                              Icon(Icons.save, size: 26.0.sp, color: Color.fromRGBO(31, 30, 37, 1)),
-                              Text('存草稿', style: TextStyle(color: Color.fromRGBO(31, 30, 37, 1), fontSize: 16.0.sp, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              onPop: () {},
-              direction: PopoverDirection.bottom,
-              backgroundColor: Colors.white,
-              width: 180.w,
-              height: 130.h,
-              arrowHeight: 15.h,
-              arrowWidth: 30.w,
-              allowClicksOnBackground: false,
-              barrierColor: Colors.transparent,
-            );
-          },
+          onTap: () => unawaited(_openEndPreviewSheet(contextBtn)),
           child: Padding(padding: EdgeInsets.all(8.w), child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 33.0.sp),),
         );
     }
@@ -872,6 +1212,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
       return VideoPreview(
         videoData: videoPreviewAssets.first,
         onPlaybackReady: _onVideoPreviewPlaybackReady,
+        onVideoPlayerBound: _onPreviewVideoPlayerBound,
       );
     }
     // 本机录像预览：路径未到或解码中时的 loading 均在 [VideoPreview] 内；路径就绪后 [ValueKey] 变化会重新挂载并开始解码。
@@ -882,6 +1223,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
         key: ValueKey(_pendingVideoPath ?? 'waiting'),
         videoFilePath: _pendingVideoPath,
         onPlaybackReady: _onVideoPreviewPlaybackReady,
+        onVideoPlayerBound: _onPreviewVideoPlayerBound,
       );
     }
     if (widget.cameraSelectedIndex == 0 &&
@@ -1254,7 +1596,8 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
             constraints.hasBoundedHeight &&
             constraints.maxWidth > 0 &&
             constraints.maxHeight > 0;
-        if (isCompleteAllow &&
+        if (_permissionsResolved &&
+            isCompleteAllow &&
             recordStatus == RecordStatus.normal &&
             !_isInitialized &&
             !_isRestartingCamera &&
@@ -1481,20 +1824,34 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                                               height: sideH,
                                               decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(8.0.r),
-                                                color: _photoPermissionGranted && latestImage != null
+                                                color: (_albumThumbMemoryJpeg != null &&
+                                                        _albumThumbMemoryJpeg!.isNotEmpty) ||
+                                                        (_photoPermissionGranted && latestImage != null)
                                                     ? Colors.transparent
                                                     : Colors.black.withValues(alpha: 0.35),
                                               ),
                                               clipBehavior: Clip.antiAlias,
                                               alignment: Alignment.center,
-                                              child: _photoPermissionGranted && latestImage != null
-                                                  ? Image.file(
-                                                      latestImage!,
+                                              child: (_albumThumbMemoryJpeg != null &&
+                                                      _albumThumbMemoryJpeg!.isNotEmpty)
+                                                  ? Image.memory(
+                                                      _albumThumbMemoryJpeg!,
+                                                      key: ValueKey(_albumCoverDisplayToken),
                                                       width: sideW,
                                                       height: sideH,
                                                       fit: BoxFit.cover,
+                                                      gaplessPlayback: true,
                                                     )
-                                                  : Icon(
+                                                  : _photoPermissionGranted && latestImage != null
+                                                      ? Image.file(
+                                                          latestImage!,
+                                                          key: ValueKey(_albumCoverDisplayToken),
+                                                          width: sideW,
+                                                          height: sideH,
+                                                          fit: BoxFit.cover,
+                                                          gaplessPlayback: true,
+                                                        )
+                                                      : Icon(
                                                       FontAwesomeIcons.images,
                                                       color: Colors.white,
                                                       size: iconSize,
@@ -1516,7 +1873,7 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
               ),
             ),
           ),
-          !isCompleteAllow
+          !isCompleteAllow && _permissionsResolved
               ? Positioned.fill(
                   child: Container(
                     alignment: Alignment.center,
@@ -1588,7 +1945,11 @@ class CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                   ),
                 )
               : Container(),
-          !_isInitialized && isCompleteAllow && !_hasEverInitializedCamera
+          !_isInitialized &&
+                  _permissionsResolved &&
+                  isCompleteAllow &&
+                  !isShowPreview &&
+                  recordStatus == RecordStatus.normal
               ? const FetchLoadingView()
               : Container(),
         ],
