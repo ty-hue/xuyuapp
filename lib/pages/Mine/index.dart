@@ -1,5 +1,5 @@
 import 'package:bilbili_project/components/default_dialog_skeleton.dart';
-import 'package:bilbili_project/pages/Mine/comps/drawer_menu.dart';
+import 'package:bilbili_project/layout/mine_side_menu_scope.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/DialogUtils.dart';
 import 'package:flutter/material.dart';
@@ -235,7 +235,7 @@ class _MinePageState extends State<MinePage>
                     builder: (context) {
                       return GestureDetector(
                         onTap: () {
-                          Scaffold.of(context).openEndDrawer();
+                          MineSideMenuScope.of(context).open();
                         },
                         child: Container(
                           padding: EdgeInsets.all(8.w * contraryOpacity),
@@ -925,7 +925,6 @@ class _MinePageState extends State<MinePage>
   Widget build(BuildContext context) {
     double statusBarHeight = MediaQuery.of(context).padding.top;
     return Scaffold(
-      endDrawer: DrawerMenu(context: context),
       appBar: _buildNavBar(statusBarHeight),
       extendBody: true,
       extendBodyBehindAppBar: true, // 让body出现在appBar区域的正下方

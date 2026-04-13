@@ -3,51 +3,22 @@ import 'package:bilbili_project/viewmodels/Mine/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class DrawerMenu extends StatefulWidget {
-  final BuildContext context;
-  DrawerMenu({Key? key, required this.context}) : super(key: key);
+/// 侧栏菜单内容（不含 [Drawer] 壳），供 Shell 抖音式推页使用。
+class DrawerMenuPanel extends StatelessWidget {
+  final BuildContext navigatorContext;
+  final VoidCallback? onBeforeItemTap;
 
-  @override
-  State<DrawerMenu> createState() => _DrawerMenuState();
-}
+  const DrawerMenuPanel({
+    super.key,
+    required this.navigatorContext,
+    this.onBeforeItemTap,
+  });
 
-class _DrawerMenuState extends State<DrawerMenu> {
-  late List<MenuItem> _centerMenuItems = [];
-  @override
-  initState() {
-    super.initState();
-    _centerMenuItems = [
-      MenuItem(
-        title: '观看历史',
-        icon: Icons.history,
-        cb: () {
-          WatchHistoryPageRoute().push(widget.context);
-        },
-      ),
-      MenuItem(
-        title: '账号数据分析',
-        icon: Icons.analytics,
-        cb: () {
-          DataAnalysisPageRoute().push(widget.context);
-        },
-      ),
-    ];
-  }
-
-  List<MenuItem> get _bottomMenuItems => [
-    MenuItem(
-      title: '设置',
-      icon: Icons.settings,
-      cb: () {
-        SettingsPageRoute().push(widget.context);
-      },
-    ),
-  ];
   Widget _buildMenuItem(MenuItem item) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, //  padding区域也可以点击
+      behavior: HitTestBehavior.opaque,
       onTap: () {
-        // 调用回调函数
+        onBeforeItemTap?.call();
         item.cb();
       },
       child: Container(
@@ -60,7 +31,11 @@ class _DrawerMenuState extends State<DrawerMenu> {
             SizedBox(width: 12.0.w),
             Text(
               item.title,
-              style: TextStyle(color: Colors.white, fontSize: 14.0.sp),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.0.sp,
+                decoration: TextDecoration.none,
+              ),
             ),
           ],
         ),
@@ -77,21 +52,44 @@ class _DrawerMenuState extends State<DrawerMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: Color.fromRGBO(22, 22, 22, 1),
-      width: 200.0.w,
+    final ctx = navigatorContext;
+    final centerMenuItems = <MenuItem>[
+      MenuItem(
+        title: '观看历史',
+        icon: Icons.history,
+        cb: () => WatchHistoryPageRoute().push(ctx),
+      ),
+      MenuItem(
+        title: '账号数据分析',
+        icon: Icons.analytics,
+        cb: () => DataAnalysisPageRoute().push(ctx),
+      ),
+    ];
+    final bottomMenuItems = <MenuItem>[
+      MenuItem(
+        title: '设置',
+        icon: Icons.settings,
+        cb: () => SettingsPageRoute().push(ctx),
+      ),
+    ];
+
+    return ColoredBox(
+      color: const Color.fromRGBO(22, 22, 22, 1),
       child: SafeArea(
         top: true,
+        bottom: true,
+        left: false,
+        right: true,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildMenuGroup(_centerMenuItems),
+              _buildMenuGroup(centerMenuItems),
               SizedBox(height: 12.0.h),
               Divider(height: 0.5.h, color: Colors.grey),
               SizedBox(height: 12.0.h),
-              _buildMenuGroup(_bottomMenuItems),
+              _buildMenuGroup(bottomMenuItems),
             ],
           ),
         ),
