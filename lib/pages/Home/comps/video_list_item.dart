@@ -451,7 +451,7 @@ class _VideoListItemState extends State<VideoListItem>
             isActive: widget.isActive,
             onDoubleTapLike: _onDoubleTapLikeFromVideo,
             url:
-                'https://vdept3.bdstatic.com/mda-scn91ktybpz1nqms/cae_h264/1774348055487634066/mda-scn91ktybpz1nqms.mp4?v_from_s=hkapp-haokan-hna&auth_key=1776253877-0-0-634523439ac64d7a27d1fdf7072bec17&bcevod_channel=searchbox_feed&cr=0&cd=0&pd=1&pt=3&logid=3077391811&vid=9373673652330137862&klogid=3077391811&abtest=',
+                'https://vdept3.bdstatic.com/mda-sdf1tuvj4z9ynwdt/cae_h264/1776303393021288528/mda-sdf1tuvj4z9ynwdt.mp4?v_from_s=hkapp-haokan-hnb&auth_key=1776325790-0-0-6299e78bfff9500671648bff442a2b52&bcevod_channel=searchbox_feed&cr=0&cd=0&pd=1&pt=3&logid=2990499984&vid=10561236075659870947&klogid=2990499984&abtest=',
           ),
         ),
         // 右侧信息

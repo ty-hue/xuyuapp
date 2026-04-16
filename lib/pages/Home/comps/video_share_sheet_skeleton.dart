@@ -139,6 +139,72 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
     _addOrRemoveSelectedContactIndex(index);
   }
 
+  // 建群并发送函数
+  void _onGroupAndSendPrivateMessageTap() {
+    print('建群并发送');
+  }
+
+  Widget get SendButtonUI {
+    if (_selectedContactIndexList.isNotEmpty &&
+        _selectedContactIndexList.length > 1) {
+      return Row(
+        spacing: 16.w,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromRGBO(254, 45, 85, 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: _onGroupAndSendPrivateMessageTap,
+              child: Text(
+                '建群并发送',
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromRGBO(254, 45, 85, 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: _onSendPrivateMessageTap,
+              icon: Icon(FontAwesomeIcons.solidPaperPlane, size: 16.sp),
+              label: Text(
+                '发送',
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color.fromRGBO(254, 45, 85, 1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        foregroundColor: Colors.white,
+      ),
+      onPressed: _onSendPrivateMessageTap,
+      icon: Icon(FontAwesomeIcons.solidPaperPlane, size: 16.sp),
+      label: Text(
+        '发送',
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
   // sheet底部UI
   Widget get sheetBottomUI {
     if (_selectedContactIndexList.isNotEmpty) {
@@ -200,28 +266,7 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
               ),
             ),
             SizedBox(height: 16.h),
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromRGBO(254, 45, 85, 1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _onSendPrivateMessageTap,
-                icon: Icon(FontAwesomeIcons.solidPaperPlane, size: 16.sp),
-                label: Text(
-                  '发送',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            SizedBox(width: double.infinity, height: 44.h, child: SendButtonUI),
           ],
         ),
       );
