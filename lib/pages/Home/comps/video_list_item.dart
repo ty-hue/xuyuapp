@@ -3,6 +3,7 @@ import 'package:bilbili_project/components/text_auto_scroll.dart';
 import 'package:bilbili_project/components/custom_video_player.dart';
 import 'package:bilbili_project/pages/Home/comps/video_comment_sheet_skeleton.dart';
 import 'package:bilbili_project/pages/Home/comps/video_share_sheet_skeleton.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/NumberUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class _VideoListItemState extends State<VideoListItem>
   int _collectCount = 50000;
 
   static const Color _likeRed = Color(0xFFFF2D55);
+
   /// 收藏点亮后的金黄色（白 → 金渐变）
   static const Color _collectGold = Color(0xFFFFC94A);
 
@@ -59,15 +61,17 @@ class _VideoListItemState extends State<VideoListItem>
     );
     _likeScaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.52).chain(
-          CurveTween(curve: Curves.easeOutCubic),
-        ),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.52,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 38,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.52, end: 1.0).chain(
-          CurveTween(curve: Curves.elasticOut),
-        ),
+        tween: Tween<double>(
+          begin: 1.52,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 62,
       ),
     ]).animate(_likeBurstController);
@@ -80,15 +84,17 @@ class _VideoListItemState extends State<VideoListItem>
     );
     _collectScaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.52).chain(
-          CurveTween(curve: Curves.easeOutCubic),
-        ),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.52,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 38,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.52, end: 1.0).chain(
-          CurveTween(curve: Curves.elasticOut),
-        ),
+        tween: Tween<double>(
+          begin: 1.52,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 62,
       ),
     ]).animate(_collectBurstController);
@@ -170,23 +176,20 @@ class _VideoListItemState extends State<VideoListItem>
               final scale = _likeBurstController.isDismissed
                   ? 1.0
                   : _likeScaleAnimation.value;
-              return Transform.scale(
-                scale: scale,
-                child: child,
-              );
+              return Transform.scale(scale: scale, child: child);
             },
             child: Icon(
               FontAwesomeIcons.solidHeart,
               color: heartColor,
               size: 39.sp,
-              shadows: _isLiked &&
+              shadows:
+                  _isLiked &&
                       _likeBurstController.isAnimating &&
                       _likeBurstController.value > 0.08
                   ? [
                       Shadow(
                         color: _likeRed.withValues(
-                          alpha: 0.5 *
-                              (1 - _likeBurstController.value * 0.45),
+                          alpha: 0.5 * (1 - _likeBurstController.value * 0.45),
                         ),
                         blurRadius: 14,
                         offset: const Offset(0, 2),
@@ -197,9 +200,7 @@ class _VideoListItemState extends State<VideoListItem>
           ),
         ),
         Text(
-          _likeCount == 0
-              ? '点赞'
-              : NumberUtils.formatLikeCount(_likeCount),
+          _likeCount == 0 ? '点赞' : NumberUtils.formatLikeCount(_likeCount),
           style: TextStyle(color: Colors.white, fontSize: 15.sp),
         ),
       ],
@@ -248,23 +249,21 @@ class _VideoListItemState extends State<VideoListItem>
               final scale = _collectBurstController.isDismissed
                   ? 1.0
                   : _collectScaleAnimation.value;
-              return Transform.scale(
-                scale: scale,
-                child: child,
-              );
+              return Transform.scale(scale: scale, child: child);
             },
             child: Icon(
               FontAwesomeIcons.solidStar,
               color: starColor,
               size: 39.sp,
-              shadows: _isCollected &&
+              shadows:
+                  _isCollected &&
                       _collectBurstController.isAnimating &&
                       _collectBurstController.value > 0.08
                   ? [
                       Shadow(
                         color: _collectGold.withValues(
-                          alpha: 0.55 *
-                              (1 - _collectBurstController.value * 0.45),
+                          alpha:
+                              0.55 * (1 - _collectBurstController.value * 0.45),
                         ),
                         blurRadius: 14,
                         offset: const Offset(0, 2),
@@ -332,7 +331,7 @@ class _VideoListItemState extends State<VideoListItem>
   // 点击分享
   void _onShareTap() {
     SheetUtils(
-      const VideoShareSheetSkeleton(),
+      VideoShareSheetSkeleton(),
       deferHeavyChild: false,
     ).openAsyncSheet<void>(context: context);
     print('点击了分享');
@@ -431,11 +430,7 @@ class _VideoListItemState extends State<VideoListItem>
             shape: BoxShape.circle,
             color: Color.fromRGBO(251, 48, 89, 1),
           ),
-          child: Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 24.sp,
-          ),
+          child: Icon(Icons.add, color: Colors.white, size: 24.sp),
         ),
       ),
     );
@@ -443,7 +438,7 @@ class _VideoListItemState extends State<VideoListItem>
 
   // 点击头像
   void _onAvatarTap() {
-    print('点击了头像');
+    OtherHomeRoute().push(context);
   }
 
   @override
@@ -456,7 +451,7 @@ class _VideoListItemState extends State<VideoListItem>
             isActive: widget.isActive,
             onDoubleTapLike: _onDoubleTapLikeFromVideo,
             url:
-                'https://vdept3.bdstatic.com/mda-scnhg803xt32vc4n/360p/h264/1774268589069318420/mda-scnhg803xt32vc4n.mp4?v_from_s=hkapp-haokan-hna&auth_key=1776084566-0-0-a4e330861894f9810f613fa8c9d2bc2c&bcevod_channel=searchbox_feed&cr=0&cd=0&pd=1&pt=3&logid=2966509307&vid=1421899744954427798&klogid=2966509307&abtest=',
+                'https://vdept3.bdstatic.com/mda-scn91ktybpz1nqms/cae_h264/1774348055487634066/mda-scn91ktybpz1nqms.mp4?v_from_s=hkapp-haokan-hna&auth_key=1776253877-0-0-634523439ac64d7a27d1fdf7072bec17&bcevod_channel=searchbox_feed&cr=0&cd=0&pd=1&pt=3&logid=3077391811&vid=9373673652330137862&klogid=3077391811&abtest=',
           ),
         ),
         // 右侧信息
@@ -574,47 +569,47 @@ class _VideoListItemState extends State<VideoListItem>
                       ),
                       GestureDetector(
                         onTap: _onAlbumTap,
-                        child:Row(
-                        spacing: 4.w,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            padding: EdgeInsets.all(4.w),
-                            alignment: Alignment.center,
-                            child: Row(
-                              spacing: 2.w,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '背景音乐',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
+                        child: Row(
+                          spacing: 4.w,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                              padding: EdgeInsets.all(4.w),
+                              alignment: Alignment.center,
+                              child: Row(
+                                spacing: 2.w,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '背景音乐',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                                Icon(
-                                  Icons.music_note,
-                                  color: Colors.white,
-                                  size: 14.sp,
-                                ),
-                              ],
+                                  Icon(
+                                    Icons.music_note,
+                                    color: Colors.white,
+                                    size: 14.sp,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 100.w,
-                            child: TextAutoScroll(
-                              isActive: widget.isActive,
-                              text: '龙转风（live）-周杰伦',
+                            SizedBox(
+                              width: 100.w,
+                              child: TextAutoScroll(
+                                isActive: widget.isActive,
+                                text: '龙转风（live）-周杰伦',
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      )
                     ],
                   ),
                 ),

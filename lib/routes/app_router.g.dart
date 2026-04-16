@@ -21,6 +21,9 @@ List<RouteBase> get $appRoutes => [
   $allPhotoRoute,
   $editProfileRoute,
   $createRoute,
+  $globalSearchRoute,
+  $chatRoute,
+  $otherHomeRoute,
   $shellRouteData,
 ];
 
@@ -1074,6 +1077,68 @@ extension $CreateRouteExtension on CreateRoute {
 
   String get location =>
       GoRouteData.$location('/create${Uri.encodeComponent(fromUrl ?? '')}');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $globalSearchRoute => GoRouteData.$route(
+  path: '/global_search',
+
+  factory: $GlobalSearchRouteExtension._fromState,
+);
+
+extension $GlobalSearchRouteExtension on GlobalSearchRoute {
+  static GlobalSearchRoute _fromState(GoRouterState state) =>
+      const GlobalSearchRoute();
+
+  String get location => GoRouteData.$location('/global_search');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $chatRoute =>
+    GoRouteData.$route(path: '/chat', factory: $ChatRouteExtension._fromState);
+
+extension $ChatRouteExtension on ChatRoute {
+  static ChatRoute _fromState(GoRouterState state) => const ChatRoute();
+
+  String get location => GoRouteData.$location('/chat');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $otherHomeRoute => GoRouteData.$route(
+  path: '/other_home',
+
+  factory: $OtherHomeRouteExtension._fromState,
+);
+
+extension $OtherHomeRouteExtension on OtherHomeRoute {
+  static OtherHomeRoute _fromState(GoRouterState state) =>
+      const OtherHomeRoute();
+
+  String get location => GoRouteData.$location('/other_home');
 
   void go(BuildContext context) => context.go(location);
 

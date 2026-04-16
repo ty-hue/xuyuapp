@@ -1,5 +1,6 @@
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Home/comps/tabbar_view_video_list.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -83,7 +84,7 @@ class _HomePageState extends State<HomePage>
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
-                      print('搜索');
+                      GlobalSearchRoute().push(context);
                     },
                     child: Container(
                       width: 60.w,

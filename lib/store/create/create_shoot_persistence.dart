@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// 创作拍摄偏好（杀进程后恢复）；不含单次会话字段（录制状态、倒计时进行中等）。
 abstract final class CreateShootPersistence {
+  // 美颜值转换为Map
   static Map<String, double> _beautyValuesMap(CreateShootState s) {
     final m = <String, double>{};
     for (final e in s.beautyOptions) {
@@ -14,7 +15,7 @@ abstract final class CreateShootPersistence {
     }
     return m;
   }
-
+  // 滤镜值转换为Map
   static Map<String, double> _filterValuesMap(CreateShootState s) {
     final m = <String, double>{};
     for (final e in s.filterOptions) {
@@ -23,7 +24,7 @@ abstract final class CreateShootPersistence {
     }
     return m;
   }
-
+  // 将所有数据转换成Map并保存到本地 （因为jsonEncode只支持dart内置类型，不支持自定义类型如：CreateShootState）
   static Future<void> saveSlice(CreateShootState s) async {
     final p = await SharedPreferences.getInstance();
     final map = <String, dynamic>{
@@ -49,6 +50,7 @@ abstract final class CreateShootPersistence {
     await p.setString(GlobalConstants.CREATE_SHOOT_PREFS_KEY, jsonEncode(map));
   }
 
+  // 读取本地保存的美颜 / 滤镜数值，做类型安全检查，避免崩溃。
   static Map<String, double>? _readDoubleMap(Map<String, dynamic> m, String k) {
     final v = m[k];
     if (v is! Map) return null;
@@ -60,7 +62,8 @@ abstract final class CreateShootPersistence {
     }
     return out.isEmpty ? null : out;
   }
-
+  
+  // 恢复美颜、滤镜的数值 + 选中的索引。
   static CreateShootState _mergeBeautyFilter(
     CreateShootState current,
     Map<String, double>? beautyVals,

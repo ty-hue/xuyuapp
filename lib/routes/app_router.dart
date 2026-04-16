@@ -1,7 +1,9 @@
 import 'package:bilbili_project/layout/shell_page.dart';
 import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Create/index.dart';
+import 'package:bilbili_project/pages/GlobalSearch/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
+import 'package:bilbili_project/pages/Message/sub/Chat/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AllFunction/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/DataAnalysis/index.dart';
@@ -11,6 +13,7 @@ import 'package:bilbili_project/pages/Mine/sub/Relationship/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/WatchHistory/index.dart';
+import 'package:bilbili_project/pages/OtherHome/index.dart';
 import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
@@ -337,6 +340,40 @@ class CreateRoute extends GoRouteData {
     );
   }
 }
+
+// 搜索页 路由
+@TypedGoRoute<GlobalSearchRoute>(path: '/global_search')
+class GlobalSearchRoute extends GoRouteData {
+  const GlobalSearchRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return GlobalSearchPage();
+  }
+}
+
+// 聊天页 路由
+@TypedGoRoute<ChatRoute>(path: '/chat')
+class ChatRoute extends GoRouteData {
+  const ChatRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return ChatPage();
+  }
+}
+
+// 他人主页路由
+@TypedGoRoute<OtherHomeRoute>(path: '/other_home')
+class OtherHomeRoute extends GoRouteData {
+  const OtherHomeRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return OtherHomePage();
+  }
+}
+
 
 // 五个分支
 @TypedStatefulShellRoute<ShellRouteData>(

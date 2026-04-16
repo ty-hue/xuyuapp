@@ -1,3 +1,4 @@
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -205,7 +206,9 @@ class _ContactRowContent extends StatelessWidget {
     return Material(
       color: Colors.white,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          ChatRoute().push(context);
+        },
         splashColor: Colors.black.withValues(alpha: 0.06),
         highlightColor: Colors.black.withValues(alpha: 0.04),
         child: SizedBox(
