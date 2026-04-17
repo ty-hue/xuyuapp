@@ -47,8 +47,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   double get _thumbRadius => _progressBarExpanded ? 8.w : 4.w;
 
   /// 底部可触摸区域高度（含进度条上方空白）；展开时加高以容纳时间文案。
-  double get _progressTouchZoneHeight =>
-      _progressBarExpanded ? 68.h : 48.h;
+  double get _progressTouchZoneHeight => _progressBarExpanded ? 68.h : 48.h;
 
   /// 首帧布局后再 play，否则刚初始化时纹理未挂上，`play()` 容易无声失败（冷启动进首页常见）。
   void _schedulePlayIfActive() {
@@ -108,7 +107,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
 
   void _openLongPressSheet() {
     SheetUtils(
-      const VideoLongPressSheetSkeleton(),
+      VideoLongPressSheetSkeleton(),
       deferHeavyChild: false,
     ).openAsyncSheet<void>(context: context);
   }
@@ -126,8 +125,10 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
     if (barW <= 0) return Duration.zero;
     final pos = (dx - barStart).clamp(0.0, barW);
     final t = pos / barW;
-    final ms =
-        (t * total.inMilliseconds).round().clamp(0, total.inMilliseconds);
+    final ms = (t * total.inMilliseconds).round().clamp(
+      0,
+      total.inMilliseconds,
+    );
     return Duration(milliseconds: ms);
   }
 
@@ -194,107 +195,109 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
               ],
             ),
             Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: MouseRegion(
-            onEnter: (_) => setState(() => _mouseInsideProgressZone = true),
-            onExit: (_) => setState(() => _mouseInsideProgressZone = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              height: _progressTouchZoneHeight,
-              width: double.infinity,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  // 进度区水平拖动手势在竞技场中立即胜出，避免外层 TabBarView/PageView 左滑切 Tab。
-                  return RawGestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    gestures: <Type, GestureRecognizerFactory>{
-                      _ProgressZoneHorizontalDragRecognizer:
-                          GestureRecognizerFactoryWithHandlers<
-                              _ProgressZoneHorizontalDragRecognizer>(
-                        _ProgressZoneHorizontalDragRecognizer.new,
-                        (_ProgressZoneHorizontalDragRecognizer instance) {
-                          instance
-                            ..onStart = (_) {}
-                            ..onUpdate = (_) {}
-                            ..onEnd = (_) {}
-                            ..onCancel = () {};
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: MouseRegion(
+                onEnter: (_) => setState(() => _mouseInsideProgressZone = true),
+                onExit: (_) => setState(() => _mouseInsideProgressZone = false),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  height: _progressTouchZoneHeight,
+                  width: double.infinity,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      // 进度区水平拖动手势在竞技场中立即胜出，避免外层 TabBarView/PageView 左滑切 Tab。
+                      return RawGestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        gestures: <Type, GestureRecognizerFactory>{
+                          _ProgressZoneHorizontalDragRecognizer:
+                              GestureRecognizerFactoryWithHandlers<
+                                _ProgressZoneHorizontalDragRecognizer
+                              >(_ProgressZoneHorizontalDragRecognizer.new, (
+                                _ProgressZoneHorizontalDragRecognizer instance,
+                              ) {
+                                instance
+                                  ..onStart = (_) {}
+                                  ..onUpdate = (_) {}
+                                  ..onEnd = (_) {}
+                                  ..onCancel = () {};
+                              }),
                         },
-                      ),
-                    },
-                    child: Listener(
-                      behavior: HitTestBehavior.opaque,
-                      onPointerDown: (e) {
-                        _wasPlayingWhenScrubStarted =
-                            _controller.value.isPlaying;
-                        _touchingProgressZone = true;
-                        setState(() {});
-                        _seekToLocalDx(e.localPosition.dx, w);
-                      },
-                      onPointerMove: (e) {
-                        if (!_touchingProgressZone) return;
-                        _seekToLocalDx(e.localPosition.dx, w);
-                      },
-                      onPointerUp: (_) {
-                        _touchingProgressZone = false;
-                        setState(() {});
-                      },
-                      onPointerCancel: (_) {
-                        _touchingProgressZone = false;
-                        setState(() {});
-                      },
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_progressBarExpanded) ...[
-                              Text(
-                                _progressTimeLabelText(),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.0,
-                                  shadows: const [
-                                    Shadow(
-                                      color: Colors.black54,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 1),
+                        child: Listener(
+                          behavior: HitTestBehavior.opaque,
+                          onPointerDown: (e) {
+                            _wasPlayingWhenScrubStarted =
+                                _controller.value.isPlaying;
+                            _touchingProgressZone = true;
+                            setState(() {});
+                            _seekToLocalDx(e.localPosition.dx, w);
+                          },
+                          onPointerMove: (e) {
+                            if (!_touchingProgressZone) return;
+                            _seekToLocalDx(e.localPosition.dx, w);
+                          },
+                          onPointerUp: (_) {
+                            _touchingProgressZone = false;
+                            setState(() {});
+                          },
+                          onPointerCancel: (_) {
+                            _touchingProgressZone = false;
+                            setState(() {});
+                          },
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (_progressBarExpanded) ...[
+                                  Text(
+                                    _progressTimeLabelText(),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.0,
+                                      shadows: const [
+                                        Shadow(
+                                          color: Colors.black54,
+                                          blurRadius: 6,
+                                          offset: Offset(0, 1),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
+                                  SizedBox(height: 6.h),
+                                ],
+                                IgnorePointer(
+                                  child: ProgressBar(
+                                    progress: _controller.value.position,
+                                    total: _controller.value.duration,
+                                    barHeight: _barHeight,
+                                    thumbRadius: _thumbRadius,
+                                    timeLabelLocation: TimeLabelLocation.none,
+                                    baseBarColor: Colors.grey.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    progressBarColor: Colors.white,
+                                    bufferedBarColor: Colors.white30,
+                                    thumbColor: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 6.h),
-                            ],
-                            IgnorePointer(
-                              child: ProgressBar(
-                                progress: _controller.value.position,
-                                total: _controller.value.duration,
-                                barHeight: _barHeight,
-                                thumbRadius: _thumbRadius,
-                                timeLabelLocation: TimeLabelLocation.none,
-                                baseBarColor: Colors.grey.withValues(alpha: 0.3),
-                                progressBarColor: Colors.white,
-                                bufferedBarColor: Colors.white30,
-                                thumbColor: Colors.white,
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
           ],
         ),
       ),

@@ -305,6 +305,10 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
       ),
     );
   }
+  // 更多按钮点击函数
+  void onEndButtonTap() {
+    print('更多');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -342,7 +346,7 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
               endButtonBackgroundColor: Colors.white,
               selectedContactIndexList: _selectedContactIndexList,
               items: frequentContacts,
-              onEndButtonTap: () {},
+              onEndButtonTap: onEndButtonTap,
               endButtonText: '更多',
               onItemTap: onItemTap,
               endButtonIcon: Icon(
