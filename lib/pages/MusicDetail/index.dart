@@ -21,6 +21,8 @@ class _MusicDetailPageState extends State<MusicDetailPage>
 
   bool _isPlaying = false;
 
+  bool _isCollected = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +52,9 @@ class _MusicDetailPageState extends State<MusicDetailPage>
 
   // 收藏
   void _collect() {
-    print('收藏');
+    setState(() {
+      _isCollected = !_isCollected;
+    });
   }
 
   // 分享
@@ -187,7 +191,7 @@ class _MusicDetailPageState extends State<MusicDetailPage>
                         _collect();
                       },
                       label: Text(
-                        '收藏',
+                        _isCollected ? '已收藏' : '收藏',
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: Color.fromRGBO(32, 32, 33, 1),
@@ -195,9 +199,9 @@ class _MusicDetailPageState extends State<MusicDetailPage>
                         ),
                       ),
                       icon: Icon(
-                        FontAwesomeIcons.star,
+                        _isCollected ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
                         size: 14.0.r,
-                        color: Color.fromRGBO(32, 32, 33, 1),
+                        color: _isCollected ? Color.fromRGBO(255, 215, 0, 1) : Color.fromRGBO(32, 32, 33, 1),
                       ),
                     ),
                   ],
