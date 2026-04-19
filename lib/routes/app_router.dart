@@ -13,6 +13,7 @@ import 'package:bilbili_project/pages/Mine/sub/Relationship/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Search/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/Visitor/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/WatchHistory/index.dart';
+import 'package:bilbili_project/pages/MusicDetail/index.dart';
 import 'package:bilbili_project/pages/OtherHome/index.dart';
 import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
@@ -371,6 +372,17 @@ class OtherHomeRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return OtherHomePage();
+  }
+}
+
+// 音乐详情页路由
+@TypedGoRoute<MusicDetailRoute>(path: '/music_detail')
+class MusicDetailRoute extends GoRouteData {
+  const MusicDetailRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return MusicDetailPage();
   }
 }
 

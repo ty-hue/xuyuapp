@@ -24,6 +24,7 @@ List<RouteBase> get $appRoutes => [
   $globalSearchRoute,
   $chatRoute,
   $otherHomeRoute,
+  $musicDetailRoute,
   $shellRouteData,
 ];
 
@@ -1139,6 +1140,28 @@ extension $OtherHomeRouteExtension on OtherHomeRoute {
       const OtherHomeRoute();
 
   String get location => GoRouteData.$location('/other_home');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $musicDetailRoute => GoRouteData.$route(
+  path: '/music_detail',
+
+  factory: $MusicDetailRouteExtension._fromState,
+);
+
+extension $MusicDetailRouteExtension on MusicDetailRoute {
+  static MusicDetailRoute _fromState(GoRouterState state) =>
+      const MusicDetailRoute();
+
+  String get location => GoRouteData.$location('/music_detail');
 
   void go(BuildContext context) => context.go(location);
 

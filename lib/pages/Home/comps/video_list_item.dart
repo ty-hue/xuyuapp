@@ -367,7 +367,7 @@ class _VideoListItemState extends State<VideoListItem>
 
   // 点击唱片
   void _onAlbumTap() {
-    print('点击了唱片');
+    MusicDetailRoute().push(context);
   }
 
   // 点击关注
