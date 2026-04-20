@@ -19,6 +19,7 @@ class CustomInputView extends StatefulWidget {
   final Widget? prefixIcon; // 前缀图标
   final ValueChanged<String>? onFieldSubmitted; // 提交回调
   final TextEditingController controller; // 控制器
+  final FocusNode? focusNode;
   CustomInputView({
     this.prefixIcon, // 前缀图标
     Key? key,
@@ -41,6 +42,7 @@ class CustomInputView extends StatefulWidget {
     required this.onChanged,
     this.onFieldSubmitted, // 提交回调
     required this.controller, // 控制器
+    this.focusNode,
   }) : super(key: key);
 
   @override
@@ -51,6 +53,7 @@ class _PasswordInputViewState extends State<CustomInputView> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      focusNode: widget.focusNode,
       keyboardType: widget.keyboardType,
       obscureText: widget.obscureText,
       controller: widget.controller,

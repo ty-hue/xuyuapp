@@ -1,5 +1,8 @@
 import 'package:bilbili_project/components/avatar_with_nickname_list.dart';
 import 'package:bilbili_project/components/dim_tap_Icon_button.dart';
+import 'package:bilbili_project/pages/Home/comps/build_groups_sheet_skeleton.dart';
+import 'package:bilbili_project/pages/Home/comps/video_share_expanded_sheet_skeleton.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -99,12 +102,12 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
 
   // 私信函数
   void _onPrivateMessageTap() {
-    print('私信');
+    SheetUtils(VideoShareExpandedSheetSkeleton()).openAsyncSheet(context: context);
   }
 
   // 建群分享函数
   void _onGroupShareTap() {
-    print('建群分享');
+    SheetUtils(BuildGroupsSheetSkeleton()).openAsyncSheet(context: context);
   }
 
   // 保存到相册函数
@@ -307,7 +310,7 @@ class _VideoShareSheetSkeletonState extends State<VideoShareSheetSkeleton> {
   }
   // 更多按钮点击函数
   void onEndButtonTap() {
-    print('更多');
+    SheetUtils(VideoShareExpandedSheetSkeleton()).openAsyncSheet(context: context);
   }
 
   @override

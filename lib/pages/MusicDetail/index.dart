@@ -208,7 +208,9 @@ class _MusicDetailPageState extends State<MusicDetailPage>
                 ),
               ),
               Expanded(
-                child: GridView.builder(
+                child: Stack(
+                  children: [
+                    GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     mainAxisSpacing: 1.w,
@@ -219,6 +221,8 @@ class _MusicDetailPageState extends State<MusicDetailPage>
                     return Container(color: Colors.red);
                   },
                 ),
+                  ],
+                )
               ),
             ],
           ),
