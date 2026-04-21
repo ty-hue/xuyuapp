@@ -4,8 +4,10 @@ import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/components/with_statusBar_color.dart';
 import 'package:bilbili_project/pages/Message/comps/contacts_list.dart';
 import 'package:bilbili_project/pages/Message/comps/search_view.dart';
+import 'package:bilbili_project/pages/Message/comps/status_settings_sheet_skeleton.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/PopoverUtils.dart';
+import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -80,6 +82,11 @@ class _MessagePageState extends State<MessagePage> {
   // 列表项点击回调
   void _onItemTap(int index) {
     ChatRoute().push(context);
+  }
+
+  // 状态设置
+  void _onStatusSettings() {
+    SheetUtils(StatusSettingsSheetSkeleton()).openAsyncSheet(context: context);
   }
   @override
   Widget build(BuildContext context) {
@@ -244,7 +251,7 @@ class _MessagePageState extends State<MessagePage> {
                     AvatarWithNicknameList(
                       items: frequentContacts,
                       onEndButtonTap: () {
-                        print('跳转设置页面');
+                        _onStatusSettings();
                       },
                       endButtonText: '状态设置',
                       onItemTap: _onItemTap,

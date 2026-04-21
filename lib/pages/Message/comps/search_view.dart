@@ -14,7 +14,7 @@ class SearchView extends StatefulWidget {
   final Function() cancelSearch;
   final List<ContactItem> searchResult;
   SearchView({Key? key, required this.cancelSearch, required this.searchResult})
-      : super(key: key);
+    : super(key: key);
 
   @override
   _SearchViewState createState() => _SearchViewState();
@@ -61,10 +61,8 @@ class _SearchViewState extends State<SearchView> {
     setState(() {});
   }
 
-  List<ContactItem> get _filteredContacts => filterContactsByName(
-        widget.searchResult,
-        _searchController.text,
-      );
+  List<ContactItem> get _filteredContacts =>
+      filterContactsByName(widget.searchResult, _searchController.text);
 
   bool get _hasSearchQuery => _searchController.text.trim().isNotEmpty;
 

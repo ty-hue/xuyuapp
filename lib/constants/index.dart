@@ -11,6 +11,13 @@ class GlobalConstants {
   static const String MUSIC_SEARCH_HISTORY_KEY =
       'csclyf_xuyuapp_music_search_history'; // 本地存储的搜索历史的key
 
+  /// 消息页搜索：最近点击的联系人（JSON 列表，供 [MessageSearchRecentStorage]）
+  static const String MESSAGE_SEARCH_RECENT_KEY =
+      'csclyf_xuyuapp_message_search_recent_v1';
+
+  /// 消息页搜索最近联系人最多保留条数
+  static const int MESSAGE_SEARCH_RECENT_MAX = 10;
+
   /// 创作页拍摄偏好（JSON，供 [CreateShootPersistence]）
   static const String CREATE_SHOOT_PREFS_KEY =
       'csclyf_xuyuapp_create_shoot_prefs_v1';
