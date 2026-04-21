@@ -1,8 +1,12 @@
+import 'package:bilbili_project/pages/Home/comps/contact_list_item.dart';
+import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MoreChat extends StatefulWidget {
-  MoreChat({Key? key}) : super(key: key);
+  final List<ContactItem> searchResult;
+  MoreChat({Key? key, required this.searchResult}) : super(key: key);
 
   @override
   _MoreChatState createState() => _MoreChatState();
@@ -33,83 +37,50 @@ class _MoreChatState extends State<MoreChat> {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-
+          itemCount: widget.searchResult.length,
           itemBuilder: (context, index) {
-            return Material(
-              color: Colors.white,
-              child: InkWell(
-                splashColor: Colors.black.withValues(alpha: 0.06),
-                highlightColor: Colors.black.withValues(alpha: 0.04),
-                onTap: () {
-                  print('点击了用户$index');
-                },
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: index == 0 ? 0 : 6.h,
-                    bottom: 6.h,
+            return GestureDetector(
+              onTap: () {
+                ChatRoute().push(context);
+              },
+              child: ContactListItem(
+                padding: EdgeInsets.symmetric(vertical: 20.h),
+                // 无边框
+                decoration: BoxDecoration(
+                  border: Border.all(width: 0, color: Colors.transparent),
+                ),
+                contactItem: widget.searchResult[index],
+                leading: CircleAvatar(
+                  radius: 30.r,
+                  backgroundColor: Color.fromRGBO(243, 243, 244, 1),
+                  backgroundImage: NetworkImage(
+                    widget.searchResult[index].avatar,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            ClipOval(
-                              child: Image.network(
-                                'https://wx4.sinaimg.cn/mw690/70e1e519ly1i9xgh6g04ej20sg0sggsj.jpg',
-                                width: 62.w,
-                                height: 62.h,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            SizedBox(width: 10.w),
-                            Expanded(
-                              child: Text(
-                                '用户昵称xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.black,
-                                  overflow: TextOverflow.ellipsis,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
-                        ),
+                ),
+                trailing: SizedBox(
+                  width: 80.w,
+                  height: 32.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromRGBO(253, 44, 85, 1),
+                    ),
+                    onPressed: () {
+                      ChatRoute().push(context);
+                    },
+                    child: Text(
+                      '发私信',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
-                      SizedBox(width: 14.w),
-                      SizedBox(
-                        width: 100.w,
-                        height: 36.h,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromRGBO(243, 243, 244, 1),
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6.r),
-                            ),
-                          ),
-                          onPressed: () {
-                            print('点击了发消息');
-                          },
-                          child: Text(
-                            '发私信',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             );
           },
           separatorBuilder: (context, index) => const SizedBox.shrink(),
-          itemCount: 10,
         ),
       ],
     );

@@ -265,7 +265,7 @@ class _MessagePageState extends State<MessagePage> {
             ),
           ),
           if (isSearch)
-            Positioned.fill(child: SearchView(cancelSearch: cancelSearch)),
+            Positioned.fill(child: SearchView(cancelSearch: cancelSearch, searchResult: frequentContacts)),
         ],
       ),
     );
