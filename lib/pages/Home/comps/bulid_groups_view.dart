@@ -1,6 +1,7 @@
 import 'package:bilbili_project/components/custom_input.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/pages/Home/comps/contact_list_item.dart';
+import 'package:bilbili_project/pages/Home/comps/contact_name_filter.dart';
 import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,14 +39,16 @@ class _BulidGroupsViewState extends State<BulidGroupsView> {
   }
 
   void _onCancelTap() {
+    _textEditingController.clear();
     _searchFocusNode.unfocus();
+    setState(() {});
   }
 
   void _onInputChanged(String value) {
     setState(() {});
   }
 
-  List<ContactItem> frequentContacts = [
+  final List<ContactItem> _allContacts = [
     ContactItem(
       name: '张三',
       avatar:
@@ -135,6 +138,9 @@ class _BulidGroupsViewState extends State<BulidGroupsView> {
       unreadCount: '1',
     ),
   ];
+
+  List<ContactItem> get _visibleContacts =>
+      filterContactsByName(_allContacts, _textEditingController.text);
 
   // 选中的用户
   List<ContactItem> selectedContacts = [];
@@ -240,11 +246,12 @@ class _BulidGroupsViewState extends State<BulidGroupsView> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: frequentContacts.length,
+              itemCount: _visibleContacts.length,
               itemBuilder: (context, index) {
+                final contact = _visibleContacts[index];
                 return GestureDetector(
                   onTap: () {
-                    _onSelectedContact(frequentContacts[index]);
+                    _onSelectedContact(contact);
                   },
                   child: ContactListItem(
                     // 无边框
@@ -252,12 +259,12 @@ class _BulidGroupsViewState extends State<BulidGroupsView> {
                       border: Border.all(color: Colors.transparent),
                     ),
                     padding: EdgeInsets.symmetric(vertical: 16.h),
-                    contactItem: frequentContacts[index],
+                    contactItem: contact,
                     leading: CircleAvatar(
                       radius: 32.r,
                       backgroundColor: Color.fromRGBO(243, 243, 244, 1),
                       backgroundImage: NetworkImage(
-                        frequentContacts[index].avatar,
+                        contact.avatar,
                       ),
                     ),
                     // 圆型单选框
@@ -268,12 +275,12 @@ class _BulidGroupsViewState extends State<BulidGroupsView> {
                       ),
                       activeColor: Color.fromRGBO(255, 41, 81, 1),
                       checkColor: Colors.white,
-                      value: selectedContacts.contains(frequentContacts[index]),
+                      value: selectedContacts.contains(contact),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       onChanged: (value) {
-                        _onSelectedContact(frequentContacts[index]);
+                        _onSelectedContact(contact);
                       },
                     ),
                   ),

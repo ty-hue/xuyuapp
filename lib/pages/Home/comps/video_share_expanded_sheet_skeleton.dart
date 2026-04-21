@@ -1,6 +1,7 @@
 import 'package:bilbili_project/components/custom_input.dart';
 import 'package:bilbili_project/pages/Home/comps/bulid_groups_view.dart';
 import 'package:bilbili_project/pages/Home/comps/contact_list_item.dart';
+import 'package:bilbili_project/pages/Home/comps/contact_name_filter.dart';
 import 'package:bilbili_project/pages/Home/comps/my_groups_view.dart';
 import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,9 @@ class _VideoShareExpandedSheetSkeletonState
   }
 
   void _onCancelTap() {
+    _textEditingController.clear();
     _searchFocusNode.unfocus();
+    setState(() {});
   }
 
   void _onInputChanged(String val) {
@@ -54,7 +57,7 @@ class _VideoShareExpandedSheetSkeletonState
   }
 
   // 模拟联系人列表数据
-  List<ContactItem> frequentContacts = [
+  final List<ContactItem> _allFrequentContacts = [
     ContactItem(
       name: '张三',
       avatar:
@@ -145,6 +148,9 @@ class _VideoShareExpandedSheetSkeletonState
     ),
   ];
 
+  List<ContactItem> get _visibleFrequentContacts =>
+      filterContactsByName(_allFrequentContacts, _textEditingController.text);
+
   //  显示 建群分享ui
   void _showBuildGroupShareUI() {
     setState(() {
@@ -166,9 +172,10 @@ class _VideoShareExpandedSheetSkeletonState
   }
 
   Widget _buildContactsPanel() {
+    final contacts = _visibleFrequentContacts;
     return ListView.builder(
       key: const ValueKey('contacts_panel'),
-      itemCount: frequentContacts.length + 2,
+      itemCount: contacts.length + 2,
       itemBuilder: (context, index) {
         if (index == 0) {
           return GestureDetector(
@@ -250,12 +257,13 @@ class _VideoShareExpandedSheetSkeletonState
             ),
           );
         }
+        final contact = contacts[index - 2];
         return ContactListItem(
-          contactItem: frequentContacts[index - 2],
+          contactItem: contact,
           leading: CircleAvatar(
             radius: 24.r,
             backgroundColor: Color.fromRGBO(243, 243, 244, 1),
-            backgroundImage: NetworkImage(frequentContacts[index - 2].avatar),
+            backgroundImage: NetworkImage(contact.avatar),
           ),
           trailing: SizedBox(
             width: 80.w,

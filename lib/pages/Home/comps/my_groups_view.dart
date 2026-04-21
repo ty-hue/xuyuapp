@@ -1,6 +1,7 @@
 import 'package:bilbili_project/components/custom_input.dart';
 import 'package:bilbili_project/components/static_app_bar.dart';
 import 'package:bilbili_project/pages/Home/comps/contact_list_item.dart';
+import 'package:bilbili_project/pages/Home/comps/contact_name_filter.dart';
 import 'package:bilbili_project/viewmodels/Message/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -37,7 +38,9 @@ class _MyGroupsViewState extends State<MyGroupsView> {
   }
 
   void _onCancelTap() {
+    _textEditingController.clear();
     _searchFocusNode.unfocus();
+    setState(() {});
   }
 
   void _onInputChanged(String value) {
@@ -79,7 +82,7 @@ class _MyGroupsViewState extends State<MyGroupsView> {
     );
   }
 
-  List<ContactItem> groupContacts = [
+  final List<ContactItem> _allGroupContacts = [
     ContactItem(
       name: '张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三张三三',
       avatar:
@@ -169,6 +172,9 @@ class _MyGroupsViewState extends State<MyGroupsView> {
       unreadCount: '1',
     ),
   ];
+
+  List<ContactItem> get _visibleGroupContacts =>
+      filterContactsByName(_allGroupContacts, _textEditingController.text);
 
   // 发送
   void _onSendTap() {
@@ -266,19 +272,20 @@ class _MyGroupsViewState extends State<MyGroupsView> {
 
           Expanded(
             child: ListView.builder(
-              itemCount: groupContacts.length,
+              itemCount: _visibleGroupContacts.length,
               itemBuilder: (context, index) {
+                final item = _visibleGroupContacts[index];
                 return ContactListItem(
                   // 无边框
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.transparent),
                   ),
                   padding: EdgeInsets.symmetric(vertical: 26.h),
-                  contactItem: groupContacts[index],
+                  contactItem: item,
                   leading: CircleAvatar(
                     radius: 32.r,
                     backgroundColor: Color.fromRGBO(243, 243, 244, 1),
-                    backgroundImage: NetworkImage(groupContacts[index].avatar),
+                    backgroundImage: NetworkImage(item.avatar),
                   ),
                   trailing: SizedBox(
                     width: 80.w,
