@@ -3,7 +3,10 @@ import 'package:bilbili_project/pages/AllPhoto/index.dart';
 import 'package:bilbili_project/pages/Create/index.dart';
 import 'package:bilbili_project/pages/GlobalSearch/index.dart';
 import 'package:bilbili_project/pages/Login/index.dart';
+import 'package:bilbili_project/pages/Message/sub/Chat/chat_history_search_page.dart';
+import 'package:bilbili_project/pages/Message/sub/Chat/chat_info_page.dart';
 import 'package:bilbili_project/pages/Message/sub/Chat/index.dart';
+import 'package:bilbili_project/pages/Message/sub/Chat/select_mutual_followers_page.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AllFunction/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/DataAnalysis/index.dart';
@@ -361,6 +364,43 @@ class ChatRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return ChatPage();
+  }
+}
+
+/// 聊天信息（会话设置）；[ChatInfoPageArgs] 通过 `context.push(..., extra: ...)` 传入。
+@TypedGoRoute<ChatInfoRoute>(path: '/chat_info')
+class ChatInfoRoute extends GoRouteData {
+  const ChatInfoRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    final extra = state.extra;
+    final args = extra is ChatInfoPageArgs ? extra : const ChatInfoPageArgs();
+    return ChatInfoPage(args: args);
+  }
+}
+
+/// 发起群聊：选择互相关注的人。
+@TypedGoRoute<SelectMutualFollowersRoute>(path: '/select_mutual_followers')
+class SelectMutualFollowersRoute extends GoRouteData {
+  const SelectMutualFollowersRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const SelectMutualFollowersPage();
+  }
+}
+
+/// 查找聊天内容（会话内搜索）。
+@TypedGoRoute<ChatHistorySearchRoute>(path: '/chat_history_search')
+class ChatHistorySearchRoute extends GoRouteData {
+  const ChatHistorySearchRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    final extra = state.extra;
+    final args = extra is ChatHistorySearchPageArgs ? extra : const ChatHistorySearchPageArgs();
+    return ChatHistorySearchPage(args: args);
   }
 }
 

@@ -23,6 +23,9 @@ List<RouteBase> get $appRoutes => [
   $createRoute,
   $globalSearchRoute,
   $chatRoute,
+  $chatInfoRoute,
+  $selectMutualFollowersRoute,
+  $chatHistorySearchRoute,
   $otherHomeRoute,
   $musicDetailRoute,
   $shellRouteData,
@@ -1118,6 +1121,71 @@ extension $ChatRouteExtension on ChatRoute {
   static ChatRoute _fromState(GoRouterState state) => const ChatRoute();
 
   String get location => GoRouteData.$location('/chat');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $chatInfoRoute => GoRouteData.$route(
+  path: '/chat_info',
+
+  factory: $ChatInfoRouteExtension._fromState,
+);
+
+extension $ChatInfoRouteExtension on ChatInfoRoute {
+  static ChatInfoRoute _fromState(GoRouterState state) => const ChatInfoRoute();
+
+  String get location => GoRouteData.$location('/chat_info');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $selectMutualFollowersRoute => GoRouteData.$route(
+  path: '/select_mutual_followers',
+
+  factory: $SelectMutualFollowersRouteExtension._fromState,
+);
+
+extension $SelectMutualFollowersRouteExtension on SelectMutualFollowersRoute {
+  static SelectMutualFollowersRoute _fromState(GoRouterState state) =>
+      const SelectMutualFollowersRoute();
+
+  String get location => GoRouteData.$location('/select_mutual_followers');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $chatHistorySearchRoute => GoRouteData.$route(
+  path: '/chat_history_search',
+
+  factory: $ChatHistorySearchRouteExtension._fromState,
+);
+
+extension $ChatHistorySearchRouteExtension on ChatHistorySearchRoute {
+  static ChatHistorySearchRoute _fromState(GoRouterState state) =>
+      const ChatHistorySearchRoute();
+
+  String get location => GoRouteData.$location('/chat_history_search');
 
   void go(BuildContext context) => context.go(location);
 

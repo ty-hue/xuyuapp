@@ -6,6 +6,8 @@
 		<string>用于选择头像</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>用于保存头像</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>需要访问麦克风以进行拍摄、录制等功能</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

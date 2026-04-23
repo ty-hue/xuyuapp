@@ -269,7 +269,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
             else
               Expanded(
                 child: shoot.outSelectedIndex == 0
-                    ? TextView()
+                    ? const TextView()
                     : InspirationView(),
               ),
             bottomBar,
