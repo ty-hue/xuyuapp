@@ -112,12 +112,7 @@ class _MinePageState extends State<MinePage>
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18.r),
-                        color: Color.fromRGBO(
-                          88,
-                          77,
-                          78,
-                          0.5,
-                        ).withOpacity(contraryOpacity),
+                        color: Colors.black.withOpacity(0.44 * contraryOpacity),
                       ),
                       child: Row(
                         spacing: 8.w,
@@ -171,12 +166,7 @@ class _MinePageState extends State<MinePage>
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18.r),
-                        color: Color.fromRGBO(
-                          88,
-                          77,
-                          78,
-                          0.5,
-                        ).withOpacity(contraryOpacity),
+                        color: Colors.black.withOpacity(0.44 * contraryOpacity),
                       ),
                       child: Row(
                         spacing: 8.w,
@@ -209,12 +199,7 @@ class _MinePageState extends State<MinePage>
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18.r),
-                        color: Color.fromRGBO(
-                          88,
-                          77,
-                          78,
-                          0.5,
-                        ).withOpacity(contraryOpacity),
+                        color: Colors.black.withOpacity(0.44 * contraryOpacity),
                       ),
                       child: Row(
                         spacing: 8.w,
@@ -241,12 +226,9 @@ class _MinePageState extends State<MinePage>
                           padding: EdgeInsets.all(8.w * contraryOpacity),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(18.r),
-                            color: Color.fromRGBO(
-                              88,
-                              77,
-                              78,
-                              0.5,
-                            ).withOpacity(contraryOpacity),
+                            color: Colors.black.withOpacity(
+                              0.44 * contraryOpacity,
+                            ),
                           ),
                           child: Row(
                             spacing: 8.w,
@@ -679,7 +661,7 @@ class _MinePageState extends State<MinePage>
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: Color.fromRGBO(88, 77, 78, 0.5),
+                color: Color.fromRGBO(88, 77, 78, 0.4),
                 borderRadius: BorderRadius.circular(5.r),
               ),
               child: Text(
