@@ -57,6 +57,7 @@ class _HomePageState extends State<HomePage>
                         indicatorWeight: 1.h,
                         indicatorColor: Colors.white, // 选中下划线颜色
                         labelColor: Colors.white, // 选中项文字的颜色
+                        indicatorSize: TabBarIndicatorSize.label,
                         unselectedLabelColor: Color.fromRGBO(
                           187,
                           188,
