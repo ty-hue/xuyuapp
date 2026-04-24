@@ -1070,17 +1070,63 @@ extension $SelectCityRouteExtension on SelectCityRoute {
 }
 
 RouteBase get $createRoute => GoRouteData.$route(
-  path: '/create:fromUrl',
+  path: '/create',
 
   factory: $CreateRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'release_preparation',
+
+      factory: $ReleasePreparationRouteExtension._fromState,
+    ),
+    GoRouteData.$route(
+      path: 'text_template_preview',
+
+      factory: $TextTemplatePreviewRouteExtension._fromState,
+    ),
+  ],
 );
 
 extension $CreateRouteExtension on CreateRoute {
   static CreateRoute _fromState(GoRouterState state) =>
-      CreateRoute(fromUrl: state.pathParameters['fromUrl']);
+      CreateRoute(fromUrl: state.uri.queryParameters['from-url']);
 
-  String get location =>
-      GoRouteData.$location('/create${Uri.encodeComponent(fromUrl ?? '')}');
+  String get location => GoRouteData.$location(
+    '/create',
+    queryParams: {if (fromUrl != null) 'from-url': fromUrl},
+  );
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $ReleasePreparationRouteExtension on ReleasePreparationRoute {
+  static ReleasePreparationRoute _fromState(GoRouterState state) =>
+      const ReleasePreparationRoute();
+
+  String get location => GoRouteData.$location('/create/release_preparation');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $TextTemplatePreviewRouteExtension on TextTemplatePreviewRoute {
+  static TextTemplatePreviewRoute _fromState(GoRouterState state) =>
+      const TextTemplatePreviewRoute();
+
+  String get location => GoRouteData.$location('/create/text_template_preview');
 
   void go(BuildContext context) => context.go(location);
 

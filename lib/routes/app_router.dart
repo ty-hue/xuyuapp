@@ -20,6 +20,8 @@ import 'package:bilbili_project/pages/MusicDetail/index.dart';
 import 'package:bilbili_project/pages/OtherHome/index.dart';
 import 'package:bilbili_project/pages/Report/index.dart';
 import 'package:bilbili_project/pages/Settings/index.dart';
+import 'package:bilbili_project/routes/create_routes/release_preparation_route.dart';
+import 'package:bilbili_project/routes/create_routes/text_template_preview_route.dart';
 import 'package:bilbili_project/routes/friend_routes/friend_route.dart';
 import 'package:bilbili_project/routes/login_routes/choose_phone_prefix_route.dart';
 import 'package:bilbili_project/routes/login_routes/fill_code_route.dart';
@@ -332,7 +334,10 @@ class EditProfileRoute extends GoRouteData {
   }
 }
 
-@TypedGoRoute<CreateRoute>(path: '/create:fromUrl')
+@TypedGoRoute<CreateRoute>(path: '/create', routes: [
+  TypedGoRoute<ReleasePreparationRoute>(path: 'release_preparation'),
+  TypedGoRoute<TextTemplatePreviewRoute>(path: 'text_template_preview'),
+])
 class CreateRoute extends GoRouteData {
   final String? fromUrl;
   const CreateRoute({this.fromUrl});

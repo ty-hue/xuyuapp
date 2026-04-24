@@ -4,6 +4,9 @@ import 'package:bilbili_project/pages/Create/comps/inspiration_view.dart';
 import 'package:bilbili_project/pages/Create/comps/setting_sheet_sekeleton.dart';
 import 'package:bilbili_project/pages/Create/comps/auto_center_scroll_tabbar.dart';
 import 'package:bilbili_project/pages/Create/comps/text_view.dart';
+import 'package:bilbili_project/routes/app_router.dart';
+import 'package:bilbili_project/pages/Create/sub/ReleasePreparation/release_preparation_args.dart';
+import 'package:bilbili_project/routes/create_routes/release_preparation_route.dart';
 import 'package:bilbili_project/store/create/create_shoot_notifier.dart';
 import 'package:bilbili_project/store/create/create_shoot_state.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -153,6 +156,15 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     }
   }
 
+  // 跳转到发布准备页
+  Future<void> _onReleasePreparation() async {
+    final args = await cameraKey.currentState?.prepareReleaseArgs() ??
+        ReleasePreparationArgs.text();
+    ReleasePreparationNav.setPending(args);
+    if (!mounted) return;
+    ReleasePreparationRoute().push(context);
+  }
+
   Widget _bottomBar(CreateShootState shoot) {
     switch (shoot.recordStatus) {
       case RecordStatus.normal:
@@ -184,19 +196,21 @@ class _CreatePageState extends ConsumerState<CreatePage> {
           width: MediaQuery.sizeOf(context).width * 0.8,
           height: 50.0.h,
           child: ElevatedButton(
-            onPressed: shoot.previewReadyForNext ? () {} : null,
+            onPressed: shoot.previewReadyForNext ? _onReleasePreparation : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               disabledBackgroundColor: const Color.fromRGBO(55, 55, 55, 0.72),
-              disabledForegroundColor: const Color.fromRGBO(255, 255, 255, 0.38),
+              disabledForegroundColor: const Color.fromRGBO(
+                255,
+                255,
+                255,
+                0.38,
+              ),
             ),
             child: Text(
               '下一步',
-              style: TextStyle(
-                fontSize: 16.0.sp,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16.0.sp, fontWeight: FontWeight.bold),
             ),
           ),
         );
@@ -211,8 +225,9 @@ class _CreatePageState extends ConsumerState<CreatePage> {
       createShootProvider.select((s) => s.settingSheetType.useVolumeKeys),
       (prev, next) {
         if (next) {
-          WidgetsBinding.instance
-              .addPostFrameCallback((_) => unawaited(_startListening()));
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => unawaited(_startListening()),
+          );
         } else if (prev == true) {
           unawaited(stopListening());
         }
@@ -235,7 +250,10 @@ class _CreatePageState extends ConsumerState<CreatePage> {
           child: Container(
             padding: EdgeInsets.only(top: 10.0.h),
             color: const Color.fromRGBO(1, 1, 1, 1),
-            child: Align(alignment: Alignment.topCenter, child: _bottomBar(shoot)),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: _bottomBar(shoot),
+            ),
           ),
         );
 
@@ -269,7 +287,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
             else
               Expanded(
                 child: shoot.outSelectedIndex == 0
-                    ? const TextView()
+                    ? TextView(belowSiblingHeight: bottomH)
                     : InspirationView(),
               ),
             bottomBar,

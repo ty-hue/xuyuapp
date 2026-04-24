@@ -28,6 +28,7 @@ import 'package:bilbili_project/pages/Create/comps/timekeeping.dart';
 import 'package:bilbili_project/pages/Create/comps/tool_bar.dart';
 import 'package:bilbili_project/pages/Create/comps/video_preview.dart';
 import 'package:bilbili_project/pages/Create/comps/work_preview_skeleton.dart';
+import 'package:bilbili_project/pages/Create/sub/ReleasePreparation/release_preparation_args.dart';
 import 'package:bilbili_project/utils/PermissionUtils.dart';
 import 'package:bilbili_project/utils/SaveImageUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -830,6 +831,54 @@ class CameraViewState extends ConsumerState<CameraView> with WidgetsBindingObser
       debugPrint('CameraView: save draft failed: $e\n$st');
     }
     return null;
+  }
+
+  /// 当前成片类型与本地路径，供发布准备页使用。
+  Future<ReleasePreparationArgs> prepareReleaseArgs() async {
+    final shoot = ref.read(createShootProvider);
+    final aspect = shoot.settingSheetType.aspectRatio;
+    if (shoot.cameraSelectedIndex == 1) {
+      final p = _pendingVideoPath;
+      if (p != null && p.isNotEmpty) {
+        return ReleasePreparationArgs.video(path: p, shootAspectRatio: aspect);
+      }
+      if (videoPreviewAssets.isNotEmpty) {
+        try {
+          final file = await videoPreviewAssets.first.file;
+          if (file != null && await file.exists()) {
+            return ReleasePreparationArgs.video(
+              path: file.path,
+              shootAspectRatio: aspect,
+            );
+          }
+        } catch (_) {}
+      }
+      return ReleasePreparationArgs.video(path: null, shootAspectRatio: aspect);
+    }
+    final bytes = _pendingPhotoBytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return ReleasePreparationArgs.photo(
+        path: null,
+        bytes: bytes,
+        shootAspectRatio: aspect,
+      );
+    }
+    final pp = _pendingPhotoPath;
+    if (pp != null && pp.isNotEmpty) {
+      return ReleasePreparationArgs.photo(path: pp, shootAspectRatio: aspect);
+    }
+    if (imagePreviewAssets.isNotEmpty) {
+      try {
+        final file = await imagePreviewAssets.first.file;
+        if (file != null && await file.exists()) {
+          return ReleasePreparationArgs.photo(
+            path: file.path,
+            shootAspectRatio: aspect,
+          );
+        }
+      } catch (_) {}
+    }
+    return ReleasePreparationArgs.photo(path: null, shootAspectRatio: aspect);
   }
 
   void startRecording() async {

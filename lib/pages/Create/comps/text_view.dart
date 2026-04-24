@@ -1,11 +1,20 @@
+import 'package:bilbili_project/pages/Create/sub/TextTemplatePreview/text_template_preview_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 enum _WriteMode { shortText, longArticle }
 
 class TextView extends StatefulWidget {
-  const TextView({super.key});
+  const TextView({
+    super.key,
+    /// 父级在 [TextView] 之下、仍占屏幕最底区域的高度（如创作页底部 Tab 栏）。
+    /// 键盘的 [MediaQuery.viewInsets] 从屏幕底边算起，需减去这段高度，底部工具栏才会贴在键盘上缘。
+    this.belowSiblingHeight = 0,
+  });
+
+  final double belowSiblingHeight;
 
   @override
   State<TextView> createState() => _TextViewState();
@@ -170,6 +179,21 @@ class _TextViewState extends State<TextView> {
     );
   }
 
+  void _openTextTemplatePreview() {
+    FocusScope.of(context).unfocus();
+    TextTemplatePreviewNav.setPending(
+      TextTemplatePreviewArgs(
+        mode: _mode == _WriteMode.shortText
+            ? TextPreviewSourceMode.shortText
+            : TextPreviewSourceMode.longArticle,
+        shortText: _shortController.text,
+        longTitle: _longTitleController.text,
+        longBody: _longBodyController.text,
+      ),
+    );
+    context.push('/create/text_template_preview');
+  }
+
   void _longWrapMarkdown(String left, String right) {
     final c = _activeLongField;
     final t = c.text;
@@ -281,7 +305,7 @@ class _TextViewState extends State<TextView> {
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                       ),
-                      onPressed: _topNextEnabled ? () {} : null,
+                      onPressed: _topNextEnabled ? _openTextTemplatePreview : null,
                       child: Text('下一步', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500)),
                     )
                   : const SizedBox.shrink(),
@@ -489,7 +513,7 @@ class _TextViewState extends State<TextView> {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                 ),
-                onPressed: _longNextEnabled ? () {} : null,
+                onPressed: _longNextEnabled ? _openTextTemplatePreview : null,
                 child: Text('下一步', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600)),
               ),
             ),
@@ -662,7 +686,9 @@ class _TextViewState extends State<TextView> {
 
   @override
   Widget build(BuildContext context) {
-    final kbInset = MediaQuery.viewInsetsOf(context).bottom;
+    final kbRaw = MediaQuery.viewInsetsOf(context).bottom;
+    // 键盘 inset 相对整屏底边；本组件底边已在「下方 sibling」之上，只垫起真正压到编辑区的部分。
+    final kbInset = (kbRaw - widget.belowSiblingHeight).clamp(0.0, double.infinity);
     return Padding(
       padding: EdgeInsets.only(bottom: kbInset),
       child: Material(
