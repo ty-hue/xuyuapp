@@ -240,14 +240,7 @@ class _EditProfilePageState extends State<EditProfilePage>
             ),
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
             child: Stack(
-              clipBehavior: Clip.none,
               children: [
-                Positioned(
-                  top: -70.h,
-                  left: 0,
-                  right: 0,
-                  child: _buildAvatarInsideStack(),
-                ),
                 Positioned(
                   top: 2.h,
                   right: 0,
@@ -257,6 +250,13 @@ class _EditProfilePageState extends State<EditProfilePage>
               ],
             ),
           ),
+        ),
+        // 头像独立放在最外层 Stack，避免上半部分点击命中到底图手势层。
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 50.h,
+          child: _buildAvatarInsideStack(),
         ),
       ],
     );
@@ -342,7 +342,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                           padding: EdgeInsets.all(8.r),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(18.r),
-                            color: Color.fromRGBO(88, 77, 78, 0.5),
+                            color: Colors.black.withOpacity(0.44),
                           ),
                           child: Row(
                             spacing: 8.w,
@@ -401,7 +401,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                             padding: EdgeInsets.all(8.r),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(18.r),
-                              color: Color.fromRGBO(88, 77, 78, 0.5),
+                              color: Colors.black.withOpacity(0.44),
                             ),
                             child: Row(
                               spacing: 8.w,
