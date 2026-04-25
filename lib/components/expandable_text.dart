@@ -37,7 +37,7 @@ class _ExpandableTextState extends State<ExpandableText> {
 
         // 如果没超出
         if (!textPainter.didExceedMaxLines) {
-          return Text(widget.text);
+          return Text(widget.text, style: textStyle);
         }
 
         // 计算可显示的截断文本

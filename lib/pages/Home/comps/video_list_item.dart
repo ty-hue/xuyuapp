@@ -1,8 +1,11 @@
 import 'package:bilbili_project/components/expandable_text.dart';
 import 'package:bilbili_project/components/text_auto_scroll.dart';
 import 'package:bilbili_project/components/custom_video_player.dart';
+import 'package:bilbili_project/components/tiktok_video_gesture.dart';
+import 'package:bilbili_project/pages/Home/comps/landscape_feed_video_page.dart';
 import 'package:bilbili_project/pages/Home/comps/video_comment_sheet_skeleton.dart';
 import 'package:bilbili_project/pages/Home/comps/video_share_sheet_skeleton.dart';
+import 'package:bilbili_project/pages/Home/data/home_feed_mock.dart';
 import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/NumberUtils.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
@@ -14,7 +17,13 @@ class VideoListItem extends StatefulWidget {
   /// 是否为纵向列表当前停留的这一条；用于自动播放 / 滑走时暂停。
   final bool isActive;
 
-  VideoListItem({Key? key, this.isActive = true}) : super(key: key);
+  final HomeFeedItem item;
+
+  VideoListItem({
+    Key? key,
+    required this.item,
+    this.isActive = true,
+  }) : super(key: key);
 
   @override
   _VideoListItemState createState() => _VideoListItemState();
@@ -37,15 +46,25 @@ class _VideoListItemState extends State<VideoListItem>
   bool _followAckPlaying = false;
 
   bool _isLiked = false;
-  int _likeCount = 336000;
+  late int _likeCount;
 
   bool _isCollected = false;
-  int _collectCount = 50000;
+  late int _collectCount;
 
   static const Color _likeRed = Color(0xFFFF2D55);
 
   /// 收藏点亮后的金黄色（白 → 金渐变）
   static const Color _collectGold = Color(0xFFFFC94A);
+
+  void _resetInteractionFromItem(HomeFeedItem it) {
+    _likeCount = it.likeCount;
+    _collectCount = it.collectCount;
+    _isLiked = false;
+    _isCollected = false;
+    _followedAuthor = false;
+    _followAckPlaying = false;
+    _followAckController.reset();
+  }
 
   @override
   void initState() {
@@ -126,6 +145,16 @@ class _VideoListItemState extends State<VideoListItem>
       });
       _followAckController.reset();
     });
+
+    _resetInteractionFromItem(widget.item);
+  }
+
+  @override
+  void didUpdateWidget(covariant VideoListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.id != widget.item.id) {
+      setState(() => _resetInteractionFromItem(widget.item));
+    }
   }
 
   void _playLikeBurstAnimation() {
@@ -441,19 +470,38 @@ class _VideoListItemState extends State<VideoListItem>
     OtherHomeRoute().push(context);
   }
 
+  Widget _buildMediaLayer() {
+    final item = widget.item;
+    switch (item.kind) {
+      case HomeFeedMediaKind.video:
+        return CustomVideoPlayer(
+          isActive: widget.isActive,
+          onDoubleTapLike: _onDoubleTapLikeFromVideo,
+          url: item.videoUrl!,
+          videoWidthHint: item.videoWidth,
+          videoHeightHint: item.videoHeight,
+          landscapeMeta: LandscapeFeedSocialMeta(
+            title: item.title,
+            author: item.author,
+            initialLikeCount: item.likeCount,
+            commentCount: item.commentCount,
+            initialCollectCount: item.collectCount,
+          ),
+        );
+      case HomeFeedMediaKind.imageSingle:
+      case HomeFeedMediaKind.imageGallery:
+        return _HomeFeedImageLayer(
+          imageUrls: item.imageUrls,
+          onDoubleTapLike: _onDoubleTapLikeFromVideo,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 视频流
-        Positioned.fill(
-          child: CustomVideoPlayer(
-            isActive: widget.isActive,
-            onDoubleTapLike: _onDoubleTapLikeFromVideo,
-            url:
-                'https://vdept3.bdsttic.com/mda-sd44daii79qnkecq/360p/h264/1775358442884685795/mda-sd44daii79qnkecq.mp4?v_from_s=hkapp-haokan-hna&auth_key=1776404906-0-0-8ae4dbe26a00ff6274f8359a73b0c9f2&bcevod_channel=searchbox_feed&cr=0&cd=0&pd=1&pt=3&logid=2906193043&vid=1180954880949199060&klogid=2906193043&abtest=',
-          ),
-        ),
+        Positioned.fill(child: _buildMediaLayer()),
         // 右侧信息
         Positioned(
           right: 12.w,
@@ -504,7 +552,7 @@ class _VideoListItemState extends State<VideoListItem>
                   _buildVideoAttatchInfoItem(
                     title: '评论',
                     icon: FontAwesomeIcons.solidCommentDots,
-                    count: '5000',
+                    count: '${widget.item.commentCount}',
                     onTap: _onCommentTap,
                   ),
                   // 收藏（未收藏时点按：与点赞同款缩放动效并变为金黄）
@@ -513,7 +561,7 @@ class _VideoListItemState extends State<VideoListItem>
                   _buildVideoAttatchInfoItem(
                     title: '分享',
                     icon: FontAwesomeIcons.share,
-                    count: '0',
+                    count: '${widget.item.shareCount}',
                     onTap: _onShareTap,
                   ),
                   // 唱片
@@ -551,7 +599,7 @@ class _VideoListItemState extends State<VideoListItem>
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.6,
                         child: Text(
-                          '@重生之我能升级xxxxxxx',
+                          widget.item.author,
                           style: TextStyle(
                             fontSize: 24.sp,
                             color: Colors.white,
@@ -564,7 +612,7 @@ class _VideoListItemState extends State<VideoListItem>
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.65,
                         child: ExpandableText(
-                          text: '视频标题视频标题视频标题视频标题视频标题视频标题视频标题视频标题视频标题视频标题视频标题',
+                          text: widget.item.title,
                         ),
                       ),
                       GestureDetector(
@@ -585,7 +633,7 @@ class _VideoListItemState extends State<VideoListItem>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '背景音乐',
+                                    widget.item.musicChip,
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: Colors.white,
@@ -604,7 +652,7 @@ class _VideoListItemState extends State<VideoListItem>
                               width: 100.w,
                               child: TextAutoScroll(
                                 isActive: widget.isActive,
-                                text: '龙转风（live）-周杰伦',
+                                text: widget.item.musicScroll,
                               ),
                             ),
                           ],
@@ -618,6 +666,101 @@ class _VideoListItemState extends State<VideoListItem>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 单图 / 多图：全屏 cover，多图横向 PageView；双击点赞与视频一致。
+class _HomeFeedImageLayer extends StatefulWidget {
+  const _HomeFeedImageLayer({
+    required this.imageUrls,
+    required this.onDoubleTapLike,
+  });
+
+  final List<String> imageUrls;
+  final VoidCallback onDoubleTapLike;
+
+  @override
+  State<_HomeFeedImageLayer> createState() => _HomeFeedImageLayerState();
+}
+
+class _HomeFeedImageLayerState extends State<_HomeFeedImageLayer> {
+  late final PageController _pageController;
+  int _pageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final urls = widget.imageUrls;
+    return TikTokVideoGesture(
+      onDoubleTapLike: widget.onDoubleTapLike,
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: urls.length,
+              onPageChanged: (i) => setState(() => _pageIndex = i),
+              itemBuilder: (context, i) {
+                return Image.network(
+                  urls[i],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  alignment: Alignment.center,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white54,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.broken_image_outlined,
+                        color: Colors.white38, size: 48),
+                  ),
+                );
+              },
+            ),
+            if (urls.length > 1)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 120.h,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(urls.length, (i) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(horizontal: 3.w),
+                      width: 6.w,
+                      height: 6.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == _pageIndex
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.35),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
