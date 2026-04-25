@@ -207,7 +207,11 @@ class _ContactRowContent extends StatelessWidget {
       color: Colors.white,
       child: InkWell(
         onTap: () {
-          ChatRoute().push(context);
+          if (data.interaction) {
+            InteractiveMessagesRoute().push(context);
+          } else {
+            ChatRoute().push(context);
+          }
         },
         splashColor: Colors.black.withValues(alpha: 0.06),
         highlightColor: Colors.black.withValues(alpha: 0.04),

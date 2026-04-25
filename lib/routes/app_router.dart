@@ -6,6 +6,7 @@ import 'package:bilbili_project/pages/Login/index.dart';
 import 'package:bilbili_project/pages/Message/sub/Chat/chat_history_search_page.dart';
 import 'package:bilbili_project/pages/Message/sub/Chat/chat_info_page.dart';
 import 'package:bilbili_project/pages/Message/sub/Chat/index.dart';
+import 'package:bilbili_project/pages/Message/sub/InteractiveMessages/interactive_messages_page.dart';
 import 'package:bilbili_project/pages/Message/sub/Chat/select_mutual_followers_page.dart';
 import 'package:bilbili_project/pages/Mine/sub/AddFriend/index.dart';
 import 'package:bilbili_project/pages/Mine/sub/AllFunction/index.dart';
@@ -369,6 +370,17 @@ class ChatRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return ChatPage();
+  }
+}
+
+/// 互动消息（赞评@ / 新关注等）
+@TypedGoRoute<InteractiveMessagesRoute>(path: '/interactive_messages')
+class InteractiveMessagesRoute extends GoRouteData {
+  const InteractiveMessagesRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const InteractiveMessagesPage();
   }
 }
 

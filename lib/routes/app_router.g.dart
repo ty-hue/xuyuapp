@@ -23,6 +23,7 @@ List<RouteBase> get $appRoutes => [
   $createRoute,
   $globalSearchRoute,
   $chatRoute,
+  $interactiveMessagesRoute,
   $chatInfoRoute,
   $selectMutualFollowersRoute,
   $chatHistorySearchRoute,
@@ -1167,6 +1168,28 @@ extension $ChatRouteExtension on ChatRoute {
   static ChatRoute _fromState(GoRouterState state) => const ChatRoute();
 
   String get location => GoRouteData.$location('/chat');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $interactiveMessagesRoute => GoRouteData.$route(
+  path: '/interactive_messages',
+
+  factory: $InteractiveMessagesRouteExtension._fromState,
+);
+
+extension $InteractiveMessagesRouteExtension on InteractiveMessagesRoute {
+  static InteractiveMessagesRoute _fromState(GoRouterState state) =>
+      const InteractiveMessagesRoute();
+
+  String get location => GoRouteData.$location('/interactive_messages');
 
   void go(BuildContext context) => context.go(location);
 
