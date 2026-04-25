@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_player/video_player.dart';
 
-/// 相册 [videoData] 或本地文件 [videoFilePath]（二选一）。
+/// 相册 [videoData]、本地文件 [videoFilePath]、网络地址 [networkVideoUrl] 三选一（非空者至多一个）。
 /// [videoFilePath] 为 null 或空：表示 native 路径尚未就绪，仅在本组件内显示 loading（用于录制结束立刻进预览页）。
 /// [onPlaybackReady]：首帧可播放时回调一次，供父级启用「下一步」等。
 /// [onVideoPlayerBound]：解码完成并持有 [VideoPlayerController] 时回调；dispose 前回调 `null`。
@@ -16,18 +16,27 @@ import 'package:video_player/video_player.dart';
 class VideoPreview extends StatefulWidget {
   final AssetEntity? videoData;
   final String? videoFilePath;
+  /// 与本地源互斥；用于创作灵感等网络样片预览。
+  final String? networkVideoUrl;
   final VoidCallback? onPlaybackReady;
   final ValueChanged<VideoPlayerController?>? onVideoPlayerBound;
 
-  const VideoPreview({
+  VideoPreview({
     super.key,
     this.videoData,
     this.videoFilePath,
+    this.networkVideoUrl,
     this.onPlaybackReady,
     this.onVideoPlayerBound,
   })  : assert(
           videoData == null || videoFilePath == null,
           'videoData 与 videoFilePath 勿同时传入',
+        ),
+        assert(
+          (networkVideoUrl == null || networkVideoUrl.isEmpty) ||
+              (videoData == null &&
+                  (videoFilePath == null || videoFilePath.isEmpty)),
+          'networkVideoUrl 与本地相册/文件勿同时传入',
         );
 
   @override
@@ -46,8 +55,50 @@ class _VideoPreviewState extends State<VideoPreview> {
     _initializePlayer();
   }
 
+  @override
+  void didUpdateWidget(covariant VideoPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoData == widget.videoData &&
+        oldWidget.videoFilePath == widget.videoFilePath &&
+        oldWidget.networkVideoUrl == widget.networkVideoUrl) {
+      return;
+    }
+    widget.onVideoPlayerBound?.call(null);
+    _controller?.dispose();
+    _controller = null;
+    _isControllerInitialized = false;
+    _initStarted = false;
+    _playbackReadyNotified = false;
+    _initializePlayer();
+  }
+
   Future<void> _initializePlayer() async {
     if (_initStarted) return;
+
+    final net = widget.networkVideoUrl;
+    if (net != null && net.isNotEmpty) {
+      _initStarted = true;
+      try {
+        final controller = VideoPlayerController.networkUrl(Uri.parse(net));
+        await controller.initialize();
+        if (!mounted) {
+          await controller.dispose();
+          return;
+        }
+        controller.setLooping(true);
+        unawaited(controller.play());
+
+        setState(() {
+          _controller = controller;
+          _isControllerInitialized = true;
+        });
+        widget.onVideoPlayerBound?.call(controller);
+        _notifyPlaybackReadyOnce();
+      } catch (_) {
+        if (mounted) setState(() {});
+      }
+      return;
+    }
 
     File? file;
     if (widget.videoData != null) {

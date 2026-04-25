@@ -1085,6 +1085,11 @@ RouteBase get $createRoute => GoRouteData.$route(
 
       factory: $TextTemplatePreviewRouteExtension._fromState,
     ),
+    GoRouteData.$route(
+      path: 'network_image_preview',
+
+      factory: $NetworkSingleImagePreviewRouteExtension._fromState,
+    ),
   ],
 );
 
@@ -1128,6 +1133,23 @@ extension $TextTemplatePreviewRouteExtension on TextTemplatePreviewRoute {
       const TextTemplatePreviewRoute();
 
   String get location => GoRouteData.$location('/create/text_template_preview');
+
+  void go(BuildContext context) => context.go(location);
+
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  void replace(BuildContext context) => context.replace(location);
+}
+
+extension $NetworkSingleImagePreviewRouteExtension
+    on NetworkSingleImagePreviewRoute {
+  static NetworkSingleImagePreviewRoute _fromState(GoRouterState state) =>
+      const NetworkSingleImagePreviewRoute();
+
+  String get location => GoRouteData.$location('/create/network_image_preview');
 
   void go(BuildContext context) => context.go(location);
 
