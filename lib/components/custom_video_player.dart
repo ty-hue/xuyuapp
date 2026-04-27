@@ -47,12 +47,10 @@ class CustomVideoPlayer extends StatefulWidget {
   State<CustomVideoPlayer> createState() => _CustomVideoPlayerState();
 }
 
-class _CustomVideoPlayerState extends State<CustomVideoPlayer>
-    with WidgetsBindingObserver {
-  late VideoPlayerController _controller;
+class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
+  static const int _kUiPositionTickMs = 250;
 
-  /// 用于检测「竖屏 → 横屏」后自动进全屏；全屏返回后会重置。
-  Orientation? _autoFsOrientationBaseline;
+  late VideoPlayerController _controller;
 
   bool _landscapeFullscreenPushInFlight = false;
 
@@ -64,6 +62,9 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
 
   /// 本次按住进度条前视频是否在播；seek 后原生层常会暂停，需按需 `play()` 恢复。
   bool _wasPlayingWhenScrubStarted = false;
+  bool _uiPlayingTracked = false;
+  bool _uiInitializedTracked = false;
+  int _uiPositionTickTracked = -1;
 
   bool get _progressBarExpanded =>
       _touchingProgressZone || _mouseInsideProgressZone;
@@ -82,47 +83,46 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !widget.isActive) return;
-      _controller.play();
+      if (!_controller.value.isPlaying) _controller.play();
     });
+  }
+
+  void _onControllerValueChanged() {
+    if (!mounted) return;
+    final v = _controller.value;
+    final init = v.isInitialized;
+    final playing = v.isPlaying;
+    final positionTick = init ? (v.position.inMilliseconds ~/ _kUiPositionTickMs) : -1;
+    final shouldRefreshByPosition = positionTick != _uiPositionTickTracked &&
+        (playing || _progressBarExpanded);
+    if (_uiInitializedTracked == init &&
+        _uiPlayingTracked == playing &&
+        !shouldRefreshByPosition) {
+      return;
+    }
+    _uiInitializedTracked = init;
+    _uiPlayingTracked = playing;
+    _uiPositionTickTracked = positionTick;
+    setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _autoFsOrientationBaseline = MediaQuery.orientationOf(context);
-      }
-    });
 
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize().then((_) {
         if (!mounted) return;
         _controller.setLooping(true);
-        _controller.addListener(() {
-          setState(() {});
-        });
-        // 先触发一帧，让 VideoPlayer 进入树并完成布局，再调度 play。
+        _controller.addListener(_onControllerValueChanged);
         setState(() {});
         _schedulePlayIfActive();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          _autoFsOrientationBaseline = MediaQuery.orientationOf(context);
-          _tryEnterFullscreenFromLandscapeRotation();
-        });
       });
   }
 
   @override
   void didUpdateWidget(covariant CustomVideoPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.isActive != widget.isActive) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _autoFsOrientationBaseline = MediaQuery.orientationOf(context);
-      });
-    }
     if (oldWidget.isActive == widget.isActive) return;
     if (!_controller.value.isInitialized) return;
     if (widget.isActive) {
@@ -135,36 +135,9 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _controller.removeListener(_onControllerValueChanged);
     _controller.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _tryEnterFullscreenFromLandscapeRotation();
-    });
-  }
-
-  /// 当前条为横屏片源、且为可见页时，设备从竖屏转到横屏则自动打开全屏（系统未锁旋转时才会收到变化）。
-  void _tryEnterFullscreenFromLandscapeRotation() {
-    if (!widget.isActive) return;
-    if (!_controller.value.isInitialized) return;
-    if (!_isLandscapeVideo()) return;
-    final route = ModalRoute.of(context);
-    if (route == null || !route.isCurrent) return;
-
-    final newO = MediaQuery.orientationOf(context);
-    final old = _autoFsOrientationBaseline;
-    _autoFsOrientationBaseline = newO;
-
-    if (newO != Orientation.landscape) return;
-    if (old != Orientation.portrait) return;
-
-    _openLandscapeFullScreen();
   }
 
   void togglePlay() {
@@ -223,64 +196,32 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
     if (!_controller.value.isInitialized) return;
     if (_landscapeFullscreenPushInFlight) return;
     _landscapeFullscreenPushInFlight = true;
+
+    bool initialPlaying = false;
+
     try {
-      final v = _controller.value;
-      final initialPosition = v.position;
-      final initialPlaying = v.isPlaying;
-      final initialSpeed = v.playbackSpeed;
-      final initialVolume = v.volume;
-      // 避免与全屏内第二个控制器同时出声；全屏会按 initial* 续播或保持暂停。
-      await _controller.pause();
+      initialPlaying = _controller.value.isPlaying;
       if (!mounted) return;
 
-      LandscapeFeedVideoExit? exitSnapshot;
       // 使用根 Navigator，全屏页盖住整个 Shell（含底部 Tab），与抖音一致。
       await Navigator.of(context, rootNavigator: true).push<void>(
         MaterialPageRoute<void>(
           builder: (ctx) => LandscapeFeedVideoPage(
-            url: widget.url,
+            controller: _controller,
             meta: widget.landscapeMeta,
-            initialPosition: initialPosition,
-            initialPlaying: initialPlaying,
-            initialPlaybackSpeed: initialSpeed,
-            initialVolume: initialVolume,
-            onExitPortrait: (exit) => exitSnapshot = exit,
           ),
         ),
       );
       if (!mounted) return;
 
-      final exit = exitSnapshot ??
-          LandscapeFeedVideoExit(
-            position: initialPosition,
-            wasPlaying: initialPlaying,
-            playbackSpeed: initialSpeed,
-            volume: initialVolume,
-          );
-
+      // 复用同一控制器：返回竖屏时按需恢复播放状态。
       if (_controller.value.isInitialized) {
-        final dur = _controller.value.duration;
-        var p = exit.position;
-        if (dur > Duration.zero && p > dur) p = dur;
-        await _controller.seekTo(p);
-        try {
-          await _controller.setPlaybackSpeed(exit.playbackSpeed);
-        } catch (_) {}
-        try {
-          await _controller.setVolume(exit.volume);
-        } catch (_) {}
-        if (exit.wasPlaying && widget.isActive) {
-          await _controller.play();
-        } else {
+        if (!widget.isActive) {
           await _controller.pause();
+        } else if (initialPlaying && !_controller.value.isPlaying) {
+          await _controller.play();
         }
-        setState(() {});
-      } else if (widget.isActive) {
-        _schedulePlayIfActive();
-      }
-
-      if (mounted) {
-        _autoFsOrientationBaseline = MediaQuery.orientationOf(context);
+        if (mounted) setState(() {});
       }
     } finally {
       _landscapeFullscreenPushInFlight = false;
@@ -354,7 +295,11 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
                 width: r.width,
                 height: r.height,
                 child: const Center(
-                  child: Icon(Icons.play_arrow, size: 80, color: Colors.white),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    size: 80,
+                    color: Colors.white,
+                  ),
                 ),
               ),
           ],
@@ -386,7 +331,11 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer>
           ),
           if (!_controller.value.isPlaying)
             const Center(
-              child: Icon(Icons.play_arrow, size: 80, color: Colors.white),
+              child: Icon(
+                Icons.play_arrow_rounded,
+                size: 80,
+                color: Colors.white,
+              ),
             ),
         ],
       ),

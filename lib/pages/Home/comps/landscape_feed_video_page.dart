@@ -54,31 +54,18 @@ class LandscapeFeedVideoExit {
   final double volume;
 }
 
-/// 首页横屏视频「全屏观看」：强制横屏 + 抖音式横屏控件。
+/// 首页横屏视频「全屏观看」：复用 Feed 同一个控制器 + 抖音式横屏控件。
+/// 仅通过竖屏「全屏观看」按钮进入；左上角返回回到竖屏 Feed。
 class LandscapeFeedVideoPage extends StatefulWidget {
   const LandscapeFeedVideoPage({
     super.key,
-    required this.url,
+    required this.controller,
     this.meta,
-    this.initialPosition = Duration.zero,
-    this.initialPlaying = true,
-    this.initialPlaybackSpeed = 1.0,
-    this.initialVolume = 1.0,
     this.onExitPortrait,
   });
 
-  final String url;
+  final VideoPlayerController controller;
   final LandscapeFeedSocialMeta? meta;
-
-  /// 进入全屏时竖屏已播到的位置（新控制器会 [seekTo] 到这里）。
-  final Duration initialPosition;
-
-  /// 进入全屏时是否在播；为 false 则全屏内保持暂停。
-  final bool initialPlaying;
-
-  /// 进入全屏时的倍速、音量（与竖屏一致）。
-  final double initialPlaybackSpeed;
-  final double initialVolume;
 
   /// 页面销毁时（含返回）把当前进度与播放状态回传给竖屏。
   final void Function(LandscapeFeedVideoExit exit)? onExitPortrait;
@@ -88,7 +75,7 @@ class LandscapeFeedVideoPage extends StatefulWidget {
 }
 
 class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin {
   late final VideoPlayerController _controller;
 
   late final AnimationController _speedPanelAnim;
@@ -120,8 +107,6 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
   bool _speedPanel = false;
 
   bool _gestureLocked = false;
-  /// 本次全屏内曾出现过横屏方向后，才允许「竖屏自动退出」，避免竖屏点进全屏立刻被 pop。
-  bool _hasSeenLandscapeSinceOpen = false;
   double _playbackSpeed = 1;
 
   /// 清屏：仅保留画面（从竖屏「播放中」进全屏时初始为 true）。
@@ -164,7 +149,8 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
 
   double get _thumbRadius => _progressBarExpanded ? 8.w : 4.w;
 
-  double get _progressTouchZoneHeight => _progressBarExpanded ? 68.h : 48.h;
+  /// 横屏底栏：轨道贴顶，区高度过大会在轨道与下方互动行之间留大片空白，故略小于竖屏 Feed。
+  double get _progressTouchZoneHeight => _progressBarExpanded ? 44.h : 28.h;
 
   /// 横屏下刘海 / 系统栏在左右之间切换时，[MediaQuery.padding] 的 left/right 会互换。
   /// 用两侧 inset 的较大值作为统一左右边距，避免 180° 旋转后 HUD 横向「跳动」。
@@ -279,45 +265,24 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
       });
     _likeCount = _m.initialLikeCount;
     _collectCount = _m.initialCollectCount;
-    _playbackSpeed = widget.initialPlaybackSpeed;
-    _volumeLevel = widget.initialVolume.clamp(0.0, 1.0);
-    // 竖屏正在播时进全屏 → 先清屏沉浸；竖屏暂停进全屏 → 直接显示控件。
-    _chromeHidden = widget.initialPlaying;
-    // 允许竖屏，便于系统随设备转到竖屏后 [didChangeMetrics] 里退出全屏（未锁手势时）。
+    _controller = widget.controller;
+    _playbackSpeed =
+        _controller.value.playbackSpeed > 0 ? _controller.value.playbackSpeed : 1;
+    _volumeLevel = _controller.value.volume.clamp(0.0, 1.0);
+    // 进入全屏时若正在播放，默认直接沉浸清屏；暂停则展示 HUD。
+    _chromeHidden = _controller.value.isPlaying;
+    _idlePlayingTracked = _controller.value.isPlaying;
+    // 全屏页只由用户点「全屏观看」进入：强制横屏（不受系统旋转锁影响）。
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    WidgetsBinding.instance.addObserver(this);
-
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
     _controller.addListener(_onControllerTick);
-    _controller.initialize().then((_) async {
-      if (!mounted) return;
-      await _controller.setLooping(true);
-      await _controller.setVolume(_volumeLevel);
-      try {
-        await _controller.setPlaybackSpeed(_playbackSpeed);
-      } catch (_) {}
-      final dur = _controller.value.duration;
-      var seekPos = widget.initialPosition;
-      if (dur > Duration.zero && seekPos > dur) seekPos = dur;
-      await _controller.seekTo(seekPos);
-      if (mounted) setState(() {});
-      if (widget.initialPlaying) {
-        await _controller.play();
-      } else {
-        await _controller.pause();
-      }
-      if (mounted) setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _cancelIdleChromeTimer();
     _controller.removeListener(_onControllerTick);
     widget.onExitPortrait?.call(
@@ -333,36 +298,14 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
     );
     _speedPanelAnim.dispose();
     _lockHudAnim.dispose();
-    _controller.dispose();
+    // 主界面按竖屏设计：退出后只许竖屏，避免横持设备时整页随系统旋转、布局错位。
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _maybeExitFullscreenOnPortraitRotation();
-    });
-  }
-
-  /// 全屏内未锁手势且设备转到竖屏时，自动退出全屏回到 Feed 竖屏播放。
-  void _maybeExitFullscreenOnPortraitRotation() {
-    final mq = MediaQuery.maybeOf(context);
-    if (mq == null) return;
-    if (mq.orientation == Orientation.landscape) {
-      _hasSeenLandscapeSinceOpen = true;
-      return;
-    }
-    if (!_hasSeenLandscapeSinceOpen) return;
-    if (mq.orientation != Orientation.portrait) return;
-    if (_gestureLocked) return;
-    final nav = Navigator.of(context, rootNavigator: true);
-    if (nav.canPop()) {
-      nav.pop();
-    }
+  void _exitToPortraitByBackButton() {
+    Navigator.of(context).pop();
   }
 
   Future<void> _applyVolume(double v) async {
@@ -446,8 +389,8 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: Container(
-          width: 70.r,
-          height: 70.r,
+          width: 48.r,
+          height: 48.r,
           alignment: Alignment.center,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
@@ -570,12 +513,12 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
   Widget _topBar() {
     final titleStyle = TextStyle(
       color: Colors.white,
-      fontSize: 10.sp,
+      fontSize: 8.sp,
       fontWeight: FontWeight.w600,
       shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
     );
     return Padding(
-      padding: EdgeInsets.fromLTRB(0, 4.h, 4.w, 10.h),
+      padding: EdgeInsets.fromLTRB(0, 0.h, 0.w, 0.h),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -587,7 +530,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                 padding: EdgeInsets.zero,
                 // constraints: BoxConstraints.tightFor(width: 40.w, height: 40.h),
                 icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 14.sp),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: _exitToPortraitByBackButton,
               ),
               SizedBox(width: 2.w),
               Expanded(
@@ -595,9 +538,8 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
               ),
             ],
           ),
-          SizedBox(height: 8.h),
           Padding(
-            padding: EdgeInsets.only(left: 20.w),
+            padding: EdgeInsets.only(left: 30.w),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -607,7 +549,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                     border: Border.all(color: Colors.white, width: 1.w),
                   ),
                   child: CircleAvatar(
-                    radius: 26.r,
+                    radius: 20.r,
                     backgroundImage: AssetImage(_m.avatarAssetPath),
                   ),
                 ),
@@ -618,7 +560,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                     _m.author,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 8.sp,
+                      fontSize: 6.sp,
                       fontWeight: FontWeight.w600,
                       shadows: const [
                         Shadow(color: Colors.black54, blurRadius: 4),
@@ -657,7 +599,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
   /// 常态：仅左侧太阳按钮（圆形底）。
   Widget _buildBrightnessEntry() {
     return _circleHudButton(
-      icon: Icon(Icons.wb_sunny_outlined, color: Colors.white, size: 12.sp),
+      icon: Icon(Icons.wb_sunny_outlined, color: Colors.white, size: 10.sp),
       onPressed: () {
         _cancelIdleChromeTimer();
         _resetSpeedPanelAnim();
@@ -729,7 +671,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                   icon: Icon(
                     showClosedLock ? Icons.lock : Icons.lock_open_rounded,
                     color: Colors.white,
-                    size: 12.sp,
+                    size: 10.sp,
                   ),
                   onPressed: _onGestureLockTap,
                 ),
@@ -751,7 +693,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                             ? Icons.volume_off_rounded
                             : Icons.volume_up_rounded,
                         color: Colors.white,
-                        size: 12.sp,
+                        size: 10.sp,
                       ),
                       onPressed: () {
                         if (_gestureLocked) return;
@@ -777,7 +719,11 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
   Widget _bottomBar(double landscapeSideGutter) {
     if (!_controller.value.isInitialized) return const SizedBox.shrink();
 
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    // 系统底边 + 真机横屏时 bottom 常全为 0（导航条在左右侧）时的最小下沿间隙。
+    final mq = MediaQuery.of(context);
+    final systemBottom = max(mq.viewPadding.bottom, mq.padding.bottom);
+    final minVisualBottom = 26.h;
+    final bottomInset = max(systemBottom, minVisualBottom);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -796,10 +742,11 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
               position: _controller.value.position,
               total: _controller.value.duration,
               textAlign: TextAlign.start,
-              style: TextStyle(fontSize: 8.sp),
+              style: TextStyle(fontSize: 6.sp),
             ),
           ),
-          SizedBox(height: 4.h),
+          // 与竖屏 Feed 一致：时间紧挨轨道；可拖动区仍用 Stack 在轨道下方留足高度，不把轨道挤离文案。
+          SizedBox(height: 2.h),
           MouseRegion(
             onEnter: (_) {
               _cancelIdleChromeTimer();
@@ -833,32 +780,39 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                               ..onCancel = () {};
                           }),
                     },
-                    child: Listener(
-                      behavior: HitTestBehavior.opaque,
-                      onPointerDown: (e) {
-                        _cancelIdleChromeTimer();
-                        _wasPlayingWhenScrubStarted = _controller.value.isPlaying;
-                        _touchingProgressZone = true;
-                        setState(() {});
-                        _seekToLocalDx(e.localPosition.dx, w);
-                      },
-                      onPointerMove: (e) {
-                        if (!_touchingProgressZone) return;
-                        _seekToLocalDx(e.localPosition.dx, w);
-                      },
-                      onPointerUp: (_) {
-                        _touchingProgressZone = false;
-                        setState(() {});
-                        _bumpChromeIdleTimer();
-                      },
-                      onPointerCancel: (_) {
-                        _touchingProgressZone = false;
-                        setState(() {});
-                        _bumpChromeIdleTimer();
-                      },
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: IgnorePointer(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Positioned.fill(
+                          child: Listener(
+                            behavior: HitTestBehavior.opaque,
+                            onPointerDown: (e) {
+                              _cancelIdleChromeTimer();
+                              _wasPlayingWhenScrubStarted =
+                                  _controller.value.isPlaying;
+                              _touchingProgressZone = true;
+                              setState(() {});
+                              _seekToLocalDx(e.localPosition.dx, w);
+                            },
+                            onPointerMove: (e) {
+                              if (!_touchingProgressZone) return;
+                              _seekToLocalDx(e.localPosition.dx, w);
+                            },
+                            onPointerUp: (_) {
+                              _touchingProgressZone = false;
+                              setState(() {});
+                              _bumpChromeIdleTimer();
+                            },
+                            onPointerCancel: (_) {
+                              _touchingProgressZone = false;
+                              setState(() {});
+                              _bumpChromeIdleTimer();
+                            },
+                          ),
+                        ),
+                        // 原先用 bottomCenter 把轨道沉在 48/68h 区底部，和上方时间离得过远；改到顶部紧贴时间行。
+                        IgnorePointer(
                           child: ProgressBar(
                             progress: _controller.value.position,
                             total: _controller.value.duration,
@@ -871,14 +825,14 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                             thumbColor: Colors.white,
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   );
                 },
               ),
             ),
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: 4.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -939,7 +893,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                     '倍速',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 8.sp,
+                      fontSize: 7.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -966,12 +920,12 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: color, size: 10.sp),
-          SizedBox(width: 4.w),
+          SizedBox(width: 2.w),
           Text(
             count <= 0 ? label : NumberUtils.formatLikeCount(count),
             style: TextStyle(
               color: Colors.white,
-              fontSize: 8.sp,
+              fontSize: 6.sp,
               shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
             ),
           ),
@@ -1059,7 +1013,9 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                     width: 100.w,
                     child: Center(
                       child: Padding(
-                        padding: EdgeInsets.only(left: sideGutter - 10.w),
+                        padding: EdgeInsets.only(
+                          left: max(0.0, sideGutter - 10.w),
+                        ),
                         child: _buildBrightnessEntry(),
                       ),
                     ),
@@ -1079,12 +1035,8 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                           ],
                         ),
                       ),
-                      child: SafeArea(
-                        top: false,
-                        left: false,
-                        right: false,
-                        child: _bottomBar(sideGutter),
-                      ),
+                      // 底部内边距在 [_bottomBar] 内用 viewPadding 计算，避免仅依赖 padding 在真机为 0。
+                      child: _bottomBar(sideGutter),
                     ),
                   ),
                 ],
@@ -1096,7 +1048,9 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                   width: 100.w,
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.only(right: sideGutter - 10.w),
+                      padding: EdgeInsets.only(
+                        right: max(0.0, sideGutter - 10.w),
+                      ),
                       child: _buildVolumeLockColumn(),
                     ),
                   ),
@@ -1110,7 +1064,9 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                   width: 100.w,
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.only(left: sideGutter - 10.w),
+                      padding: EdgeInsets.only(
+                        left: max(0.0, sideGutter - 10.w),
+                      ),
                       child: _verticalCapsule(
                         level: _brightnessLevel,
                         centerIcon: Icons.wb_sunny_outlined,
@@ -1130,7 +1086,9 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                   width: 100.w,
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.only(right: sideGutter - 10.w),
+                      padding: EdgeInsets.only(
+                        right: max(0.0, sideGutter - 10.w),
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1170,7 +1128,7 @@ class _LandscapeFeedVideoPageState extends State<LandscapeFeedVideoPage>
                 IgnorePointer(
                   child: Center(
                     child: Icon(
-                      Icons.play_arrow,
+                      Icons.play_arrow_rounded,
                       size: 88,
                       color: Colors.white.withValues(alpha: 0.82),
                     ),

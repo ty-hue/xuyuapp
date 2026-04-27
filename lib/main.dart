@@ -1,10 +1,14 @@
 import 'package:bilbili_project/routes/index.dart';
 import 'package:bilbili_project/utils/app_messenger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 全应用默认竖屏；仅横屏全屏播放入口内会临时改为仅横屏。
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(
     ProviderScope(
       child: ScreenUtilInit(

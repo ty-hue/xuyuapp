@@ -4,12 +4,17 @@ import 'package:bilbili_project/pages/Home/data/home_feed_mock.dart';
 import 'package:flutter/material.dart';
 
 class TabbarViewVideoList extends StatefulWidget {
-  TabbarViewVideoList({Key? key, List<HomeFeedItem>? feed})
+  TabbarViewVideoList({
+    Key? key,
+    List<HomeFeedItem>? feed,
+    this.tabVisible = true,
+  })
       : feed = feed ?? kHomeMockFeed,
         super(key: key);
 
   /// 推荐 / 关注等 Tab 可传不同列表；默认 `kHomeMockFeed`。
   final List<HomeFeedItem> feed;
+  final bool tabVisible;
 
   @override
   _TabbarViewVideoListState createState() => _TabbarViewVideoListState();
@@ -33,7 +38,7 @@ class _TabbarViewVideoListState extends State<TabbarViewVideoList> {
         return VideoListItem(
           key: ValueKey<String>(item.id),
           item: item,
-          isActive: homeVisible && index == _currentPage,
+          isActive: homeVisible && widget.tabVisible && index == _currentPage,
         );
       },
     );
