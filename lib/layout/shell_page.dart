@@ -139,7 +139,8 @@ class _ShellPageState extends State<ShellPage>
       ),
     );
 
-    return Material(
+    // 不用 [Material]，避免顶边出现 M2/M3 默认的阴影视效，被看成「上边框」。
+    return ColoredBox(
       color: barBg,
       child: SafeArea(
         child: SizedBox(
