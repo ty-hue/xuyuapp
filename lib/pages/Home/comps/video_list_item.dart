@@ -19,9 +19,13 @@ class VideoListItem extends StatefulWidget {
 
   final HomeFeedItem item;
 
+  /// 与 [HomePage] 共用；清屏时隐藏本页互动层，并通知首页隐藏顶栏。
+  final ValueNotifier<bool> clearPlaybackNotifier;
+
   VideoListItem({
     Key? key,
     required this.item,
+    required this.clearPlaybackNotifier,
     this.isActive = true,
   }) : super(key: key);
 
@@ -31,6 +35,11 @@ class VideoListItem extends StatefulWidget {
 
 class _VideoListItemState extends State<VideoListItem>
     with TickerProviderStateMixin {
+  /// 拖拽进度条时置 true，只隐藏本条 overlay，不触发首页顶栏隐藏。
+  late final ValueNotifier<bool> _feedScrubbingOverlayNotifier;
+
+  late final Listenable _overlayHideListenable;
+
   late final AnimationController _recordRotationController;
   late final AnimationController _likeBurstController;
   late final Animation<double> _likeScaleAnimation;
@@ -146,6 +155,12 @@ class _VideoListItemState extends State<VideoListItem>
       _followAckController.reset();
     });
 
+    _feedScrubbingOverlayNotifier = ValueNotifier<bool>(false);
+    _overlayHideListenable = Listenable.merge(<Listenable>[
+      widget.clearPlaybackNotifier,
+      _feedScrubbingOverlayNotifier,
+    ]);
+
     _resetInteractionFromItem(widget.item);
   }
 
@@ -153,6 +168,8 @@ class _VideoListItemState extends State<VideoListItem>
   void didUpdateWidget(covariant VideoListItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.item.id != widget.item.id) {
+      widget.clearPlaybackNotifier.value = false;
+      _feedScrubbingOverlayNotifier.value = false;
       setState(() => _resetInteractionFromItem(widget.item));
     }
   }
@@ -387,6 +404,7 @@ class _VideoListItemState extends State<VideoListItem>
 
   @override
   void dispose() {
+    _feedScrubbingOverlayNotifier.dispose();
     _recordRotationController.dispose();
     _likeBurstController.dispose();
     _collectBurstController.dispose();
@@ -487,6 +505,8 @@ class _VideoListItemState extends State<VideoListItem>
             commentCount: item.commentCount,
             initialCollectCount: item.collectCount,
           ),
+          clearPlaybackChromeNotifier: widget.clearPlaybackNotifier,
+          feedScrubbingOverlayNotifier: _feedScrubbingOverlayNotifier,
         );
       case HomeFeedMediaKind.imageSingle:
       case HomeFeedMediaKind.imageGallery:
@@ -500,169 +520,181 @@ class _VideoListItemState extends State<VideoListItem>
   @override
   Widget build(BuildContext context) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Positioned.fill(child: _buildMediaLayer()),
-        // 右侧信息
-        Positioned(
-          right: 12.w,
-          bottom: 40.h,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Column(
-                spacing: 20.h,
-                mainAxisSize: MainAxisSize.min,
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _overlayHideListenable,
+            builder: (context, _) {
+              final hideOverlays = widget.clearPlaybackNotifier.value ||
+                  _feedScrubbingOverlayNotifier.value;
+              if (hideOverlays) return const SizedBox.shrink();
+              return Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // 头像
-                  Container(
-                    width: 68.w,
-                    height: 90.h,
-                    child: Container(
-                      width: 68.w,
-                      height: 68.h,
-                      padding: EdgeInsets.all(2.w),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-
-                        children: [
-                          Positioned.fill(
-                            child: GestureDetector(
-                              onTap: _onAvatarTap,
-                              child: CircleAvatar(
-                                backgroundImage: AssetImage(
-                                  'lib/assets/avatar.webp',
-                                ),
-                              ),
-                            ),
-                          ),
-                          _buildFollowBadgeBelowAvatar(),
-                        ],
-                      ),
-                    ),
-
-                    // 头像
-                  ),
-                  // 点赞（双击视频未点赞时会动画变红）
-                  _buildLikeColumn(),
-                  // 评论数
-                  _buildVideoAttatchInfoItem(
-                    title: '评论',
-                    icon: FontAwesomeIcons.solidCommentDots,
-                    count: '${widget.item.commentCount}',
-                    onTap: _onCommentTap,
-                  ),
-                  // 收藏（未收藏时点按：与点赞同款缩放动效并变为金黄）
-                  _buildCollectColumn(),
-                  // 分享
-                  _buildVideoAttatchInfoItem(
-                    title: '分享',
-                    icon: FontAwesomeIcons.share,
-                    count: '${widget.item.shareCount}',
-                    onTap: _onShareTap,
-                  ),
-                  // 唱片
-                  GestureDetector(
-                    onTap: _onAlbumTap,
-                    child: RotationTransition(
-                      turns: _recordRotationController,
-                      child: CircleAvatar(
-                        radius: 24.r,
-                        backgroundImage: AssetImage('lib/assets/avatar.webp'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        // 底部信息
-        Positioned(
-          bottom: 24.h,
-          left: 0,
-          right: 0,
-          child: Padding(
-            padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    spacing: 12.h,
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.6,
-                        child: Text(
-                          widget.item.author,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          maxLines: 1,
-                        ),
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.65,
-                        child: ExpandableText(
-                          text: widget.item.title,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _onAlbumTap,
-                        child: Row(
-                          spacing: 4.w,
+                  Positioned(
+                    right: 12.w,
+                    bottom: 40.h,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Column(
+                          spacing: 20.h,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              padding: EdgeInsets.all(4.w),
-                              alignment: Alignment.center,
-                              child: Row(
-                                spacing: 2.w,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    widget.item.musicChip,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
+                              width: 68.w,
+                              height: 90.h,
+                              child: Container(
+                                width: 68.w,
+                                height: 68.h,
+                                padding: EdgeInsets.all(2.w),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Positioned.fill(
+                                      child: GestureDetector(
+                                        onTap: _onAvatarTap,
+                                        child: CircleAvatar(
+                                          backgroundImage: AssetImage(
+                                            'lib/assets/avatar.webp',
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  Icon(
-                                    Icons.music_note,
-                                    color: Colors.white,
-                                    size: 14.sp,
-                                  ),
-                                ],
+                                    _buildFollowBadgeBelowAvatar(),
+                                  ],
+                                ),
                               ),
                             ),
-                            SizedBox(
-                              width: 100.w,
-                              child: TextAutoScroll(
-                                isActive: widget.isActive,
-                                text: widget.item.musicScroll,
+                            _buildLikeColumn(),
+                            _buildVideoAttatchInfoItem(
+                              title: '评论',
+                              icon: FontAwesomeIcons.solidCommentDots,
+                              count: '${widget.item.commentCount}',
+                              onTap: _onCommentTap,
+                            ),
+                            _buildCollectColumn(),
+                            _buildVideoAttatchInfoItem(
+                              title: '分享',
+                              icon: FontAwesomeIcons.share,
+                              count: '${widget.item.shareCount}',
+                              onTap: _onShareTap,
+                            ),
+                            GestureDetector(
+                              onTap: _onAlbumTap,
+                              child: RotationTransition(
+                                turns: _recordRotationController,
+                                child: CircleAvatar(
+                                  radius: 24.r,
+                                  backgroundImage:
+                                      AssetImage('lib/assets/avatar.webp'),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Positioned(
+                    bottom: 24.h,
+                    left: 0,
+                    right: 0,
+                    child: Padding(
+                      padding:
+                          EdgeInsetsGeometry.symmetric(horizontal: 12.w),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              spacing: 12.h,
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width *
+                                      0.6,
+                                  child: Text(
+                                    widget.item.author,
+                                    style: TextStyle(
+                                      fontSize: 24.sp,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width *
+                                      0.65,
+                                  child: ExpandableText(
+                                    text: widget.item.title,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _onAlbumTap,
+                                  child: Row(
+                                    spacing: 4.w,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withOpacity(0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(4.r),
+                                        ),
+                                        padding: EdgeInsets.all(4.w),
+                                        alignment: Alignment.center,
+                                        child: Row(
+                                          spacing: 2.w,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              widget.item.musicChip,
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.white,
+                                                fontWeight:
+                                                    FontWeight.w500,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.music_note,
+                                              color: Colors.white,
+                                              size: 14.sp,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 100.w,
+                                        child: TextAutoScroll(
+                                          isActive: widget.isActive,
+                                          text: widget.item.musicScroll,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],

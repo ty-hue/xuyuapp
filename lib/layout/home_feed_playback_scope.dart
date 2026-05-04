@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// 由 [ShellPage] 注入：仅当底部栏选中首页分支且当前路由仍是 `/`（未被全屏页覆盖）时为 true。
-/// [TabbarViewVideoList] 再与纵向 PageView 的当前条组合，驱动 [CustomVideoPlayer.isActive]。
+/// 由 [ShellPage] 注入：选中首页 (`/`) 或朋友 (`/friend`) 等分支且顶层路由仍为该分支根路径时，
+/// 纵向视频才可播。[TabbarViewVideoList] 与 PageView 当前条驱动 [CustomVideoPlayer.isActive]。
 class HomeFeedPlaybackScope extends InheritedWidget {
   const HomeFeedPlaybackScope({
     super.key,

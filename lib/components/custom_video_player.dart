@@ -3,10 +3,12 @@ import 'package:bilbili_project/components/tiktok_video_gesture.dart';
 import 'package:bilbili_project/pages/Home/comps/feed_video_progress_utils.dart';
 import 'package:bilbili_project/pages/Home/comps/landscape_feed_video_page.dart';
 import 'package:bilbili_project/pages/Home/comps/video_long_press_sheet_skeleton.dart';
+import 'package:bilbili_project/routes/app_router.dart';
 import 'package:bilbili_project/utils/SheetUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:math' as math;
 
 class CustomVideoPlayer extends StatefulWidget {
   final String url;
@@ -24,12 +26,19 @@ class CustomVideoPlayer extends StatefulWidget {
   /// 传入后在横屏全屏页展示标题、作者、互动等（与抖音横屏条一致）。
   final LandscapeFeedSocialMeta? landscapeMeta;
 
-  /// 进度条展开时「当前/总时长」文案样式，在默认 `12.sp` 基础上合并；不传则与原先 Feed 一致。
+  /// 进度条展开时「当前/总时长」文案样式，在默认 `18.sp` 基础上合并；不传则与原先 Feed 一致。
   final TextStyle? progressTimeLabelStyle;
 
   /// 进度条触摸区相对底部 [Stack] 再向下偏移（正值向下，内部用 `Positioned(bottom: -value)`）。
   /// 默认 `0` 不改变布局；需要更贴底时可传 `6.h` 等，由调用方按需传入。
   final double progressBarBottomOffset;
+
+  /// 仅「长按清屏播放」时使用；隐藏首页顶栏 Tab + 搜索。
+  final ValueNotifier<bool>? clearPlaybackChromeNotifier;
+
+  /// 拖拽进度条或清屏模式下拖进度时使用；隐藏本条右侧 / 底部互动层，
+  /// **不**隐藏首页顶栏（与 [clearPlaybackChromeNotifier] 区分）。
+  final ValueNotifier<bool>? feedScrubbingOverlayNotifier;
 
   const CustomVideoPlayer({
     Key? key,
@@ -41,6 +50,8 @@ class CustomVideoPlayer extends StatefulWidget {
     this.landscapeMeta,
     this.progressTimeLabelStyle,
     this.progressBarBottomOffset = 0,
+    this.clearPlaybackChromeNotifier,
+    this.feedScrubbingOverlayNotifier,
   }) : super(key: key);
 
   @override
@@ -62,27 +73,80 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
 
   /// 本次按住进度条前视频是否在播；seek 后原生层常会暂停，需按需 `play()` 恢复。
   bool _wasPlayingWhenScrubStarted = false;
+
+  /// 用户在本条视频上最近一次「点按」选择的是暂停时为 true。
+  /// 用于区分：因切 Tab / 去「我的」等导致的 `isActive=false`（仅 pause），回到前台时不应擅自 `play()`。
+  bool _userExplicitlyPaused = false;
+
   bool _uiPlayingTracked = false;
   bool _uiInitializedTracked = false;
   int _uiPositionTickTracked = -1;
 
+  /// 清屏播放：除进度条外隐藏视频内 Chrome。
+  bool _clearPlaybackChrome = false;
+
+  /// 清屏底栏拖拽进度中。
+  bool _clearBarScrubbing = false;
+
+  double _appliedPlaybackSpeed = 1.0;
+
+  /// 参见 [kVideoFeedPlaybackSpeedSteps]，清屏面板循环倍速与该列表一致。
+  static const Color _kClearChromeSurface = Color(0xE62E2E32);
+
+  /// 与设计稿对齐：方形关闭 / 等高右侧胶囊。
+  double get _clearChromeHitExtent => 42.h;
+
+  /// 长按清屏 **或** 正在操作进度（含悬停进度区）：隐藏大图播放键、横屏「全屏观看」，
+  /// 并通过 [feedScrubbingOverlayNotifier] 收起本条 overlay（顶栏不受影响）。
+  bool get _immersivePlaybackTrim =>
+      _clearPlaybackChrome ||
+      _touchingProgressZone ||
+      _mouseInsideProgressZone ||
+      _clearBarScrubbing;
+
   bool get _progressBarExpanded =>
       _touchingProgressZone || _mouseInsideProgressZone;
 
-  double get _barHeight => _progressBarExpanded ? 8.h : 4.h;
+  double get _barHeight => _progressBarExpanded ? 5.h : 2.5.h;
 
-  double get _thumbRadius => _progressBarExpanded ? 8.w : 4.w;
+  double get _thumbRadius => _progressBarExpanded ? 5.w : 2.5.w;
 
   /// 底部可触摸区域高度（含进度条上方空白）；展开时加高以容纳时间文案。
-  double get _progressTouchZoneHeight => _progressBarExpanded ? 68.h : 48.h;
+  /// 条带视觉较细，触控区仍略高于条本身，避免误触困难。
+  double get _progressTouchZoneHeight => _progressBarExpanded ? 92.h : 40.h;
 
-  /// 首帧布局后再 play，否则刚初始化时纹理未挂上，`play()` 容易无声失败（冷启动进首页常见）。
+  void _applyClearPlaybackChrome(bool value) {
+    if (!mounted) return;
+    final n = widget.clearPlaybackChromeNotifier;
+    final needsFrame = _clearPlaybackChrome != value;
+    final needsNotify = n != null && n.value != value;
+    if (!needsFrame && !needsNotify) return;
+    if (needsFrame) {
+      setState(() => _clearPlaybackChrome = value);
+    }
+    if (needsNotify) {
+      n.value = value;
+    }
+  }
+
+  void _syncFeedScrubbingOverlayNotifier() {
+    final notifier = widget.feedScrubbingOverlayNotifier;
+    if (notifier == null) return;
+    final immersive =
+        _touchingProgressZone || _mouseInsideProgressZone || _clearBarScrubbing;
+    if (notifier.value != immersive) {
+      notifier.value = immersive;
+    }
+  }
+
   void _schedulePlayIfActive() {
     if (!mounted || !widget.isActive || !_controller.value.isInitialized) {
       return;
     }
+    if (_userExplicitlyPaused) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !widget.isActive) return;
+      if (_userExplicitlyPaused) return;
       if (!_controller.value.isPlaying) _controller.play();
     });
   }
@@ -94,7 +158,12 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
     final playing = v.isPlaying;
     final positionTick = init ? (v.position.inMilliseconds ~/ _kUiPositionTickMs) : -1;
     final shouldRefreshByPosition = positionTick != _uiPositionTickTracked &&
-        (playing || _progressBarExpanded);
+        (playing ||
+            _progressBarExpanded ||
+            _clearPlaybackChrome ||
+            _clearBarScrubbing ||
+            _touchingProgressZone ||
+            _mouseInsideProgressZone);
     if (_uiInitializedTracked == init &&
         _uiPlayingTracked == playing &&
         !shouldRefreshByPosition) {
@@ -111,9 +180,14 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
     super.initState();
 
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
+      ..initialize().then((_) async {
         if (!mounted) return;
         _controller.setLooping(true);
+        try {
+          _appliedPlaybackSpeed = _controller.value.playbackSpeed;
+        } catch (_) {
+          _appliedPlaybackSpeed = 1.0;
+        }
         _controller.addListener(_onControllerValueChanged);
         setState(() {});
         _schedulePlayIfActive();
@@ -126,35 +200,61 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
     if (oldWidget.isActive == widget.isActive) return;
     if (!_controller.value.isInitialized) return;
     if (widget.isActive) {
-      _schedulePlayIfActive();
+      if (!_userExplicitlyPaused) {
+        _schedulePlayIfActive();
+      }
     } else {
       _controller.pause();
+      if (_clearPlaybackChrome) {
+        _applyClearPlaybackChrome(false);
+      }
+      _touchingProgressZone = false;
+      _mouseInsideProgressZone = false;
+      _clearBarScrubbing = false;
+      _syncFeedScrubbingOverlayNotifier();
     }
     setState(() {});
   }
 
   @override
   void dispose() {
+    widget.feedScrubbingOverlayNotifier?.value = false;
     _controller.removeListener(_onControllerValueChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleVideoTap() {
+    togglePlay();
   }
 
   void togglePlay() {
     if (!_controller.value.isInitialized) return;
     if (_controller.value.isPlaying) {
       _controller.pause();
+      _userExplicitlyPaused = true;
     } else {
       _controller.play();
+      _userExplicitlyPaused = false;
     }
     setState(() {});
   }
 
-  void _openLongPressSheet() {
-    SheetUtils(
-      VideoLongPressSheetSkeleton(),
+  Future<void> _openLongPressSheet() async {
+    final result = await SheetUtils(
+      VideoLongPressSheetSkeleton(
+        initialPlaybackSpeed: _appliedPlaybackSpeed,
+        onPlaybackSpeedSelected: _applyPlaybackSpeed,
+        onReportNavigate: () {
+          ReportPageRoute().push(context);
+        },
+      ),
       deferHeavyChild: false,
-    ).openAsyncSheet<void>(context: context);
+    ).openAsyncSheet<VideoLongPressSheetResult>(context: context);
+    if (!mounted) return;
+    if (result == VideoLongPressSheetResult.clearScreenPlayback) {
+      _applyClearPlaybackChrome(true);
+    }
   }
 
   /// 横屏片源：宽 > 高；优先解码后的 `size`，否则用接口下发的 hint。
@@ -288,7 +388,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
               height: r.height,
               child: VideoPlayer(_controller),
             ),
-            if (!_controller.value.isPlaying)
+            if (!_immersivePlaybackTrim && !_controller.value.isPlaying)
               Positioned(
                 left: r.left,
                 top: r.top,
@@ -329,7 +429,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
               child: VideoPlayer(_controller),
             ),
           ),
-          if (!_controller.value.isPlaying)
+          if (!_immersivePlaybackTrim && !_controller.value.isPlaying)
             const Center(
               child: Icon(
                 Icons.play_arrow_rounded,
@@ -338,6 +438,234 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  String _formatSpeedLabel(double s) {
+    if ((s - s.roundToDouble()).abs() < 1e-6) {
+      return '${s.round()}x';
+    }
+    return '${s}x';
+  }
+
+  Future<void> _applyPlaybackSpeed(double speed) async {
+    if (!_controller.value.isInitialized) return;
+    try {
+      await _controller.setPlaybackSpeed(speed);
+    } catch (_) {}
+    if (!mounted) return;
+    try {
+      _appliedPlaybackSpeed = _controller.value.playbackSpeed;
+    } catch (_) {
+      _appliedPlaybackSpeed = speed;
+    }
+    setState(() {});
+  }
+
+  Future<void> _cycleClearModeSpeed() async {
+    final list = kVideoFeedPlaybackSpeedSteps;
+    final i = list.indexWhere((e) => (e - _appliedPlaybackSpeed).abs() < 0.001);
+    final idx = i < 0 ? 0 : i;
+    final next = list[(idx + 1) % list.length];
+    await _applyPlaybackSpeed(next);
+  }
+
+  void _seekClearBarToDx(double dx, double width) {
+    final d = feedVideoDurationFromLocalDx(
+      dx,
+      width,
+      3.h,
+      _controller.value.duration,
+    );
+    _controller.seekTo(d).then((_) {
+      if (!mounted) return;
+      if (_wasPlayingWhenScrubStarted && !_controller.value.isPlaying) {
+        _controller.play();
+      }
+      setState(() {});
+    });
+  }
+
+  Widget _clearChromeCloseSquare() {
+    final r = BorderRadius.circular(10.r);
+    return SizedBox(
+      width: _clearChromeHitExtent,
+      height: _clearChromeHitExtent,
+      child: Material(
+        color: _kClearChromeSurface,
+        borderRadius: r,
+        child: InkWell(
+          onTap: () => _applyClearPlaybackChrome(false),
+          borderRadius: r,
+          child: Icon(
+            Icons.close_rounded,
+            color: Colors.white,
+            size: 21.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _clearChromePlaySpeedPill(bool playingNow) {
+    final r = BorderRadius.circular(10.r);
+    return SizedBox(
+      height: _clearChromeHitExtent,
+      child: Material(
+        color: _kClearChromeSurface,
+        borderRadius: r,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(10.r)),
+              onTap: togglePlay,
+              child: SizedBox(
+                height: _clearChromeHitExtent,
+                width: 44.w,
+                child: Icon(
+                  playingNow ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 24.sp,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 16.h,
+              child: VerticalDivider(
+                width: 1.w,
+                thickness: 1,
+                color: Colors.white.withValues(alpha: 0.28),
+              ),
+            ),
+            InkWell(
+              borderRadius:
+                  BorderRadius.horizontal(right: Radius.circular(10.r)),
+              onTap: () {
+                _cycleClearModeSpeed();
+              },
+              child: Padding(
+                padding: EdgeInsets.only(left: 8.w, right: 14.w),
+                child: Center(
+                  child: Text(
+                    _formatSpeedLabel(_appliedPlaybackSpeed),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClearModeThinProgressInner(double trackWidth) {
+    final dur = _controller.value.duration;
+    final pos = _controller.value.position;
+    final totalMs = dur.inMilliseconds;
+    final t =
+        totalMs > 0 ? (pos.inMilliseconds / totalMs).clamp(0.0, 1.0) : 0.0;
+
+    final h = 2.5.h;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(1.5.r),
+      child: SizedBox(
+        height: h,
+        width: trackWidth,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(
+              color: Colors.white.withValues(alpha: 0.22),
+            ),
+            FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: t,
+              heightFactor: 1,
+              child: const ColoredBox(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClearModeBottomChrome(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final playingNow = _controller.value.isPlaying;
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0x00000000),
+            Color(0x66000000),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 12.w,
+          right: 12.w,
+          top: 10.h,
+          bottom: bottomInset + 10.h,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _clearChromeCloseSquare(),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: SizedBox(
+                height: math.max(_clearChromeHitExtent, 40.h),
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    final trackW = c.maxWidth;
+                    return Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (e) {
+                        _wasPlayingWhenScrubStarted =
+                            _controller.value.isPlaying;
+                        _clearBarScrubbing = true;
+                        setState(() {});
+                        _syncFeedScrubbingOverlayNotifier();
+                        _seekClearBarToDx(e.localPosition.dx, trackW);
+                      },
+                      onPointerMove: (e) {
+                        if (!_clearBarScrubbing) return;
+                        _seekClearBarToDx(e.localPosition.dx, trackW);
+                      },
+                      onPointerUp: (_) {
+                        _clearBarScrubbing = false;
+                        setState(() {});
+                        _syncFeedScrubbingOverlayNotifier();
+                      },
+                      onPointerCancel: (_) {
+                        _clearBarScrubbing = false;
+                        setState(() {});
+                        _syncFeedScrubbingOverlayNotifier();
+                      },
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: _buildClearModeThinProgressInner(trackW),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            _clearChromePlaySpeedPill(playingNow),
+          ],
+        ),
       ),
     );
   }
@@ -368,7 +696,8 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
             builder: (context, constraints) {
               final box = Size(constraints.maxWidth, constraints.maxHeight);
               final showPill = _controller.value.isInitialized &&
-                  _isLandscapeVideo();
+                  _isLandscapeVideo() &&
+                  !_immersivePlaybackTrim;
               final pillTop = showPill
                   ? _landscapeContainRect(box).bottom + 8.h
                   : 0.0;
@@ -377,7 +706,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                 fit: StackFit.expand,
                 children: [
                   TikTokVideoGesture(
-                    onSingleTap: togglePlay,
+                    onSingleTap: _handleVideoTap,
                     onDoubleTapLike: widget.onDoubleTapLike,
                     onLongPress: _openLongPressSheet,
                     child: SizedBox.expand(child: _buildVideoBody(box)),
@@ -394,14 +723,20 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
             },
           ),
         ),
-        if (_controller.value.isInitialized)
+        if (_controller.value.isInitialized && !_clearPlaybackChrome)
           Positioned(
             left: 0,
             right: 0,
             bottom: -widget.progressBarBottomOffset,
             child: MouseRegion(
-              onEnter: (_) => setState(() => _mouseInsideProgressZone = true),
-              onExit: (_) => setState(() => _mouseInsideProgressZone = false),
+              onEnter: (_) {
+                setState(() => _mouseInsideProgressZone = true);
+                _syncFeedScrubbingOverlayNotifier();
+              },
+              onExit: (_) {
+                setState(() => _mouseInsideProgressZone = false);
+                _syncFeedScrubbingOverlayNotifier();
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
@@ -433,6 +768,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                               _controller.value.isPlaying;
                           _touchingProgressZone = true;
                           setState(() {});
+                          _syncFeedScrubbingOverlayNotifier();
                           _seekToLocalDx(e.localPosition.dx, w);
                         },
                         onPointerMove: (e) {
@@ -442,10 +778,12 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                         onPointerUp: (_) {
                           _touchingProgressZone = false;
                           setState(() {});
+                          _syncFeedScrubbingOverlayNotifier();
                         },
                         onPointerCancel: (_) {
                           _touchingProgressZone = false;
                           setState(() {});
+                          _syncFeedScrubbingOverlayNotifier();
                         },
                         child: Align(
                           alignment: Alignment.bottomCenter,
@@ -457,10 +795,10 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                                 FeedVideoProgressTimeLabel(
                                   position: _controller.value.position,
                                   total: _controller.value.duration,
-                                  style: TextStyle(fontSize: 12.sp)
+                                  style: TextStyle(fontSize: 18.sp)
                                       .merge(widget.progressTimeLabelStyle),
                                 ),
-                                SizedBox(height: 6.h),
+                                SizedBox(height: 20.h),
                               ],
                               IgnorePointer(
                                 child: ProgressBar(
@@ -486,6 +824,13 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                 ),
               ),
             ),
+          ),
+        if (_controller.value.isInitialized && _clearPlaybackChrome)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: -widget.progressBarBottomOffset,
+            child: _buildClearModeBottomChrome(context),
           ),
       ],
     );

@@ -47,11 +47,17 @@ class _ShellPageState extends State<ShellPage>
     if (mounted) setState(() {});
   }
 
-  /// 首页视频：仅底部选中首页且顶层路由仍是 `/`（例如未 push 全屏页）时可播。
-  bool _allowHomeFeedPlayback() {
-    if (widget.navigationShell.currentIndex != 0) return false;
+  /// 纵向视频流：首页 `/`（或空路径）与朋友页 `/friend`，在对应底栏分支选中且未被子路由顶替时可播。
+  bool _allowVerticalFeedPlayback() {
+    final shellIndex = widget.navigationShell.currentIndex;
     final path = router.routeInformationProvider.value.uri.path;
-    return path.isEmpty || path == '/';
+    if (shellIndex == 0) {
+      return path.isEmpty || path == '/';
+    }
+    if (shellIndex == 1) {
+      return path == '/friend';
+    }
+    return false;
   }
 
   @override
@@ -209,7 +215,7 @@ class _ShellPageState extends State<ShellPage>
                     children: [
                       Scaffold(
                         body: HomeFeedPlaybackScope(
-                          allowPlayback: _allowHomeFeedPlayback(),
+                          allowPlayback: _allowVerticalFeedPlayback(),
                           child: widget.navigationShell,
                         ),
                         bottomNavigationBar: _buildBottomBar(context, bottomIndex),

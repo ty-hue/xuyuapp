@@ -157,3 +157,62 @@ final List<HomeFeedItem> kHomeMockFeed = <HomeFeedItem>[
     collectCount: 400,
   ),
 ];
+
+/// 「朋友」流模拟：互关作者发布的动态（结构与 [kHomeMockFeed] 一致，接入 API 后可替换）。
+final List<HomeFeedItem> kFriendMutualFollowMockFeed = <HomeFeedItem>[
+  HomeFeedItem(
+    id: 'f_v1',
+    kind: HomeFeedMediaKind.video,
+    videoUrl:
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+    author: '@互关小林',
+    title: '早安 · butterfly 短片（好友流模拟）',
+    musicChip: '好友作品',
+    musicScroll: '互关专属可见 · demo',
+    likeCount: 1280,
+    commentCount: 86,
+    shareCount: 12,
+    collectCount: 340,
+  ),
+  HomeFeedItem(
+    id: 'f_img1',
+    kind: HomeFeedMediaKind.imageSingle,
+    imageUrls: const ['https://picsum.photos/id/1003/1080/1920'],
+    author: '@互关阿周',
+    title: '今日随拍一张（模拟互关图文）',
+    musicChip: '单图',
+    musicScroll: '好友动态',
+    likeCount: 520,
+    commentCount: 28,
+    shareCount: 2,
+    collectCount: 90,
+  ),
+  HomeFeedItem(
+    id: 'f_v2',
+    kind: HomeFeedMediaKind.video,
+    videoUrl:
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+    author: '@互关 Mina',
+    title: '周末 bee 合集 · 等你来赞',
+    musicChip: '好友作品',
+    musicScroll: 'Track · friend feed',
+    likeCount: 5600,
+    commentCount: 410,
+    shareCount: 33,
+    collectCount: 890,
+  ),
+  HomeFeedItem(
+    id: 'f_v3',
+    kind: HomeFeedMediaKind.video,
+    videoUrl:
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+    author: '@互关大江',
+    title: '攀岩记录 #好友可见',
+    musicChip: '运动',
+    musicScroll: 'Climb mix',
+    likeCount: 3400,
+    commentCount: 156,
+    shareCount: 8,
+    collectCount: 412,
+  ),
+];
